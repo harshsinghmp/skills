@@ -52,7 +52,18 @@ export function validateSkillsDirectory(baseDir = "skills"): ValidationResult {
 
     const frontmatter = frontmatterMatch[1];
     const nameMatch = frontmatter.match(/^name:\s*(.+)$/m);
-    const descMatch = frontmatter.match(/^description:\s*(.+)$/m);
+    
+    // Extract description supporting both single-line and multiline block scalars (>, |)
+    let description = "";
+    const multilineMatch = frontmatter.match(/^description:\s*(?:[>|]-?)\s*\r?\n((?:[ \t]+.+\r?\n?)+)/m);
+    if (multilineMatch) {
+      description = multilineMatch[1].replace(/^[ \t]+/gm, "").replace(/\r?\n/g, " ").trim();
+    } else {
+      const singleMatch = frontmatter.match(/^description:\s*(.+)$/m);
+      if (singleMatch) {
+        description = singleMatch[1].trim().replace(/^["']|["']$/g, "");
+      }
+    }
 
     if (!nameMatch || !nameMatch[1].trim()) {
       errors.push({
@@ -62,17 +73,17 @@ export function validateSkillsDirectory(baseDir = "skills"): ValidationResult {
       });
     }
 
-    if (!descMatch || !descMatch[1].trim()) {
+    if (!description) {
       errors.push({
         skill: skillName,
         type: "error",
         message: `YAML frontmatter is missing 'description:' field in SKILL.md`,
       });
-    } else if (descMatch[1].trim().length < 15) {
+    } else if (description.length < 15) {
       warnings.push({
         skill: skillName,
         type: "warning",
-        message: `Description in SKILL.md is very short (${descMatch[1].trim().length} chars). Consider making it more descriptive for LLM indexing.`,
+        message: `Description in SKILL.md is very short (${description.length} chars). Consider making it more descriptive for LLM indexing.`,
       });
     }
 
