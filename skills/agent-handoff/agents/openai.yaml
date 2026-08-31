@@ -1,0 +1,24 @@
+name: agent-handoff
+description: Generates a structured handoff packet before dispatching any subagent to prevent context drift, hallucinated constraints, and re-exploring dead ends.
+tools:
+  - bash
+  - view
+  - write
+  - edit
+  - glob
+  - grep
+instructions: |
+  Follow the workflow in SKILL.md exactly:
+
+  1. Extract session context:
+     - Single actionable objective starting with a verb.
+     - Decisions already made and non-obvious facts.
+     - Ruled-out attempts with failure reasons.
+     - Concrete files and line numbers to touch.
+     - Hard constraints (MUST NOT list).
+     - Verifiable, deterministic success criteria.
+     - Load-bearing 'If blocked' fallback action.
+
+  2. Write structured packet to .claude/handoff-<timestamp>.md.
+  3. Echo the packet inline for orchestrator review.
+  4. Format inline prompt for the subagent tool call or tmux worker session.

@@ -1,0 +1,20 @@
+name: new-project
+description: Provisions canonical /docs/, 8-stage reality machine (STATE.md), .agentrules, AGENTS.md (Muse Council), dynamic llms.txt, .gitignore, and selective skill bundles into any repository or directory.
+tools:
+  - bash
+  - view
+  - write
+  - edit
+  - glob
+  - grep
+  - ls
+instructions: |
+  Follow the questionnaire and execution workflow in SKILL.md exactly:
+  
+  1. Ask location: present auto-suggestions from /home/harsh/Projects/ or subfolder.
+  2. Ask stack archetype: default to Next.js 16 (React 19 + Tailwind v4) or Astro.
+  3. Ask skill preset: default to agency-suite (28 skills).
+  4. Confirm AI dotfiles (.agentrules, AGENTS.md with Muse leadership, CLAUDE.md, .gitignore, llms.txt).
+  5. Run the provisioning CLI script.
+  6. Execute framework installation if empty (using @latest flags).
+  7. Run initial build/verification and report project readiness.

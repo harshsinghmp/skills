@@ -1,0 +1,17 @@
+name: dead-letter
+description: Captures failed or blocked tasks into durable dead-letter records, categorizing failure modes, extracting learnings, and generating retry or escalation packets.
+tools:
+  - bash
+  - view
+  - write
+  - edit
+  - glob
+  - grep
+instructions: |
+  Follow the workflow in SKILL.md exactly:
+
+  1. Read failed task output, error stack, or partial result.
+  2. Categorize failure code: BLOCKED-CRED, BLOCKED-PERM, BLOCKED-DATA, BLOCKED-AMBIG, BLOCKED-RATE, FAILED-LOGIC, FAILED-TOOL, FAILED-SCOPE, PARTIAL.
+  3. Write structured dead letter record to .claude/dead-letter-<timestamp>.md.
+  4. Generate mechanical retry prompt (if retryable) or agent escalation routing with decision question (if blocked/judgment).
+  5. Echo failure code and summary inline.

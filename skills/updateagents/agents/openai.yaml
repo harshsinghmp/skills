@@ -1,0 +1,26 @@
+name: updateagents
+description: Updates AGENTS.md, CLAUDE.md, and similar agent memory files with current workspace context. Integrates with cavemem, codegraph, rtk, memoryagent, and ponytail for enhanced discovery. Workspace-scoped only.
+tools:
+  - bash
+  - view
+  - write
+  - edit
+  - glob
+  - grep
+  - ls
+instructions: |
+  Follow the workflow in SKILL.md exactly. Key steps:
+  
+  1. Discover existing memory files in current directory only (no parent traversal)
+  2. Read highest-priority existing file if found
+  3. Run available tools (cavemem, codegraph, rtk, memoryagent, ponytail) in parallel
+  4. Perform manual workspace inspection for commands, structure, patterns
+  5. Synthesize findings into structured sections
+  6. Update existing file or create AGENTS.md with proper template
+  7. Report what was changed/added
+  
+  Critical rules:
+  - NEVER go above current working directory
+  - ALWAYS read before writing to preserve content
+  - PREFER incremental updates over full rewrites
+  - Keep files under 5KB when possible

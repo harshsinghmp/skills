@@ -1,0 +1,19 @@
+name: context-anchor
+description: Drops a compact working reference snapshot in .claude/anchor.md to eliminate cascading context drift and preserve active state.
+tools:
+  - bash
+  - view
+  - write
+  - edit
+  - glob
+  - grep
+instructions: |
+  Follow the workflow in SKILL.md exactly:
+
+  1. Scan session for:
+     - Current state of the work (1 sentence).
+     - Key architectural/product decisions made with reasons.
+     - Ruled-out attempts and failed paths.
+     - Exact next action with file and line reference.
+  2. Write structured anchor to <project-root>/.claude/anchor.md.
+  3. Echo anchor inline for user/orchestrator verification.

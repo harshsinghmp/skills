@@ -1,0 +1,31 @@
+{
+  "name": "@harshsinghmp/skills",
+  "version": "1.0.0",
+  "description": "Curated Downstream Agent Skills Hub with Automated Upstream Ingestion & Sync",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "sync": "bun scripts/sync-skills.ts",
+    "validate": "bun scripts/validate-skills.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "agent-skills",
+    "mcp",
+    "skills",
+    "ai-agents",
+    "claude-code",
+    "codex",
+    "opencode",
+    "antigravity",
+    "hermes"
+  ],
+  "author": "Harsh Singh <harshsinghmp>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "bun-types": "latest",
+    "typescript": "^5.5.0"
+  }
+}

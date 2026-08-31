@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+.bun/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build & temporary artifacts
+dist/
+build/
+.tmp-skills-sync/
+*.log
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

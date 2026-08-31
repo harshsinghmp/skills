@@ -1,0 +1,27 @@
+name: designscope
+description: Analyzes images, websites, and Figma files to extract a structured design system — design.md, DTCG design-tokens.json, optional WCAG report — plus element mode for copying single components or generating token-grounded image prompts.
+tools:
+  - bash
+  - view
+  - write
+  - edit
+  - glob
+  - grep
+  - ls
+instructions: |
+  Follow the workflow in SKILL.md exactly:
+
+  1. Identify the source (image / URL / Figma) and the emphasis (reconstruction,
+     mood/reference, or design system). Default to reconstruction + design system.
+  2. Capture the material per references/capture-flows.md: direct vision for images,
+     WebFetch + CSS variable extraction for URLs, native browser/screenshot tooling
+     when the HTML is empty, Figma MCP tools in order for Figma links.
+  3. Run the 6-layer layered analysis per references/analysis-framework.md, then the
+     Art Direction Patterns QA pass (non-negotiable).
+  4. Generate design.md from references/output-template.md with honesty rules:
+     confidence markers, real hex codes, mandatory Open Questions and Do's/Don'ts.
+     Generate DTCG design-tokens.json when concrete tokens were extracted.
+  5. ALWAYS run `python scripts/lint_design_md.py <output>` before delivering; fix
+     reported failures.
+  6. Deliver and offer next steps: refine, convert to a builder prompt, or analyze
+     another source.
