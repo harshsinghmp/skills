@@ -57,21 +57,38 @@ Managing them across workstations leads to three major problems:
 
 ## ⚡ Shallow Sparse-Checkout Sync Mechanics
 
-Rather than cloning full repository histories, the sync engine (`src/sync.ts`) executes **shallow blob-less sparse checkouts**:
+The sync engine (`src/sync.ts`) groups manifest entries **per upstream repo** and clones each repo **once** (not once per skill), then performs a **shallow blob-less sparse checkout**:
 
 ```bash
-# 1. Initialize shallow blob-less clone for target upstream
+# 1. Initialize shallow blob-less clone for the target upstream
 git clone --depth 1 --filter=blob:none --sparse "https://github.com/<upstream-repo>.git" "<tmp-dir>" --branch "<branch>"
 
-# 2. Extract ONLY the requested skill directory
-git -C "<tmp-dir>" sparse-checkout set "<source-subpath>"
+# 2. Fetch ONLY the requested skill directories (one sparse-checkout add per path)
+git -C "<tmp-dir>" sparse-checkout add "<source-subpath>"
 
-# 3. Synchronize cleanly to downstream ./skills/<skill-name>
-cp -r "<tmp-dir>/<source-subpath>/." "skills/<skill-name>/"
+# 3. Diff skill content against the local copy; skip if byte-identical
+#    (ignores .upstream-meta.json so timestamps don't cause churn)
 
-# 4. Stamp immutable provenance metadata
+# 4. Clean-replace the target (removes files deleted upstream) and stamp provenance
 git -C "<tmp-dir>" rev-parse HEAD > "skills/<skill-name>/.upstream-meta.json"
 ```
+
+Reliability features:
+- **Concurrency**: multiple upstream repos sync in parallel (default 4 workers).
+- **Retries**: each upstream gets 2 attempts before its skills are marked failed (one bad repo never blocks the rest).
+- **Branch fallback**: unspecified branches resolve via the GitHub API default branch.
+- **Non-GitHub hosts**: fall back to pure git clone (no API).
+
+## 🔍 Continuous Upstream Discovery (`--discover`)
+
+Aggregation is not limited to what the manifest already lists. The `--discover` flag (used by the nightly workflow) re-scans **every upstream repo referenced by any manifest entry** and registers skills that appeared upstream after the initial ingest:
+
+1. Lists each repo's full tree via the GitHub API (`git/trees/<branch>?recursive=1`), falling back to a shallow clone for other hosts or API failures.
+2. Finds every directory containing a `SKILL.md` (excluding `node_modules`, `.git`, build dirs).
+3. Registers unseen skills under a deduplicated name (collisions get a `-2`, `-3` suffix instead of overwriting).
+4. Auto-categorizes via keyword heuristics; descriptions are backfilled from the synced `SKILL.md` frontmatter.
+
+The same engine backs the **link-based ingest CLI** (`bun run add <url>`), which resolves GitHub tree/blob/raw URLs, bare `owner/repo` shorthands, and arbitrary git-host URLs (`src/resolve.ts`, `src/ingest.ts`).
 
 ---
 

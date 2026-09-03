@@ -16,6 +16,12 @@ async function main() {
       options.dryRun = true;
     } else if (arg === "--filter" && args[i + 1]) {
       options.filter = args[++i];
+    } else if (arg === "--discover") {
+      options.discover = true;
+    } else if (arg === "--concurrency" && args[i + 1]) {
+      options.concurrency = Number(args[++i]);
+    } else if (arg === "--attempts" && args[i + 1]) {
+      options.attempts = Number(args[++i]);
     } else if (arg === "--token" && args[i + 1]) {
       options.token = args[++i];
     }

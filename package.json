@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "sync": "bun scripts/sync-skills.ts",
+    "sync:discover": "bun scripts/sync-skills.ts --discover",
+    "add": "bun scripts/add-skills.ts",
     "validate": "bun scripts/validate-skills.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
