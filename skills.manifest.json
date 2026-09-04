@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft-07/schema#",
   "version": "1.0.0",
   "description": "Downstream Curated Agent Skills Hub for Harsh Singh (harshsinghmp)",
-  "lastUpdated": "2026-08-31T12:28:09.774Z",
+  "lastUpdated": "2026-09-04T15:10:02.169Z",
   "skills": [
     {
       "name": "agency-accessibility-auditor",
@@ -758,6 +758,90 @@
       "version": "1.0.0"
     },
     {
+      "name": "better-accessibility",
+      "category": "creative",
+      "description": "Helps your project comply with accessibility standards and best practices.",
+      "upstream": {
+        "repo": "jakubkrehel/skills",
+        "branch": "main",
+        "sourcePath": "skills/better-accessibility",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "better-colors",
+      "category": "creative",
+      "description": "Helps you build a color system and answer anything about color in your project. You can generate palettes, use semantic tokens, convert between formats, check contrast and more.",
+      "upstream": {
+        "repo": "jakubkrehel/skills",
+        "branch": "main",
+        "sourcePath": "skills/better-colors",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "better-interface",
+      "category": "creative",
+      "description": "Combines all of the `better-*` skills into a single review across accessibility, layout, writing, typography, color and UI polish.",
+      "upstream": {
+        "repo": "jakubkrehel/skills",
+        "branch": "main",
+        "sourcePath": "skills/better-interface",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "better-layout",
+      "category": "creative",
+      "description": "Helps with grouping, alignment, reading order, progressive disclosure and other details that make a good layout.",
+      "upstream": {
+        "repo": "jakubkrehel/skills",
+        "branch": "main",
+        "sourcePath": "skills/better-layout",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "better-typography",
+      "category": "creative",
+      "description": "Focuses on type scale, spacing, sizing, variable fonts, OpenType features, wrapping, truncation and other details that make typography feel great across your product.",
+      "upstream": {
+        "repo": "jakubkrehel/skills",
+        "branch": "main",
+        "sourcePath": "skills/better-typography",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "better-ui",
+      "category": "creative",
+      "description": "Polishes and improves the UI in your project. Covers concentric border radius, optical alignment, surface depth, contextual icons, hit areas and more.",
+      "upstream": {
+        "repo": "jakubkrehel/skills",
+        "branch": "main",
+        "sourcePath": "skills/better-ui",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "better-writing",
+      "category": "creative",
+      "description": "Focuses on improving product copy in your project.",
+      "upstream": {
+        "repo": "jakubkrehel/skills",
+        "branch": "main",
+        "sourcePath": "skills/better-writing",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "brainstorming",
       "category": "creative",
       "description": "Use before creative or constructive work (features, architecture, behavior). Transforms vague ideas into validated designs through disciplined reasoning and collaboration.",
@@ -766,6 +850,18 @@
         "sourcePath": "skills/brainstorming"
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "break",
+      "category": "creative",
+      "description": "Renders a component you choose in every state and scenario on a temporary page and stress tests it.",
+      "upstream": {
+        "repo": "jakubkrehel/skills",
+        "branch": "main",
+        "sourcePath": "skills/break",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "close",
@@ -890,6 +986,18 @@
       "version": "1.0.0"
     },
     {
+      "name": "explain-interface",
+      "category": "creative",
+      "description": "Helps you figure out how something was built on the web.",
+      "upstream": {
+        "repo": "jakubkrehel/skills",
+        "branch": "main",
+        "sourcePath": "skills/explain-interface",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "exposure-audit",
       "category": "governance",
       "description": "Audit what you are actually exposed to — live API keys sitting in cloud-synced folders, secrets committed to public repos, unauthenticated local services, abandoned deployments still holding environment variables, and the twenty classic vibe-coding app vulnerabilities. Use this skill whenever the user says \"am I exposed\", \"check my security\", \"did I leak a key\", \"is anything of mine hackable\", \"audit my machine\", \"check my repos for secrets\", \"are we at risk of this\", or pastes a security scare (a reel, a thread, a news story, a vulnerability list) and wants to know whether it applies to them. Also use it before making a repo public, before handing a project to a collaborator, and after shutting a product down. Reach for it even when the user does not say the word \"security\" — if the honest answer needs to know what is actually exposed, audit first, then answer.",
@@ -971,6 +1079,18 @@
         "sourcePath": "skills/inbox-executive-assistant"
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "interface-review",
+      "category": "creative",
+      "description": "Reviews your work across multiple categories like UI, typography, layout, color, writing and accessibility and gives you a detailed analysis of the findings.",
+      "upstream": {
+        "repo": "jakubkrehel/skills",
+        "branch": "main",
+        "sourcePath": "skills/interface-review",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "invoice-chaser",
@@ -1362,6 +1482,18 @@
       "category": "creative",
       "description": "Use when choosing, comparing, or implementing UX patterns across the UX Patterns for Developers corpus.",
       "version": "1.0.0"
+    },
+    {
+      "name": "variant",
+      "category": "creative",
+      "description": "Builds multiple variants of a component you're working on and helps you iterate and pick one.",
+      "upstream": {
+        "repo": "jakubkrehel/skills",
+        "branch": "main",
+        "sourcePath": "skills/variant",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "voice-builder",
