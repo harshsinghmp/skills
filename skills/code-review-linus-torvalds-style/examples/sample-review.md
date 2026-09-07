@@ -1,6 +1,6 @@
-# Sample Code Review — Code Review - Linus Torvalds Style
+# Sample Code Review — Code Review (Linus Torvalds Style)
 
-Below is a demonstration of a code review performed using the `code-review-linus-torvalds-style` on a proposed pull request modifying a shared buffer pool and connection lookup table.
+Below is a demonstration of a code review performed using `code-review` on a proposed pull request modifying a shared buffer pool and connection lookup table.
 
 ---
 

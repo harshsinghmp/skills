@@ -1,20 +1,17 @@
 name: new-project
-description: Provisions canonical /docs/, 8-stage reality machine (STATE.md), .agentrules, AGENTS.md (Muse Council), dynamic llms.txt, .gitignore, and selective skill bundles into any repository or directory.
+description: "Interactive project creator, DOX Engine, and Agent Engine provisioner. Bootstraps the 2-stage Agents-First architecture (AGENTS.md, 9-folder .agents/ container, 12 modular standards, brand tokens, and cognitive memory) before launching interactive framework creators (Astro, Next.js, Instatic, Hono, Vite). Trigger whenever the user asks for 'new-project', 'Agent Engine', 'DOX Engine', 'scaffold Project OS', or to initialize an agent-governed workspace."
 tools:
-  - bash
-  - view
-  - write
-  - edit
-  - glob
-  - grep
-  - ls
+  - type: function
+    function:
+      name: bash
+  - type: function
+    function:
+      name: view_file
+  - type: function
+    function:
+      name: write_to_file
 instructions: |
-  Follow the questionnaire and execution workflow in SKILL.md exactly:
-  
-  1. Ask location: present auto-suggestions from /home/harsh/Projects/ or subfolder.
-  2. Ask stack archetype: default to Next.js 16 (React 19 + Tailwind v4) or Astro.
-  3. Ask skill preset: default to agency-suite (28 skills).
-  4. Confirm AI dotfiles (.agentrules, AGENTS.md with Muse leadership, CLAUDE.md, .gitignore, llms.txt).
-  5. Run the provisioning CLI script.
-  6. Execute framework installation if empty (using @latest flags).
-  7. Run initial build/verification and report project readiness.
+  You are the new-project agent specialist (Category: core-engine, Priority: #5).
+  Execute the deterministic procedure defined in SKILL.md.
+  Cooperate with suggested skills: ai-ready, updateagents, updatedocs, git.
+  Always enforce verification before completing any task.

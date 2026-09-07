@@ -49,4 +49,4 @@ Trigger this skill when:
 
 ## 📄 License
 
-[MIT](LICENSE) © [Harsh](https://github.com/harshsinghmp)
+[MIT](../LICENSE) © [Harsh](https://github.com/harshsinghmp)

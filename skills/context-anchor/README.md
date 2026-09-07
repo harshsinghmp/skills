@@ -12,7 +12,7 @@ Drop a working reference at any point in a session to prevent cascading context 
 
 Long agent sessions accumulate noise: outdated tool outputs, superseded hypotheses, retracted approaches, and sprawling transcripts. Over time, this causes **cascading context drift** — the model begins reasoning from stale intermediate state because the true signal is buried.
 
-`context-anchor` halts drift by creating a minimal, load-bearing working snapshot in `.claude/anchor.md`. It captures what is true *right now*, why key decisions were made, what was ruled out, and the exact next line of execution.
+`context-anchor` halts drift by creating a minimal, load-bearing working snapshot in `.agents/anchor.md`. It captures what is true *right now*, why key decisions were made, what was ruled out, and the exact next line of execution.
 
 ---
 
@@ -53,7 +53,7 @@ Trigger this skill anytime you need to anchor session context:
    - Key decisions and their underlying rationale
    - Ruled-out paths and failed attempts
    - Exact next concrete action (with file and line references)
-2. **Writes to `<project-root>/.claude/anchor.md`** using the standardized anchor schema.
+2. **Writes to `<project-root>/.agents/anchor.md`** using the standardized anchor schema.
 3. **Echoes the Anchor Inline** for immediate developer verification.
 
 ---

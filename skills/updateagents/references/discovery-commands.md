@@ -6,59 +6,59 @@ Quick reference for manual workspace inspection when automated tools are unavail
 
 ### Package.json scripts
 ```bash
-cat package.json | jq '.scripts' 2>/dev/null
-grep -A 20 '"scripts"' package.json 2>/dev/null
+# Modern: gojq or jq
+gojq '.scripts' package.json 2>/dev/null || jq '.scripts' package.json 2>/dev/null || rg -A 20 '"scripts"' package.json
 ```
 
 ### Makefile targets
 ```bash
-make -n 2>/dev/null || cat Makefile | grep "^[a-zA-Z]" | cut -d: -f1
+make -n 2>/dev/null || rg "^[a-zA-Z]" Makefile | choose 0 -d: 2>/dev/null || cat Makefile | grep "^[a-zA-Z]" | cut -d: -f1
 ```
 
 ### NPM/Yarn/Pnpm commands
 ```bash
-ls package-lock.json yarn.lock pnpm-lock.yaml 2>/dev/null
-cat package.json | jq -r '.packageManager' 2>/dev/null
+fd -d 1 "^(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$" || ls package-lock.json yarn.lock pnpm-lock.yaml 2>/dev/null
+gojq -r '.packageManager' package.json 2>/dev/null || jq -r '.packageManager' package.json 2>/dev/null
 ```
 
 ### Python projects
 ```bash
-cat pyproject.toml | grep -A 10 "\[tool\." 2>/dev/null
-cat requirements.txt 2>/dev/null | head -20
-cat setup.py 2>/dev/null | grep -A 5 "install_requires"
+rg -A 10 "\[tool\." pyproject.toml 2>/dev/null || grep -A 10 "\[tool\." pyproject.toml 2>/dev/null
+bat requirements.txt 2>/dev/null | head -20 || head -20 requirements.txt 2>/dev/null
+rg -A 5 "install_requires" setup.py 2>/dev/null || grep -A 5 "install_requires" setup.py
 ```
 
 ### Go projects
 ```bash
-cat go.mod 2>/dev/null | head -20
+bat go.mod 2>/dev/null | head -20 || head -20 go.mod 2>/dev/null
 go list -m all 2>/dev/null | head -10
 ```
 
 ### Rust projects
 ```bash
-cat Cargo.toml 2>/dev/null | grep -A 10 "\[dependencies\]"
+rg -A 10 "\[dependencies\]" Cargo.toml 2>/dev/null || grep -A 10 "\[dependencies\]" Cargo.toml
 ```
 
 ## Structure Analysis
 
 ### Directory layout
 ```bash
-# Top-level structure
-ls -la | grep "^d"
+# Top-level structure (modern: eza tree/dirs or classic ls)
+eza -D 2>/dev/null || ls -la | grep "^d"
 
 # Source directories
-find . -maxdepth 2 -type d -name "src" -o -name "lib" -o -name "app" -o -name "packages"
+fd -t d -d 2 "^(src|lib|app|packages)$" || find . -maxdepth 2 -type d -name "src" -o -name "lib" -o -name "app" -o -name "packages"
 
 # Component patterns
-find . -name "*.component.*" -o -name "*Component.*" | head -10
+fd "([cC]omponent|\.component\.)" | head -10 || find . -name "*.component.*" -o -name "*Component.*" | head -10
 ```
 
 ### File type distribution
 ```bash
-find . -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) | wc -l
-find . -type f -name "*.py" | wc -l
-find . -type f -name "*.go" | wc -l
-find . -type f -name "*.rs" | wc -l
+fd -e ts -e tsx -e js -e jsx | wc -l
+fd -e py | wc -l
+fd -e go | wc -l
+fd -e rs | wc -l
 ```
 
 ## Pattern Detection
@@ -66,50 +66,50 @@ find . -type f -name "*.rs" | wc -l
 ### Import/export patterns
 ```bash
 # TypeScript/JavaScript
-grep -r "export default\|export const\|export function" src/ --include="*.ts" --include="*.tsx" | head -10
+rg "export (default|const|function)" src/ -g "*.ts" -g "*.tsx" | head -10
 
 # Python
-grep -r "def \|class " src/ --include="*.py" | head -10
+rg "(def |class )" src/ -g "*.py" | head -10
 
 # Go
-grep -r "func " . --include="*.go" | grep -v "_test.go" | head -10
+rg "func " . -g "*.go" -g "!*_test.go" | head -10
 ```
 
 ### Testing patterns
 ```bash
 # Test file locations
-find . -name "*.test.*" -o -name "*.spec.*" | head -10
+fd "(\.test\.|\.spec\.)" | head -10
 
 # Test framework detection
-grep -r "describe\|it(\|test(" . --include="*.test.*" | head -5
-grep -r "pytest\|unittest" . --include="*.py" | head -5
+rg "describe\(|it\(|test\(" . -g "*.test.*" -g "*.spec.*" | head -5
+rg "(pytest|unittest)" . -g "*.py" | head -5
 ```
 
 ### Configuration files
 ```bash
 # Common config files
-ls .eslintrc* .prettierrc* tsconfig.json vite.config.* next.config.* tailwind.config.* 2>/dev/null
+fd -d 1 "^(\.eslintrc|\.prettierrc|tsconfig\.json|vite\.config|next\.config|tailwind\.config)"
 
 # CI/CD
-ls .github/workflows/*.yml .gitlab-ci.yml Jenkinsfile 2>/dev/null
+fd "\.(yml|yaml)$" .github/workflows/
 ```
 
 ## Gotcha Detection
 
 ### Environment variables
 ```bash
-grep -r "process.env\|import.meta.env\|os.environ" . --include="*.ts" --include="*.js" --include="*.py" | grep -v node_modules | head -10
-cat .env.example .env.template 2>/dev/null
+rg "(process\.env|import\.meta\.env|os\.environ)" . -g "*.ts" -g "*.js" -g "*.py" | head -10
+bat .env.example .env.template 2>/dev/null || cat .env.example .env.template 2>/dev/null
 ```
 
 ### TODOs and FIXMEs
 ```bash
-grep -r "TODO\|FIXME\|HACK\|XXX" . --include="*.ts" --include="*.js" --include="*.py" --include="*.go" | grep -v node_modules | head -10
+rg "(TODO|FIXME|HACK|XXX)" . -g "*.ts" -g "*.js" -g "*.py" -g "*.go" | head -10
 ```
 
 ### Deprecated code
 ```bash
-grep -r "@deprecated\|DEPRECATED" . --include="*.ts" --include="*.js" --include="*.py" | head -10
+rg "(@deprecated|DEPRECATED)" . -g "*.ts" -g "*.js" -g "*.py" | head -10
 ```
 
 ## Integration Tool Commands

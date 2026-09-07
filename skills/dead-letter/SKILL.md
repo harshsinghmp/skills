@@ -1,15 +1,28 @@
 ---
 name: dead-letter
+aliases: ["failure-triage","blocked-task","dead-letter-queue"]
 description: "Capture a failed or blocked task before it disappears. Categorizes the failure mode, extracts what was learned, and generates either a retry packet with the root cause fixed or an escalation message with specific decision points."
 version: 1.0.0
 author: Harsh Singh
 license: MIT
 platforms: [macos, linux, windows]
+category: quality-review
 metadata:
+  category: quality-review
+  priority: 15
+  aliases: ["failure-triage","blocked-task","dead-letter-queue"]
+  suggested_skills: ["handoff","pua","context-anchor","secretary"]
   hermes:
     tags: [triage, error-handling, debugging, subagents, escalation, reliability]
-    related_skills: [pua, agent-handoff, context-anchor]
+    related_skills: [handoff, pua, context-anchor, secretary]
+    suggested_skills: [handoff, pua, context-anchor, secretary]
     requires_tools: [bash, view_file, write_to_file]
+  openclaw:
+    category: quality-review
+    suggested_skills: [handoff, pua, context-anchor, secretary]
+    primary_triggers: ["task failed","blocked on error","dead letter capture","escalate failure"]
+    requires_tools: [bash, view_file, write_to_file]
+  compatibility: [hermes, openclaw, claude-code, codex, cursor, gemini-cli, opencode]
 ---
 
 # 📮 dead-letter — Failed Task Triage & Capture

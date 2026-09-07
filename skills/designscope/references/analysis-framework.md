@@ -302,6 +302,13 @@ Categorize images by role and document each:
 
 If the source has no images, **say so explicitly** in the output.
 
+### 4.5 Component Layout Tree (DOM/Flexbox/CSS Grid Hierarchy)
+
+Deconstruct the captured visual layout into a responsive component layout tree (see `references/layout-tree-extraction.md` for full breakdown):
+1. **Container Block Decomposition**: Segment macro regions (Header, Hero, Feature/Bento Grid, Alternating Bands, Footer).
+2. **Responsive Box Model Specs**: Detail `display`, `grid-template-columns`, `flex-direction`, `gap`, and breakpoint collapse rules.
+3. **Visual Hierarchy & Token Mapping**: Map container padding, gap tokens, typography tokens (`{typography.display}`, `{typography.h1}`, `{typography.body}`), and surface tokens directly to the extracted design tokens.
+
 ### Common trap
 
 Don't confuse "centered" with "good layout". Note real decisions: does it use asymmetric

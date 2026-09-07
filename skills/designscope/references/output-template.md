@@ -350,6 +350,36 @@ How each kind of image is treated. List one per image category observed:
 
 *Omit this subsection if the source has no images — but say so explicitly.*
 
+### 4.5 Component Layout Tree
+
+```text
+[Page: Landing / Main View]
+├── <header> (Sticky, flex row, justify-between, items-center, border-b {colors.border})
+│   ├── Logo (flex items-center)
+│   ├── NavLinks (desktop: flex row gap-8; mobile: hidden/drawer)
+│   └── Actions (flex row gap-3)
+├── <main> (flex col gap-24 py-12)
+│   ├── <section: Hero> (min-h-[80vh], grid 1-col lg:grid-cols-2 gap-12, items-center)
+│   │   ├── LeftColumn (flex col gap-6)
+│   │   │   ├── EyebrowBadge ({typography.body-sm}, pill, border {colors.border})
+│   │   │   ├── Title ({typography.display}, {colors.text-primary})
+│   │   │   ├── Subtitle ({typography.body}, {colors.text-muted})
+│   │   │   └── CTAButtonGroup (flex row gap-4)
+│   │   │       ├── PrimaryCTA ({colors.primary}, {rounded.md})
+│   │   │       └── SecondaryCTA (border {colors.border}, {rounded.md})
+│   │   └── RightColumn (relative, aspect-[4/3], rounded-2xl)
+│   │       └── ProductPreviewCanvas (mockup with elevation-level-2)
+│   ├── <section: BentoGrid> (grid 12-cols gap-6, max-w-7xl)
+│   │   ├── BentoCardA (col-span-12 lg:col-span-8, p-8, {colors.surface})
+│   │   └── BentoCardB (col-span-12 lg:col-span-4, p-8, {colors.surface})
+│   └── <section: AlternatingFeatures> (flex col gap-16)
+│       ├── FeatureRow1 (flex col lg:flex-row gap-12, items-center)
+│       └── FeatureRow2 (flex col lg:flex-row-reverse gap-12, items-center)
+└── <footer> (border-t {colors.border}, pt-16 pb-8)
+    ├── LinkMatrix (grid grid-cols-2 md:grid-cols-4 gap-8)
+    └── LegalBar (flex row justify-between)
+```
+
 ---
 
 ## 5. Reconstruction Notes

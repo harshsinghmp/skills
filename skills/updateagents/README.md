@@ -1,127 +1,82 @@
-# updateagents Skill
+# 🧠 `updateagents` Skill
 
-Automatically discovers, reads, and updates agent memory files (AGENTS.md, CLAUDE.md, .cursorrules, etc.) in the current working directory. Integrates with cavemem, codegraph, rtk, memoryagent, and ponytail for enhanced context discovery.
+> Project Agent Context Synchronization & DOX Architecture Maintenance.
 
-## Features
+Synchronize AI-agent instructions and project context with the **actual current state of the workspace**.
 
-- **Auto-discovery**: Finds existing memory files (AGENTS.md, CLAUDE.md, .cursorrules, etc.)
-- **Workspace-scoped**: Never traverses above current directory
-- **Tool integration**: Works with cavemem, codegraph, rtk, memoryagent, ponytail
-- **Incremental updates**: Preserves existing content, adds only new information
-- **Priority system**: Handles multiple memory files intelligently
-- **Size management**: Keeps files under recommended 5KB limit
+This skill is not merely an `AGENTS.md` updater. It determines what project information has changed, identifies which agent-facing instruction files are authoritative, updates only necessary content, preserves intentional human-authored material, and validates the resulting context.
 
-## Installation
+---
 
-Install via `npx skills` shorthand:
+## ⚡ Core Principles & Features
 
-```bash
-# Recommended shorthand
-npx skills add harshsinghmp/muse-skills --skill updateagents
+- **🎯 Agent-Relevant Knowledge**: Captures actionable commands, architecture boundaries, and sources of truth. Strictly avoids full file dumps, debug output, and transient noise.
+- **🔒 HARD BOUNDARY — MuseMemory (`.memory/**`)**: The `.memory/` directory is exclusively owned and managed by MuseMemory. `updateagents` **never** reads, writes, modifies, deletes, or validates `.memory/**`.
+- **🌐 Workspace-Scoped**: Operates strictly within the current working directory. Never traverses above the workspace.
+- **🛠️ Smart DOX Retrofit**: If a workspace lacks the Progressive Disclosure DOX architecture, `updateagents` safely provisions the 9-folder `.agents/` container, migrates existing facts into `.agents/context/`, and archives legacy instruction files.
+- **🔄 Single Source of Truth**: Pulls updated universal standards (`.agents/standards/`) and brand baselines directly from `ai-ready/templates/` (13 modular standards, including modern WordPress) with **zero duplicate templates**.
+- **📏 Compact Size Control**: Enforces concise instruction files (<5KB preferred, <10KB hard ceiling).
+
+---
+
+## 💻 Usage
+
+### Agent Prompt Cues
 ```
-
-*(Full URL syntax `npx skills add https://github.com/harshsinghmp/muse-skills/tree/main/updateagents` is also supported).*
-
-## Usage
-
-### Basic usage
-```bash
-# Trigger by saying:
 "update agents.md"
-"refresh clauade.md"
-"sync memory files"
-"create agent guide for this workspace"
+"sync project agent context"
+"retrofit this project with the DOX architecture"
+"refresh agent rules and standards"
 ```
 
-### With specific tools
-If you have these tools installed, they'll be used automatically:
-- `cavemem` - Historical session context
-- `codegraph` - Code structure analysis
-- `rtk` - Repository pattern extraction
-- `memoryagent` - Workspace memory capture
-- `ponytail` - Recent activity extraction
-
-### Manual trigger
+### Direct CLI Execution
 ```bash
-# You can also explicitly invoke:
-"run updateagents skill"
+# Run in the current working directory
+bun path/to/updateagents/scripts/updateagents.ts
+
+# Run in simulation mode without writing files
+bun path/to/updateagents/scripts/updateagents.ts --dry-run
+
+# Run on a specific target project
+bun path/to/updateagents/scripts/updateagents.ts /path/to/project
 ```
 
-## What it does
+---
 
-1. **Discovers** existing memory files in current directory
-2. **Reads** highest-priority file if found
-3. **Scans** workspace using available tools + manual inspection
-4. **Synthesizes** findings into structured sections
-5. **Updates** or creates memory file with proper format
-6. **Reports** what changed
+## 📋 The 17-Step Synchronization Procedure
 
-## Output structure
-
-Generated files include:
-- Quick Start commands (build, test, run, deploy)
-- Architecture overview
-- Key directories and purposes
-- Naming conventions and patterns
-- Testing setup and commands
-- Gotchas and pitfalls
-- Important dependencies
-
-## Safety guarantees
-
-- ✅ Never modifies parent directories
-- ✅ Always reads before writing
-- ✅ Preserves existing content
-- ✅ Warns about large files (>5KB)
-- ✅ Validates output structure
-
-## File priorities
-
-When multiple memory files exist:
-1. AGENTS.md (preferred)
-2. CLAUDE.md
-3. .cursorrules
-4. .github/copilot-instructions.md
-5. GEMINI.md
-6. CODEX.md
-
-## Examples
-
-See `examples/before-after.md` for detailed usage examples.
-
-## Validation
-
-After updating, validate the output:
-```bash
-./scripts/validate-memory-file.sh AGENTS.md
+```
+Project State
+      ↓
+Change Detection (git diff, status)
+      ↓
+Impact Analysis (NEW | CHANGED | OBSOLETE)
+      ↓
+Source-of-Truth Resolution (package.json, configs)
+      ↓
+Agent Context Delta
+      ↓
+Scoped Synchronization & DOX Retrofit
+      ↓
+Validation & Size Check (<5KB, .memory untouched)
+      ↓
+Updated Agent Context
 ```
 
-## Integration
-
-This skill works seamlessly with:
-- **cavemem**: Provides historical context from previous sessions
-- **codegraph**: Maps code relationships automatically
-- **rtk**: Extracts repository-level patterns
-- **memoryagent**: Captures workspace-specific decisions
-- **ponytail**: Extracts recent activity and logs
-
-## Troubleshooting
-
-**Q: No tools detected**
-A: Skill falls back to manual scanning. Install tools for richer context.
-
-**Q: File too large**
-A: Skill warns at 5KB, errors at 10KB. Manually trim if needed.
-
-**Q: Multiple files found**
-A: Updates highest priority file. Consider consolidating manually.
-
-**Q: Missing sections**
-A: Run validation script to check structure completeness.
-
-## Contributing
-
-To improve this skill:
-1. Add new discovery patterns to `references/discovery-commands.md`
-2. Update priority system in `references/memory-file-priorities.md`
-3. Add examples to `examples/before-after.md`
+1. **Establish Workspace Context**: Verifies `cwd` and excludes `.memory/**`.
+2. **Discover Agent Context**: Identifies `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, etc.
+3. **Inspect Project State**: Reads canonical sources (`package.json`, build/test configs).
+4. **Context Integrations**: Utilizes `codegraph`, `rtk`, or `ponytail` if present.
+5. **Build Context Delta**: Categorizes changes into `NEW`, `CHANGED`, `OBSOLETE`, `CONFLICTING`.
+6. **Determine Targets**: Targets smallest correct scope.
+7. **Preserve Existing Knowledge**: Protects intentional human notes and ADRs.
+8. **DOX Scaffolding & Context Placement**: Checks existing agent files, scaffolds if absent, and merges custom content into context files without clobbering.
+9. **Standards Synchronization**: Syncs the 13 rulebooks from `ai-ready/templates/` (including WordPress).
+10. **Capture Commands**: Verifies commands against actual package scripts.
+11. **Capture Architecture**: Documents system boundaries and data flows.
+12. **Capture Sources of Truth**: Explicitly records authoritative files.
+13. **Capture Agent Rules**: Records operational invariants and Vibeguard policies.
+14. **Downstream Synchronization**: Propagates changes affecting types or tests.
+15. **Size & Noise Control**: Validates instruction file sizes (<5KB target).
+16. **Validate**: Runs `validate-memory-file.sh` to confirm invariants.
+17. **Report**: Generates a structured change summary.

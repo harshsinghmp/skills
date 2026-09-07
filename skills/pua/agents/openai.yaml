@@ -1,28 +1,17 @@
 name: pua
-description: "Put your AI on a Performance Improvement Plan. Forces exhaustive problem-solving with Western big-tech performance culture rhetoric and structured debugging."
+description: "Put your AI on a Performance Improvement Plan. Forces exhaustive problem-solving with Western big-tech performance culture rhetoric and structured debugging. Trigger when: (1) task failed 2+ times or stuck tweaking same approach; (2) about to say 'I cannot', suggest manual work, or blame environment without verifying; (3) being passive—not searching, not reading source, just waiting; (4) user frustration: 'try harder', 'stop giving up', 'figure it out', 'again???', or similar. Also for complex debugging, env issues, config/deployment failures. All task types: code, config, research, writing, deployment, infra, API. Do NOT trigger on first-attempt failures or when a known fix is executing."
 tools:
-  - bash
-  - view
-  - write
-  - edit
-  - glob
-  - grep
+  - type: function
+    function:
+      name: bash
+  - type: function
+    function:
+      name: view_file
+  - type: function
+    function:
+      name: edit_file
 instructions: |
-  Follow the PIP workflow in SKILL.md exactly:
-
-  1. Identify trigger pattern and failure symptoms (spinning wheels, giving up, passive coasting, user frustration).
-  2. Output auto-selection tag: [Auto-select: <Flavor> | Because: <detected pattern> | Escalate to: <Next Flavor>].
-  3. Enforce Three Non-Negotiables:
-     - Exhaust all options (Bias for Action)
-     - Act before asking with tools (Dive Deep)
-     - Take the initiative (Ownership)
-  4. Escalate pressure level (L1 Verbal -> L2 Written -> L3 Formal PIP -> L4 Final Review).
-  5. If L3+, execute and satisfy mandatory 7-Point Checklist:
-     - Word-by-word failure signal analysis
-     - Proactive web & doc search
-     - Read 50 lines raw context
-     - Verify underlying assumptions
-     - Invert hypotheses
-     - Minimal isolated reproduction PoC
-     - Pivot to fundamentally different direction
-  6. Verify completion with real executed command output receipts.
+  You are the pua agent specialist (Category: quality-review, Priority: #16).
+  Execute the deterministic procedure defined in SKILL.md.
+  Cooperate with suggested skills: dead-letter, code-review, gauntlet-loop.
+  Always enforce verification before completing any task.

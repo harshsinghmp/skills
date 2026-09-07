@@ -1,58 +1,50 @@
 #!/bin/bash
-# validate-memory-file.sh - Validates AGENTS.md/CLAUDE.md structure and size
+# validate-memory-file.sh - Validates AGENTS.md structure, size, and boundary compliance
 
 set -euo pipefail
 
 FILE="${1:-AGENTS.md}"
 
-# Check file exists
+echo "🔍 Validating agent instruction file: $FILE"
+
+# 1. Check file exists
 if [ ! -f "$FILE" ]; then
   echo "❌ File not found: $FILE"
   exit 1
 fi
 
-# Check file size
+# 2. Check file size (<10KB max, <5KB preferred)
 SIZE=$(wc -c < "$FILE")
 echo "📄 File size: $SIZE bytes"
 
-if [ "$SIZE" -gt 10240 ]; then
-  echo "⚠️  WARNING: File exceeds 10KB recommended maximum"
-elif [ "$SIZE" -gt 5120 ]; then
-  echo "ℹ️  File is between 5-10KB (consider trimming)"
+if [ "$SIZE" -ge 10240 ]; then
+  echo "❌ Hard Error: File exceeds 10KB maximum limit ($SIZE bytes)"
+  exit 1
+elif [ "$SIZE" -ge 5120 ]; then
+  echo "⚠️  Warning: File is between 5-10KB (consider trimming)"
 else
-  echo "✅ File size is within recommended range"
+  echo "✅ File size is within recommended range (<5KB)"
 fi
 
-# Check for required sections
-REQUIRED_SECTIONS=("Quick Start" "Architecture" "Conventions" "Testing" "Gotchas")
-MISSING=()
+# 3. Check MuseMemory boundary (.memory/** must never be in instruction files)
+if grep -q "\.memory/memory\.db" "$FILE" 2>/dev/null; then
+  echo "❌ Safety Error: Found raw .memory database references in instruction file"
+  exit 1
+fi
+echo "✅ MuseMemory hard boundary respected"
 
-for section in "${REQUIRED_SECTIONS[@]}"; do
-  if ! grep -q "$section" "$FILE"; then
-    MISSING+=("$section")
-  fi
-done
-
-if [ ${#MISSING[@]} -eq 0 ]; then
-  echo "✅ All required sections present"
+# 4. Check for Core Invariants or Essential Sections
+if grep -q "Core Turn Invariants" "$FILE" || grep -q "DOX Rail" "$FILE" || grep -q "Quick Start" "$FILE"; then
+  echo "✅ Recognized governance architecture verified"
 else
-  echo "⚠️  Missing sections: ${MISSING[*]}"
+  echo "⚠️  Notice: Custom governance structure detected"
 fi
 
-# Check for commands (backtick-wrapped)
-COMMANDS=$(grep -o '`[^`]*`' "$FILE" | wc -l)
-echo "📋 Found $COMMANDS inline code blocks (likely commands)"
-
-if [ "$COMMANDS" -lt 3 ]; then
-  echo "⚠️  Low command count - may be missing essential commands"
+# 5. Check for accidental credentials/tokens
+if grep -iE '(sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{20,}|BEGIN (RSA|EC|OPENSSH) PRIVATE KEY)' "$FILE" 2>/dev/null; then
+  echo "❌ Critical Security Error: Credential pattern detected in instruction file!"
+  exit 1
 fi
+echo "✅ Zero secret leakage verified"
 
-# Check for last updated timestamp
-if grep -q "Last updated\|Updated:" "$FILE"; then
-  echo "✅ Contains update timestamp"
-else
-  echo "ℹ️  No update timestamp found (recommended to add)"
-fi
-
-echo ""
-echo "Validation complete"
+echo "🎉 Validation PASSED for $FILE"

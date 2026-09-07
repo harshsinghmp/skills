@@ -1,18 +1,22 @@
-# agent-handoff Skill
+# handoff Skill
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![Type: Agent Skill](https://img.shields.io/badge/Type-Agent%20Skill-blue.svg?style=for-the-badge)](#)
-[![Triggers: /handoff](https://img.shields.io/badge/Triggers-%2Fhandoff%20%7C%20%2Fagent--handoff-purple.svg?style=for-the-badge)](#)
+[![Triggers: /handoff](https://img.shields.io/badge/Triggers-%2Fhandoff%20%7C%20%2Fresume-purple.svg?style=for-the-badge)](#)
 
-Generate a structured context packet before dispatching any subagent. Prevents context drift, hallucinated constraints, and re-exploring dead ends.
+Bidirectional agent handoff and session resumption engine. Resume previous agent sessions with strict directory-boundary matching and unanswered questions leading, or generate structured outbound context packets before dispatching subagents.
 
 ---
 
 ## What is this?
 
-Subagents fail for one primary reason: **they receive a high-level goal but not its operational shape**. They don't know what you've already tried, what constraints are non-negotiable, what "done" actually looks like, or which specific files matter. 
+Agent workflows lose momentum and fail in two critical transitions:
+1. **Inbound Resumption**: Resuming after an interruption where agents hallucinate past context, conflate sibling repositories, or overlook critical unanswered questions.
+2. **Outbound Dispatch**: Handing off work to subagents without operational boundaries, causing subagents to re-explore dead ends or touch forbidden files.
 
-`agent-handoff` externalizes the orchestrator's implicit working model into an explicit, verifiable context packet written directly to `.claude/handoff-<timestamp>.md` and copied inline into the subagent invocation.
+`handoff` solves both:
+- **Inbound Mode**: Fast, boundary-safe session restoration that matches strictly on directory boundaries (`===` or `startsWith(cwd + sep)`) and leads with any unanswered user questions.
+- **Outbound Mode**: Generates a lean 7-section context packet saved to `.agents/artifacts/handoff-<timestamp>.md` and passed directly into the subagent invocation.
 
 ---
 
@@ -22,23 +26,24 @@ Install via `npx skills` shorthand:
 
 ```bash
 # Recommended shorthand
-npx skills add harshsinghmp/muse-skills --skill agent-handoff
+npx skills add harshsinghmp/muse-skills --skill handoff
 ```
-
-*(Direct URL syntax `npx skills add https://github.com/harshsinghmp/muse-skills/tree/main/agent-handoff` is also supported).*
 
 ---
 
 ## 🚀 Usage & Triggers
 
-Trigger this skill using slash commands or natural language:
-
+### 1. Inbound Session Resumption
 ```bash
-# Slash commands
-/handoff
-/agent-handoff
+"where were we"
+"resume"
+"pick up where I left off"
+"/resume"
+```
 
-# Natural language
+### 2. Outbound Subagent Dispatch
+```bash
+/handoff
 "prepare a handoff for the subagent"
 "generate a handoff packet for backend auth refactor"
 "handoff this task to worker agent"
@@ -48,16 +53,14 @@ Trigger this skill using slash commands or natural language:
 
 ## 📋 What It Does
 
-1. **Extracts Session Context:**
-   - **Actionable Objective**: Single-sentence goal starting with an active verb.
-   - **Architectural & Business Context**: Decisions that cannot be re-litigated.
-   - **Ruled-Out Paths**: Approaches tried and why they failed.
-   - **File Scope**: Specific files and line numbers to touch.
-   - **Hard Constraints**: Non-negotiable rules and boundaries.
-   - **Verifiable Success Criteria**: Deterministic validation checks.
-   - **Blocker Escalation**: Clear fallback if blocked.
-2. **Generates `.claude/handoff-<timestamp>.md`** with the structured template.
-3. **Echoes the Packet** to the orchestrator for verification.
+1. **Inbound Resumption Mode:**
+   - Validates directory boundaries against session logs so sibling folders never cross-contaminate.
+   - Surfaces unanswered user questions at the very top.
+   - Provides an atomic next-step action.
+2. **Outbound Dispatch Mode:**
+   - Extracts objective, context, ruled-out paths, file scope, hard constraints, and verification commands.
+   - Generates `.agents/artifacts/handoff-<timestamp>.md`.
+   - Embeds context packet directly into worker prompts.
 4. **Prepares the Inline Prompt** for the subagent tool call or tmux session.
 
 ---

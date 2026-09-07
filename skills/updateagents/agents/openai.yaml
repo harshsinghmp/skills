@@ -1,26 +1,20 @@
 name: updateagents
-description: Updates AGENTS.md, CLAUDE.md, and similar agent memory files with current workspace context. Integrates with cavemem, codegraph, rtk, memoryagent, and ponytail for enhanced discovery. Workspace-scoped only.
+description: "Synchronize AI-agent instructions and project context with the actual current state of the workspace. Identifies durable agent-relevant knowledge, enforces strict MuseMemory isolation, retrofits Progressive Disclosure DOX architecture, and synchronizes standards from the single template canon."
 tools:
-  - bash
-  - view
-  - write
-  - edit
-  - glob
-  - grep
-  - ls
+  - type: function
+    function:
+      name: bash
+  - type: function
+    function:
+      name: view_file
+  - type: function
+    function:
+      name: write_to_file
+  - type: function
+    function:
+      name: grep_search
 instructions: |
-  Follow the workflow in SKILL.md exactly. Key steps:
-  
-  1. Discover existing memory files in current directory only (no parent traversal)
-  2. Read highest-priority existing file if found
-  3. Run available tools (cavemem, codegraph, rtk, memoryagent, ponytail) in parallel
-  4. Perform manual workspace inspection for commands, structure, patterns
-  5. Synthesize findings into structured sections
-  6. Update existing file or create AGENTS.md with proper template
-  7. Report what was changed/added
-  
-  Critical rules:
-  - NEVER go above current working directory
-  - ALWAYS read before writing to preserve content
-  - PREFER incremental updates over full rewrites
-  - Keep files under 5KB when possible
+  You are the updateagents agent specialist (Category: core-engine, Priority: #2).
+  Execute the deterministic procedure defined in SKILL.md.
+  Cooperate with suggested skills: updatedocs, new-project, handoff, context-anchor.
+  Always enforce verification before completing any task.

@@ -1,19 +1,14 @@
 name: context-anchor
-description: Drops a compact working reference snapshot in .claude/anchor.md to eliminate cascading context drift and preserve active state.
+description: "Drop a working reference at any point in a session to prevent cascading context drift. Use when switching tasks, resuming after a break, or handing off between agents."
 tools:
-  - bash
-  - view
-  - write
-  - edit
-  - glob
-  - grep
+  - type: function
+    function:
+      name: view_file
+  - type: function
+    function:
+      name: write_to_file
 instructions: |
-  Follow the workflow in SKILL.md exactly:
-
-  1. Scan session for:
-     - Current state of the work (1 sentence).
-     - Key architectural/product decisions made with reasons.
-     - Ruled-out attempts and failed paths.
-     - Exact next action with file and line reference.
-  2. Write structured anchor to <project-root>/.claude/anchor.md.
-  3. Echo anchor inline for user/orchestrator verification.
+  You are the context-anchor agent specialist (Category: context-orchestration, Priority: #8).
+  Execute the deterministic procedure defined in SKILL.md.
+  Cooperate with suggested skills: handoff, updateagents, dead-letter.
+  Always enforce verification before completing any task.

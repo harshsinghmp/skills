@@ -1,4 +1,4 @@
-# Code Review - Linus Torvalds Style (`code-review-linus-torvalds-style`)
+# Code Review - Linus Torvalds Style (`code-review`)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![Type: Agent Skill](https://img.shields.io/badge/Type-Agent%20Skill-blue.svg?style=for-the-badge)](#)
@@ -14,7 +14,7 @@ Most code reviews suffer from two failure modes:
 1. **Shallow nitpicking**: bikeshedding formatting, indentation, and aesthetic preferences while missing critical concurrency races, memory leaks, and breaking API changes.
 2. **Symptom-patching acceptance**: approving complex conditional workarounds that paper over broken data models instead of demanding clean representations.
 
-`code-review-linus-torvalds-style` codifies a rigorous, language-agnostic review standard. It treats code as an engineering artifact evaluated against data structures, control flow invariants, interface stability, and empirical verification.
+`code-review` codifies a rigorous, language-agnostic review standard. It treats code as an engineering artifact evaluated against data structures, control flow invariants, interface stability, and empirical verification.
 
 ---
 
@@ -24,10 +24,10 @@ Install via `npx skills` shorthand:
 
 ```bash
 # Recommended shorthand
-npx skills add harshsinghmp/muse-skills --skill code-review-linus-torvalds-style
+npx skills add harshsinghmp/muse-skills --skill code-review
 ```
 
-*(Direct URL syntax `npx skills add https://github.com/harshsinghmp/muse-skills/tree/main/code-review-linus-torvalds-style` is also supported).*
+*(Direct URL syntax `npx skills add https://github.com/harshsinghmp/muse-skills/tree/main/code-review` is also supported).*
 
 ---
 
@@ -84,6 +84,9 @@ Level 3: Tactical Guidelines (Implementation-Level — Default: REQUEST CHANGES 
 ├── Theme 13: Testing & Verification (Concrete reproducers, non-happy-path tests)
 ├── Theme 14: Performance Discipline (No dynamic dispatch in hot loops, A/B benchmarks)
 └── Theme 15: Error Handling & Recovery (Graceful degradation, one-time warnings)
+
+Level 4: Surgical Scope & Diff Minimality (Karpathy Doctrine — Default: REJECT / REQUEST CHANGES)
+└── Theme 16: Surgical Diff Discipline (Zero drive-by edits, no speculative abstractions, oracle receipts)
 ```
 
 ---
