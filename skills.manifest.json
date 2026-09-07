@@ -2,8 +2,32 @@
   "$schema": "https://json-schema.org/draft-07/schema#",
   "version": "1.0.0",
   "description": "Downstream Curated Agent Skills Hub for Harsh Singh (harshsinghmp)",
-  "lastUpdated": "2026-09-04T15:10:02.169Z",
+  "lastUpdated": "2026-09-07T05:53:56.192Z",
   "skills": [
+    {
+      "name": "60fps-animation",
+      "category": "general",
+      "description": "This skill should be used when the user asks to \"fix janky CSS animation\", \"make animation 60fps\", \"stop layout thrashing\", \"animate width/height/top/left smoothly\", \"convert animation to transform\", \"animate box-shadow performantly\", \"animate height auto\", \"FLIP animation\", or \"why is my scroll/hover animation choppy\".",
+      "upstream": {
+        "repo": "iart-ai/web-animation-skills",
+        "branch": "main",
+        "sourcePath": "skills/60fps-animation",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "accessible-animation",
+      "category": "general",
+      "description": "This skill should be used when the user asks to \"respect prefers-reduced-motion\", \"honor reduced motion\", \"make my animations accessible\", \"fix vestibular / motion-sickness issues\", \"add a useReducedMotion hook\", \"gate GSAP / Framer Motion / Lenis for reduced motion\", or \"meet WCAG 2.3.3 / C39\". Provides tiered (not all-or-nothing) reduced-motion patterns in CSS and JS.",
+      "upstream": {
+        "repo": "iart-ai/web-animation-skills",
+        "branch": "main",
+        "sourcePath": "skills/accessible-animation",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
     {
       "name": "agent-handoff",
       "category": "engineering",
@@ -37,6 +61,42 @@
       "version": "1.0.0"
     },
     {
+      "name": "animate",
+      "category": "general",
+      "description": "Build an animation from scratch, making the decisions in the order that determines whether it feels right — should it animate at all, what purpose, which tool, which properties, which curve and duration, how it interrupts, how it exits. Writes the implementation. Use when asked to animate something, add motion, make a component feel alive, or build a transition. For critiquing existing motion use review-animations; for auditing a whole codebase use improve-animations.",
+      "upstream": {
+        "repo": "emilkowalski/skills",
+        "branch": "main",
+        "sourcePath": "skills/animate",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "animate-expo",
+      "category": "general",
+      "description": "Build animations in React Native and Expo, making the decisions in the order that determines whether they feel right — should it animate, which thread it runs on, which properties, spring or timing, how the gesture hands off, how it degrades. Writes the implementation with Reanimated, Gesture Handler, Expo Router and expo-haptics. Use when animating anything in an Expo app, adding gestures, sheets, screen transitions, press feedback or haptics, or fixing motion that stutters on device. For web animation use `animate`.",
+      "upstream": {
+        "repo": "emilkowalski/skills",
+        "branch": "main",
+        "sourcePath": "skills/animate-expo",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "animation-vocabulary",
+      "category": "general",
+      "description": "Reverse-lookup glossary that turns a vague description of a web animation or motion effect into its exact term (\"the bouncy thing when a popover opens\" → Pop in; \"the iOS rubber-band scroll\" → Rubber-banding). Use when the user asks \"what's it called when…\", or describes a motion effect without knowing its name and wants the right word to prompt an AI or designer with. For naming an effect, not designing or building one.",
+      "upstream": {
+        "repo": "emilkowalski/skills",
+        "branch": "main",
+        "sourcePath": "skills/animation-vocabulary",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "answer-first",
       "category": "cognitive",
       "description": "Shape every answer so the action comes first. Use when the user asks for output that is short, skimmable, action-led or \"no waffle\", and apply it for the whole conversation once invoked, not just one reply. Triggers on \"answer first\", \"no preamble\", \"no waffle\", \"keep it short\", \"just tell me what to do\", \"cut the fluff\", \"ADHD mode\", or any request to stop burying the answer in paragraph four.",
@@ -46,6 +106,42 @@
         "sourcePath": "skills/answer-first"
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "apple-design",
+      "category": "creative",
+      "description": "Apple's approach to interface design and fluid, physical motion, translated for the web. Use when building or reviewing gesture-driven UI, spring animations, drag/swipe/sheet interactions, momentum and interruptible transitions, translucent materials and depth, typography (optical sizing, tracking, leading), reduced-motion, or the design foundations (feedback, spatial consistency, restraint) behind Apple-style interfaces.",
+      "upstream": {
+        "repo": "emilkowalski/skills",
+        "branch": "main",
+        "sourcePath": "skills/apple-design",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "ascii-animation",
+      "category": "general",
+      "description": "This skill should be used when the user asks to \"make an ASCII animation\", \"build a terminal/CLI intro or loader\", \"convert an image or video to ASCII art\", \"add an ASCII shader/post-effect to a canvas or Three.js scene\", \"create retro/hacker text-character motion\", or \"animate text characters with a brightness ramp\". Covers generative ASCII fields, image/video/3D-to-ASCII, and animated character art for both web and terminal.",
+      "upstream": {
+        "repo": "iart-ai/web-animation-skills",
+        "branch": "main",
+        "sourcePath": "skills/ascii-animation",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "ask-sonner",
+      "category": "general",
+      "description": "Guide to Sonner, the React toast library — install and wire up the Toaster, pick the right toast() call, promise and loading toasts, updating, dismissing and persisting toasts, styling, theming and icons, positioning and multiple toasters. Use when working with Sonner or troubleshooting it — toasts that don't appear, appear twice, lose their styles, ignore Tailwind classes, sit behind a modal, or don't follow dark mode.",
+      "upstream": {
+        "repo": "emilkowalski/skills",
+        "branch": "main",
+        "sourcePath": "skills/ask-sonner",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "better-accessibility",
@@ -255,6 +351,18 @@
       "version": "1.0.0"
     },
     {
+      "name": "emil-design-eng",
+      "category": "creative",
+      "description": "This skill encodes Emil Kowalski's philosophy on UI polish, component design, animation decisions, and the invisible details that make software feel great.",
+      "upstream": {
+        "repo": "emilkowalski/skills",
+        "branch": "main",
+        "sourcePath": "skills/emil-design-eng",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "executing-plans",
       "category": "engineering",
       "description": "Use when you have a written implementation plan to execute in a separate session with review checkpoints",
@@ -299,6 +407,18 @@
       "version": "1.0.0"
     },
     {
+      "name": "find-animation-opportunities",
+      "category": "general",
+      "description": "Search a codebase or UI for places that don't animate but should, and reject everything that shouldn't. Read-only; it proposes motion with exact values, it does not implement it. Use when the user asks \"what could be animated here?\" or wants to \"make this feel more alive\". For fixing existing animations, use improve-animations or review-animations instead.",
+      "upstream": {
+        "repo": "emilkowalski/skills",
+        "branch": "main",
+        "sourcePath": "skills/find-animation-opportunities",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "follow-up-chaser",
       "category": "delivery",
       "description": "Finds the email threads where you are waiting on someone else, then drafts the nudge for you to send. Claude should use this skill whenever the user asks \"who owes me a reply\", \"what am I waiting on\", \"chase my follow-ups\", \"nudge them\", \"chase that up\", \"which of my emails went unanswered\", or wants to sweep sent mail for stalled threads and get polite chase drafts. Reads email (Gmail or Microsoft 365, including sent mail) and Google Calendar for context. Draft-only. The user always sends.",
@@ -338,6 +458,18 @@
       "version": "1.0.0"
     },
     {
+      "name": "glassmorphism",
+      "category": "general",
+      "description": "This skill should be used when the user asks to \"add a glassmorphism effect\", \"frosted glass UI\", \"Apple liquid glass style\", \"frosted blur card\", \"translucent glass panel animation\", \"make a frosted nav bar\", \"build a glass modal/dialog\", \"animate a glass card on hover\", or \"add a refracting liquid-glass hero\". Covers frosted translucent panels with backdrop-filter blur, edge/specular highlights, SVG liquid-glass refraction, motion on hover/scroll/enter, and accessible reduced-transparency fallbacks.",
+      "upstream": {
+        "repo": "iart-ai/web-animation-skills",
+        "branch": "main",
+        "sourcePath": "skills/glassmorphism",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "graphic-designer",
       "category": "creative",
       "description": "Create LinkedIn post graphics. Decides between an HTML/CSS structured graphic or an AI-generated infographic based on the post content. Use this skill whenever the user says \"design a graphic\", \"create a visual\", \"make an image\", \"graphic for my post\", \"LinkedIn image\", or wants any visual content to pair with a LinkedIn post. Also trigger when the user finishes writing a post and wants a matching graphic.",
@@ -349,6 +481,18 @@
       "version": "1.0.0"
     },
     {
+      "name": "gsap-web",
+      "category": "general",
+      "description": "This skill should be used when the user asks to \"build a scroll animation\", \"add ScrollTrigger\", \"pin a section while scrolling\", \"scrub an animation to scroll\", \"create a hero timeline\", \"do a horizontal scroll section\", \"split text and animate words\", \"animate a layout change with GSAP Flip\", \"sync ScrollTrigger with Lenis\", \"Lenis smooth scroll jittery\", \"ScrollTrigger markers drift\", \"ScrollTrigger pins break with Lenis/Locomotive\", or \"set up smooth scroll with GSAP pinning\". Covers GSAP timelines, ScrollTrigger, SplitText, Flip, and Lenis/Locomotive smooth-scroll sync for code-driven web motion.",
+      "upstream": {
+        "repo": "iart-ai/web-animation-skills",
+        "branch": "main",
+        "sourcePath": "skills/gsap-web",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "hook-generator",
       "category": "marketing",
       "description": "Generate 6 clickbait-style LinkedIn hook variations for any topic. Two-line hooks built on the formula: a 40-char opening line, a 40-char bold contrast line. Includes digits, \"How I\" or \"I\" statements, and metrics. Use this skill whenever the user says \"write me hooks\", \"hook ideas\", \"generate hooks\", \"I need a hook for a post about...\", or pastes a topic and asks for openers. Fast output, no preamble.",
@@ -358,6 +502,18 @@
         "sourcePath": "skills/hook-generator"
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "improve-animations",
+      "category": "general",
+      "description": "Survey a codebase's animation and motion code as a senior motion advisor, then produce a prioritized audit and self-contained implementation plans for other agents (or cheaper models) to execute. Read-only on source code — it plans improvements, it does not apply them. Use when the user asks to \"improve the animations\", \"audit the motion\", \"make this app feel better\", or wants a roadmap of animation fixes rather than a review of a single diff.",
+      "upstream": {
+        "repo": "emilkowalski/skills",
+        "branch": "main",
+        "sourcePath": "skills/improve-animations",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "inbox-executive-assistant",
@@ -400,6 +556,18 @@
       "version": "1.0.0"
     },
     {
+      "name": "lottie-animation",
+      "category": "general",
+      "description": "This skill should be used when the user asks to \"add a Lottie animation\", \"play a .lottie or .json animation\", \"integrate a Bodymovin/After Effects animation on web or mobile\", \"control Lottie playback / segments\", \"make a scroll-driven Lottie\", \"recolor a Lottie at runtime\", or \"export an AE animation to Lottie\". Covers dotLottie/lottie-web integration, playback control, interactivity, theming, and the AE export checklist.",
+      "upstream": {
+        "repo": "iart-ai/web-animation-skills",
+        "branch": "main",
+        "sourcePath": "skills/lottie-animation",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "mcp-builder",
       "category": "engineering",
       "description": "Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate external APIs or services, whether in Python (FastMCP) or Node/TypeScript (MCP SDK).",
@@ -426,6 +594,18 @@
         "sourcePath": "skills/meeting-scheduler"
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "micro-interaction",
+      "category": "general",
+      "description": "This skill should be used when the user asks to \"add a hover/press effect\", \"animate a toggle or switch\", \"build an animated like button\", \"make a toast/snackbar slide in\", \"animate a drawer or modal\", \"animate list reordering or add/remove\", \"do a shared-element layout transition\", or \"polish UI feedback\". Covers UI motion with Framer Motion (motion/react) and modern CSS.",
+      "upstream": {
+        "repo": "iart-ai/web-animation-skills",
+        "branch": "main",
+        "sourcePath": "skills/micro-interaction",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "muse-brief",
@@ -520,6 +700,30 @@
       "version": "1.0.0"
     },
     {
+      "name": "page-transition-animation",
+      "category": "general",
+      "description": "This skill should be used when the user asks to \"animate page or route transitions\", \"add a page transition or crossfade between views\", \"animate route changes in Next.js App Router\", \"use the View Transitions API\", \"AnimatePresence exit doesn't fire on navigation\", or \"Framer Motion exit animation not working / exit animation before unmount in Next.js\". Covers enter/exit page-transition animation with the View Transitions API and Framer Motion, for Next.js App Router and general SPA routing.",
+      "upstream": {
+        "repo": "iart-ai/web-animation-skills",
+        "branch": "main",
+        "sourcePath": "skills/page-transition-animation",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "pick-ui-library",
+      "category": "creative",
+      "description": "Pick the right library for a given frontend task from a curated, opinionated list — numbers, OTP inputs, charts, command menus, virtualization, drag and drop, toasts, state, styling, and more. Only runs when explicitly invoked; it does not trigger on its own.",
+      "upstream": {
+        "repo": "emilkowalski/skills",
+        "branch": "main",
+        "sourcePath": "skills/pick-ui-library",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "pinned-comment",
       "category": "marketing",
       "description": "Write LinkedIn pinned comments AND image generation prompts in Charlie Hills' signature style. Use when Charlie or his team asks for a pinned comment, pin comment, or first comment for a LinkedIn post. ALWAYS produce the image prompt FIRST, then caption it with the 4-line comment. Output both together unless told otherwise.",
@@ -575,6 +779,18 @@
       "version": "1.0.0"
     },
     {
+      "name": "prototype",
+      "category": "engineering",
+      "description": "Build multiple genuinely different versions of a UI piece you describe, rendered behind a visual picker so you can flip through them live and promote the one that feels right. Only runs when explicitly invoked; it does not trigger on its own.",
+      "upstream": {
+        "repo": "emilkowalski/skills",
+        "branch": "main",
+        "sourcePath": "skills/prototype",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "pua",
       "category": "engineering",
       "description": "Put your AI on a Performance Improvement Plan. Forces exhaustive problem-solving with Western big-tech performance culture rhetoric and structured debugging. Trigger when: (1) task failed 2+ times or stuck tweaking same approach; (2) about to say 'I cannot', suggest manual work, or blame environment without verifying; (3) being passive—not searching, not reading source, just waiting; (4) user frustration: 'try harder', 'stop giving up', 'figure it out', 'again???', or similar. Also for complex debugging, env issues, config/deployment failures. All task types: code, config, research, writing, deployment, infra, API. Do NOT trigger on first-attempt failures or when a known fix is executing.",
@@ -626,6 +842,18 @@
         "sourcePath": "skills/research-brief"
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "review-animations",
+      "category": "general",
+      "description": "Reviews animation and motion code against a high craft bar derived from Emil Kowalski's design engineering philosophy. Default to flagging; approval is earned.",
+      "upstream": {
+        "repo": "emilkowalski/skills",
+        "branch": "main",
+        "sourcePath": "skills/review-animations",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "save-progress",
@@ -701,6 +929,18 @@
       "version": "1.0.0"
     },
     {
+      "name": "svg-animation",
+      "category": "general",
+      "description": "This skill should be used when the user asks to \"animate an SVG\", \"make a line draw itself on\", \"do a stroke draw-on / signature animation\", \"morph one shape into another\", \"move an element along a path\", \"animate an icon/logo\", or \"animate an SVG gradient or filter\". Covers stroke-dashoffset draw-on, path morphing, motion-along-path, and animated icons/gradients/filters via CSS, SMIL, and GSAP.",
+      "upstream": {
+        "repo": "iart-ai/web-animation-skills",
+        "branch": "main",
+        "sourcePath": "skills/svg-animation",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "systematic-debugging",
       "category": "engineering",
       "description": "4-phase root cause debugging: understand bugs before fixing.",
@@ -730,6 +970,18 @@
         "sourcePath": "skills/test-driven-development"
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "text-to-lottie",
+      "category": "general",
+      "description": "Create, edit, or fix Lottie/Bodymovin JSON animations for the local Skia Skottie player. Use for text-to-Lottie, SVG/logo/type animation, loaders/icons, state feedback, UI microinteractions, lower thirds, diagrams, data/stat/chart animations, product promos, scene/camera motion, visual effects, scene edits, slots/controls, and Skottie debugging.",
+      "upstream": {
+        "repo": "diffusionstudio/lottie",
+        "branch": "main",
+        "sourcePath": "skills/text-to-lottie",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "typescript-pro",
@@ -812,6 +1064,18 @@
         "sourcePath": "skills/weekly-review"
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "write-swift",
+      "category": "general",
+      "description": "How to write modern Swift well — modeling with value types, Swift 6 data-race safety and approachable concurrency (@concurrent, main-actor-by-default, actors, task groups), protocols and generics (some vs any), API design, performance and ARC, Swift Testing, macros, and the modern language features agents don't know about yet. Use when writing, reviewing, or migrating Swift, or when a concurrency error, a hang, a data race, a retain cycle, or a performance problem needs fixing.",
+      "upstream": {
+        "repo": "emilkowalski/skills",
+        "branch": "main",
+        "sourcePath": "skills/write-swift",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "writing-plans",
