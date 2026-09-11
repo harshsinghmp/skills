@@ -1,0 +1,92 @@
+name: Remote Skill Ingest (Zero Local Clone)
+
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "Space-separated skill links (repo root, tree/blob URL, or owner/repo shorthand)"
+        required: true
+      category:
+        description: "Force a category (engineering|creative|delivery|governance|cognitive|marketing|general)"
+        required: false
+        default: ""
+      dry_run:
+        description: "Preview registration without writing anything"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  ingest:
+    name: Ingest Skills Remotely
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun Runtime
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile || bun install
+
+      - name: Register upstream skills
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.category }}" ]; then
+            ARGS="$ARGS --category ${{ github.event.inputs.category }}"
+          fi
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          # shellcheck disable=SC2086
+          bun run add ${{ github.event.inputs.urls }} $ARGS
+
+      - name: Validate ingested skills
+        if: github.event.inputs.dry_run != 'true'
+        run: bun run validate
+
+      - name: Check for changes
+        id: git-diff
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create pull request with new skills
+        if: github.event.inputs.dry_run != 'true' && steps.git-diff.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "feat(skills): ingest ${{ github.event.inputs.urls }}"
+          branch: automated-skill-ingest
+          title: "➕ Skill ingest: ${{ github.event.inputs.urls }}"
+          body: |
+            ### ➕ Remote Skill Ingest
+            Triggered via `add-skill` workflow dispatch — no local clone required.
+
+            - **Links:** `${{ github.event.inputs.urls }}`
+            - **Category override:** `${{ github.event.inputs.category }}`
+            - Registration + sync ran on the runner; `bun run validate` passed.
+
+            #### 📋 Review Checklist:
+            - [ ] Confirm the new manifest entries point at the intended upstream paths.
+            - [ ] Confirm collision suffixes (`-2`, `-3`) are expected, if any.
+            - [ ] Confirm all unit tests and CI checks pass.
+            - [ ] Merge into `main` to publish to `npx skills add harshsinghmp/skills`.
+          labels: |
+            skills-ingest
+            automated-pr
+          delete-branch: true

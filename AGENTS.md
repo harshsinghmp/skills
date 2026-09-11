@@ -35,7 +35,7 @@ skills/
 │   └── link-ingest.test.ts
 ├── docs/                       # Architectural documentation
 │   └── ARCHITECTURE.md
-├── .github/workflows/          # CI and automated upstream sync
+├── .github/workflows/          # CI, upstream sync, remote ingest
 │   ├── ci.yml
 │   └── sync-skills.yml
 ├── skills.manifest.json        # Single source of truth for upstream sources
@@ -55,6 +55,8 @@ bun run add <link>                           # register + auto-sync
 bun run validate                             # must pass before commit/PR
 ```
 
+Remote (zero local disk): `gh workflow run add-skill -f urls="<link>"` → merge PR.
+
 | Link shape | Behavior |
 | :--- | :--- |
 | `https://github.com/owner/repo` or `owner/repo` | Discover + ingest **all** skills in repo |
@@ -66,12 +68,12 @@ bun run validate                             # must pass before commit/PR
 Protocol rules:
 
 1. Paste link as-is. Never hand-create `skills/<name>/` or hand-edit manifest — `bun run add` owns registration.
-2. Read `INGEST SUMMARY`. Errors → report link + error verbatim, stop. Never copy files manually.
-3. Same path re-added → `Skipped`. Name taken → suffixed `-2`, `-3`. Never rename/delete existing skill.
+2. Read `INGEST SUMMARY`. Errors → report link + error verbatim, stop.
+3. Same path re-added → `Skipped`. Name taken → suffixed `-2`, `-3`.
 4. Auto-sync default. `--no-sync` only for batches, then `bun run sync` before validate.
 5. `--category` fixed set only (`engineering|creative|delivery|governance|cognitive|marketing|general`).
 6. `--dry-run` previews. Release/archive URLs rejected — resend as root or tree/blob link.
-7. Placeholder `Skill synced from …` normal before sync; descriptions backfill after.
+7. Placeholders backfill after sync.
 
 ---
 

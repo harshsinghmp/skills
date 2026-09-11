@@ -193,6 +193,13 @@ bun run add <url> --dry-run                # preview what would be registered
 
 Every ingested skill keeps its upstream link in the manifest — all future `bun run sync -- --discover` runs keep it updated automatically. Name collisions are suffixed (`-2`, `-3`), never silently overwritten. Release/archive URLs are rejected (resend as repo root or tree/blob link); `--category` accepts only the seven manifest categories.
 
+No local clone? Dispatch to a runner instead — it registers, validates, and opens a PR:
+
+```bash
+gh workflow run add-skill -f urls="https://github.com/owner/repo"
+# preview only: -f dry_run=true | force category: -f category=engineering
+```
+
 ---
 
 ## 📜 Declarative Manifest (`skills.manifest.json`)

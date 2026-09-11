@@ -2,6 +2,17 @@
 
 Downstream hub: 170+ agent skills synced from upstream repos. Most changes arrive via automation; human PRs add new upstreams or fix the engine.
 
+## Remote-first (no local clone)
+
+Prefer runners over local disk. Sync already runs daily; ingest dispatches on demand:
+
+```bash
+gh workflow run add-skill -f urls="https://github.com/owner/repo"
+# preview only: -f dry_run=true | force category: -f category=engineering
+```
+
+The runner registers, syncs, validates, and opens a PR — merge after CI passes. Keep a local clone only when debugging the engine itself.
+
 ## Adding skills (preferred path)
 
 ```bash
