@@ -17,6 +17,7 @@
 - [Why an Aggregator?](#-why-an-aggregator)
 - [Automated Upstream Synchronization](#-automated-upstream-synchronization)
 - [Adding Skills by Link](#-adding-skills-by-link-aggregator-ingest)
+- [User Guide](docs/GUIDE.md)
 - [Declarative Manifest](#-declarative-manifest-skillsmanifestjson)
 - [FAQ](#-faq)
 - [License](#-license)
