@@ -55,7 +55,7 @@ bun run add <link>                           # register + auto-sync
 bun run validate                             # must pass before commit/PR
 ```
 
-Remote (zero local disk): `gh workflow run add-skill -f urls="<link>"` → merge PR.
+Remote (zero local disk, any folder): `gh workflow run add-skill.yml -R harshsinghmp/skills -f urls="<link>"` → merge PR.
 
 | Link shape | Behavior |
 | :--- | :--- |

@@ -11,7 +11,8 @@ Downstream hub of 170+ agent skills. Upstreams (Superpowers, Muse Memory, Muse S
 **Remote (preferred, zero local disk):**
 
 ```bash
-gh workflow run add-skill -f urls="https://github.com/owner/repo"
+gh workflow run add-skill.yml -R harshsinghmp/skills -f urls="https://github.com/owner/repo"
+# -R pins the hub repo, so this works from any folder with no local clone
 # preview: -f dry_run=true | force category: -f category=engineering
 ```
 
@@ -62,5 +63,5 @@ Local clone is optional. `skills/` is ~6M; bulk lives in `node_modules` and `.ag
 bun run add <url> [--category X] [--no-sync] [--dry-run]
 bun run sync [-- --discover] [-- --filter name] [-- --dry-run]
 bun run validate && bun test && bun run typecheck
-gh workflow run add-skill -f urls="<link>"
+gh workflow run add-skill.yml -R harshsinghmp/skills -f urls="<link>"
 ```

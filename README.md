@@ -197,7 +197,7 @@ Every ingested skill keeps its upstream link in the manifest — all future `bun
 No local clone? Dispatch to a runner instead — it registers, validates, and opens a PR:
 
 ```bash
-gh workflow run add-skill -f urls="https://github.com/owner/repo"
+gh workflow run add-skill.yml -R harshsinghmp/skills -f urls="https://github.com/owner/repo"
 # preview only: -f dry_run=true | force category: -f category=engineering
 ```
 

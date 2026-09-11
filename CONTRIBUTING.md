@@ -7,7 +7,7 @@ Downstream hub: 170+ agent skills synced from upstream repos. Most changes arriv
 Prefer runners over local disk. Sync already runs daily; ingest dispatches on demand:
 
 ```bash
-gh workflow run add-skill -f urls="https://github.com/owner/repo"
+gh workflow run add-skill.yml -R harshsinghmp/skills -f urls="https://github.com/owner/repo"
 # preview only: -f dry_run=true | force category: -f category=engineering
 ```
 
