@@ -26,7 +26,21 @@ async function main() {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === "--category" && args[i + 1]) {
-      options.category = args[++i] as SkillCategory;
+      const cat = args[++i];
+      const valid: SkillCategory[] = [
+        "engineering",
+        "creative",
+        "delivery",
+        "governance",
+        "cognitive",
+        "marketing",
+        "general",
+      ];
+      if (!valid.includes(cat as SkillCategory)) {
+        console.error(`Invalid category: ${cat}. Valid: ${valid.join("|")}`);
+        usage();
+      }
+      options.category = cat as SkillCategory;
     } else if (arg === "--no-sync") {
       options.sync = false;
     } else if (arg === "--dry-run") {

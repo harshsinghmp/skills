@@ -141,14 +141,12 @@ function registerSingleSkill(
     return;
   }
 
-  const name = path.split("/").pop() ?? "skill";
+  const baseName = path.split("/").pop() ?? "skill";
   const existingNames = new Set(manifest.skills.map((s) => s.name.toLowerCase()));
-  if (existingNames.has(name.toLowerCase())) {
-    const msg = `A skill named '${name}' already exists; refusing to overwrite it.`;
-    report.errors.push(`${source.repo}: ${msg}`);
-    console.error(`[INGEST] ✗ ${msg}`);
-    report.skipped++;
-    return;
+  const name = uniqueName(baseName, existingNames);
+  const sanitizedBase = baseName.replace(/[^a-zA-Z0-9-_.]/g, "-").toLowerCase() || "skill";
+  if (name !== sanitizedBase) {
+    console.warn(`[INGEST] Name collision for '${baseName}'; registering as '${name}'.`);
   }
 
   const entry: SkillEntry = {

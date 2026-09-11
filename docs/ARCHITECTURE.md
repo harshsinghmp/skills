@@ -88,7 +88,7 @@ Aggregation is not limited to what the manifest already lists. The `--discover` 
 3. Registers unseen skills under a deduplicated name (collisions get a `-2`, `-3` suffix instead of overwriting).
 4. Auto-categorizes via keyword heuristics; descriptions are backfilled from the synced `SKILL.md` frontmatter.
 
-The same engine backs the **link-based ingest CLI** (`bun run add <url>`), which resolves GitHub tree/blob/raw URLs, bare `owner/repo` shorthands, and arbitrary git-host URLs (`src/resolve.ts`, `src/ingest.ts`).
+The same engine backs the **link-based ingest CLI** (`bun run add <url>`), which resolves GitHub tree/blob/raw URLs, bare `owner/repo` shorthands, and arbitrary git-host URLs (`src/resolve.ts`, `src/ingest.ts`). Release/archive URLs are rejected; single-skill name collisions suffix (`-2`, `-3`) exactly like whole-repo ingest.
 
 ---
 

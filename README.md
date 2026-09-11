@@ -191,7 +191,7 @@ bun run add <url> --dry-run                # preview what would be registered
 | `owner/repo/<path>` | Ingest that one skill |
 | Any other git host URL | Clone & scan via git protocol |
 
-Every ingested skill keeps its upstream link in the manifest — all future `bun run sync -- --discover` runs keep it updated automatically. Name collisions are suffixed (`-2`, `-3`), never silently overwritten.
+Every ingested skill keeps its upstream link in the manifest — all future `bun run sync -- --discover` runs keep it updated automatically. Name collisions are suffixed (`-2`, `-3`), never silently overwritten. Release/archive URLs are rejected (resend as repo root or tree/blob link); `--category` accepts only the seven manifest categories.
 
 ---
 

@@ -49,7 +49,12 @@ function resolveHttpUrl(url: string): ResolvedSource {
       throw new Error(`Malformed GitHub URL: ${url}`);
     }
     const repoSlug = `${owner}/${repo}`;
-    if (!kind || kind === "tree" || kind === "releases" || kind === "archive") {
+    if (kind === "releases" || kind === "archive") {
+      throw new Error(
+        `Release/archive URLs not supported: ${url}. Use the repo root or a tree/blob URL instead.`
+      );
+    }
+    if (!kind || kind === "tree") {
       return {
         repo: repoSlug,
         branch: kind === "tree" && branch ? branch : undefined,
