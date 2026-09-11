@@ -35,9 +35,10 @@ Clean separation of machine runtime state from human-and-agent verified system r
 
 ---
 
-### 4. Agency Council Governance & Nexus Quality Gate
-- **👑 Muse**: Chief Agency Orchestrator leading turn contract extraction and task routing.
-- **⚡ Sol**: Product Architecture, backend logic, APIs, database schemas.
-- **🎨 Jasper**: Creative Technology, Design Systems, Motion, WCAG 2.2 AA.
-- **🚢 Crew**: Operations, staging environments, package management, deployment.
-- **🛡️ Nexus**: Mandatory quality hardening gate (Typecheck, Build, SecretScan, Conventional Commit check).
+### 4. Autonomous Agent Governance & Quality Gate
+- **👑 Lead Orchestrator**: Project lead extracting turn contracts, task routing, and high-level alignment.
+- **⚡ Systems Architect**: Product architecture, backend systems, scalable APIs, and database schemas.
+- **🎨 Creative Technologist**: Design systems, interactive UI/UX, motion engineering, and WCAG 2.2 AA accessibility.
+- **🚢 Operations & Delivery**: Infrastructure, staging environments, package management, and deployment pipelines.
+- **🛡️ Quality Assurance (Hardening Gate)**: Mandatory quality gate (Typecheck, Build, Secret Scan, and Conventional Commit verification).
+

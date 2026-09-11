@@ -65,7 +65,18 @@ Fix the data structure first, fix the concurrency bugs, and run controlled bench
 
 ### ⚠️ Required Changes (Request-Changes)
 
-#### 3. Special Case Proliferation in List Removal (Theme 5, Trigger 5.1) — `src/core/item_list.c:54`
+#### 3. Test Weakened to Match Broken Behavior (Theme 17, Trigger 17.1) — `tests/test_conn_table.c:201`
+- **Violation**: The diff changes the existing deadlock regression test from asserting that `conn_migrate()` acquires table locks in sorted order to asserting only that "both locks are held during migration". The reordered-lock fix this patch ships alongside it passes the weakened test but not the original specification — the patch edits the test to fit the implementation instead of the reverse.
+- **The Principle**: The test defines correct behavior. Fix the implementation to match the spec — never the spec to match the implementation. If the spec itself is wrong, changing it is a deliberate, separately-reviewable spec decision with its own rationale, not a hunk inside a bug fix.
+- **Concrete Fix**:
+```diff
+-    /* relax: both locks must simply be held during migration */
+-    assert(locks_held_during(conn_migrate, src, dst) == 2);
++    /* spec: acquisition order must be globally deterministic (sorted) */
++    assert(lock_order_of(conn_migrate(src, dst)) == sorted_by_address(src, dst));
+```
+
+#### 4. Special Case Proliferation in List Removal (Theme 5, Trigger 5.1) — `src/core/item_list.c:54`
 - **Violation**: `list_remove()` has 4 separate conditionals checking `if (item == list->head)`, `if (item == list->tail)`, and `if (item->prev == NULL)`. 
 - **The Principle**: "Bad programmers worry about the code. Good programmers worry about data structures and their relationships." Using a pointer-to-pointer makes list-head removal identical to standard node removal, eliminating the special-case branches entirely.
 - **Concrete Fix**:
@@ -89,7 +100,7 @@ Fix the data structure first, fix the concurrency bugs, and run controlled bench
 + }
 ```
 
-#### 4. Unverified Performance Claim (Theme 14, Trigger 14.2) — Commit Message
+#### 5. Unverified Performance Claim (Theme 14, Trigger 14.2) — Commit Message
 - **Violation**: Commit message states *"Optimizes lookup times by ~15% on high-core machines"*, but includes no benchmark script, no perf trace, and mentions testing on a single non-standard debug kernel configuration.
 - **The Principle**: Talk is cheap. Show the code and the reproducible numbers. Isolate the exact delta on identical hardware and config.
 - **Action Required**: Provide reproduction benchmark script in `tests/benchmarks/` with A/B comparative stats.

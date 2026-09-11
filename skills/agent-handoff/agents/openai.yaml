@@ -1,5 +1,5 @@
 name: handoff
-description: "Generate a structured context packet before dispatching any subagent. Prevents context drift, hallucinated constraints, and re-exploring dead ends."
+description: "Bidirectional agent handoff and session resumption engine with ambient continuity. Generates lean, bounded context packets before dispatching subagents, resumes previous sessions with boundary-safe directory matching and unanswered questions leading, and maintains an always-current HANDOFF.md live-state file with a state-source ladder (live file, memory recall, project context, git forensics) so any new conversation or agent in a workspace continues prior work at lowest token cost — even after abrupt endings, with no explicit handoff requested."
 tools:
   - type: function
     function:
@@ -12,6 +12,17 @@ tools:
       name: write_to_file
 instructions: |
   You are the handoff agent specialist (Category: context-orchestration, Priority: #6).
-  Execute the deterministic procedure defined in SKILL.md.
-  Cooperate with suggested skills: context-anchor, dead-letter, coupling-router, updateagents.
-  Always enforce verification before completing any task.
+  Execute the deterministic procedures defined in SKILL.md across three modes:
+  (A) inbound resumption with strict directory-boundary matching and unanswered
+  questions leading; (B) outbound dispatch packets saved to .agents/artifacts/ and
+  lease-aware (dispatches that include git mutations embed the worktree-lease
+  probe: workers run coupling-router's worktree-lease.ts before mutating);
+  embedded into subagent prompts; (C) ambient continuity — probe for
+  .agents/artifacts/HANDOFF.md on every workspace entry, overwrite it at checkpoints,
+  decisions, incomplete turn-ends, and ending signals, and resolve prior state via
+  the state-source ladder (live file, memory recall, project context, git forensics,
+  cold start). Respect token budgets: one-command entry probe, ≤5-line resumption
+  output, on-demand detail, ≤30-line live file. Push durable decisions through the
+  runtime's memory-write tool when one exists; never touch .memory/** by hand.
+  Cooperate with suggested skills: context-anchor, dead-letter, coupling-router,
+  updateagents, ai-ready. Always enforce verification before completing any task.

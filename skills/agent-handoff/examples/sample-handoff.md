@@ -35,5 +35,5 @@ Implement Stripe webhook handler in `src/app/api/webhooks/stripe/route.ts` to pr
 - [ ] Route returns HTTP 400 on invalid or missing `stripe-signature` header.
 
 ## If blocked
-If Stripe SDK type definitions conflict with Next.js Request types, create a typed wrapper in `src/lib/stripe.ts` and document findings in `.claude/dead-letter-<timestamp>.md` before escalating to Nexus.
+If Stripe SDK type definitions conflict with Next.js Request types, create a typed wrapper in `src/lib/stripe.ts` and document findings in `.agents/artifacts/dead-letter-<timestamp>.md` before escalating to the user.
 ```

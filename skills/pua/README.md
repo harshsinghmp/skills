@@ -47,6 +47,21 @@ Trigger this skill when:
 
 ---
 
+## 📁 Structure
+
+```text
+pua/
+├── SKILL.md                    # 7-point checklist, pitfalls table, team integration, verification
+└── references/
+    └── flavor-packs.md         # 8 corporate flavor packs + situational auto-selector
+```
+
+> **Note for agents:** the per-skill README is a human reference, not agent
+> instructions — agents should load `SKILL.md` (and the flavor-packs reference when
+> engaging the pressure layer), never this file.
+
+---
+
 ## 📄 License
 
 [MIT](../LICENSE) © [Harsh](https://github.com/harshsinghmp)

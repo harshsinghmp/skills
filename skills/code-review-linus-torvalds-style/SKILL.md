@@ -1,26 +1,29 @@
 ---
 name: code-review
 aliases: ["code-review-linus-torvalds-style","linus-review","rigorous-review"]
-description: "A language-agnostic code review method derived from Linus Torvalds' review corpus. Enforces correctness, eliminates special cases, and demands evidence over assertion. Trigger when: (1) reviewing PRs, diffs, patches, or commits; (2) auditing data structures, memory safety, concurrency, or API stability; (3) refactoring edge cases and special cases into clean representations; (4) demanding proof, benchmarks, or reproducer evidence for code changes; (5) user requests a Linus Torvalds style, no-nonsense, or rigorous code review."
-version: 1.0.0
+description: "A language-agnostic code review method derived from Linus Torvalds' review corpus. Enforces correctness, eliminates special cases, and demands evidence over assertion. Trigger when: (1) reviewing PRs, diffs, patches, or commits; (2) auditing data structures, memory safety, concurrency, or API stability; (3) refactoring edge cases and special cases into clean representations; (4) demanding proof, benchmarks, or reproducer evidence for code changes; (5) user requests a Linus Torvalds style, no-nonsense, or rigorous code review; (6) reviewing diffs that touch tests, specs, or snapshots to confirm the spec stayed authoritative and tests were never weakened to match broken behavior; (7) security review of a diff or module (OWASP-style control pass); (8) receiving or acting on code review feedback; (9) turning review findings into verified fixes."
+version: 1.3.0
 author: Harsh Singh
 license: MIT
 platforms: [macos, linux, windows]
 category: quality-review
 metadata:
+  skill_orchestration:
+    post: ["git"]
+    optional: ["dead-letter", "pua"]
   category: quality-review
   priority: 4
   aliases: ["code-review-linus-torvalds-style","linus-review","rigorous-review"]
   suggested_skills: ["git","gauntlet-loop","refactor-ui","pua"]
   hermes:
-    tags: [code-review, reviewer-method, torvalds, correctness, data-structures, concurrency, api-stability, karpathy-doctrine, minimal-diff]
-    related_skills: [git, gauntlet-loop, refactor-ui, pua]
+    tags: [code-review, reviewer-method, torvalds, correctness, data-structures, concurrency, api-stability, karpathy-doctrine, minimal-diff, test-spec-immutability, security-review, feedback-receiving, findings-to-fixes]
+    related_skills: [git, gauntlet-loop, refactor-ui, pua, dead-letter]
     suggested_skills: [git, gauntlet-loop, refactor-ui, pua]
     requires_tools: [bash, view_file, grep, edit_file]
   openclaw:
     category: quality-review
     suggested_skills: [git, gauntlet-loop, refactor-ui, pua]
-    primary_triggers: ["review PR","review code","linus code review","audit diff","check invariants"]
+    primary_triggers: ["review PR","review code","linus code review","audit diff","check invariants","review test changes","tests weakened to pass","security review this code","act on review feedback","fix the review findings"]
     requires_tools: [bash, view_file, grep, edit_file]
   compatibility: [hermes, openclaw, claude-code, codex, cursor, gemini-cli, opencode]
 ---
@@ -28,6 +31,31 @@ metadata:
 # 🐧 Code Review - Linus Torvalds Style
 
 > A language-agnostic code review method synthesized from thousands of public code review decisions across a 30+ year corpus. Operates on data structures, control flow, interface contracts, and process discipline — not on syntax. Enforces correctness, eliminates special cases, and demands evidence over assertion.
+
+**This SKILL.md is the router.** It carries what every review needs (mindset, mode
+resolution, severity calibration, output format). Detailed catalogs load per mode —
+see the load-map column below; loading nothing extra is the default.
+
+---
+
+## Modes — quick commands
+
+Every invocation resolves to exactly one mode, routed on the *verb* and *scope of
+change* — review depth scales with blast radius. Load only the listed references.
+
+| Mode | Trigger phrases | Scope | Loads |
+|:---|:---|:---|:---|
+| **diff** (default) | "review this PR", "review this diff", `/torvalds` | Full 17-theme adversarial review with severity calibration | [references/themes.md](references/themes.md) |
+| **hotfix** | "quick review", "one-liner review", "is this safe to merge" | Single-hunk changes: correctness + surgical-diff + tests-only; skips architectural themes | nothing extra |
+| **audit** | "audit this module", "deep review this subsystem" | Cross-file invariants + data-structure focus over a whole module, not one diff; discovers the project's own conventions (test runner, standards docs, error conventions) before judging | [references/themes.md](references/themes.md) + [references/cross-file-invariants.md](references/cross-file-invariants.md) |
+| **contract** | "review the API change", "is this breaking" | API/ABI stability only: signatures, return semantics, error conventions | Quick Reference table below |
+| **security** | "security review", "check this for vulnerabilities", "OWASP pass" | Numbered control pass (SEC-01..10) over a diff or module; evidence-first findings | [references/security-controls.md](references/security-controls.md) |
+| **receive** | "review feedback arrived", "act on review comments" | Incoming feedback: verify → implement/rebut/ask per item; anti-sycophancy; risk-gating | [references/receiving-feedback.md](references/receiving-feedback.md) |
+| **fix** | "fix the review findings", "apply REVIEW.md", "fix and re-review" | Findings ledger → test-first fixes, one commit per finding, skip ledger for blind-risk items, re-review until convergence | [references/fixing-findings.md](references/fixing-findings.md) |
+
+**Token minimization rule**: a mode loads its listed references and nothing else.
+`hotfix` and `contract` never load the theme catalog; `receive` and `fix` never load
+it either — they operate on existing findings, they do not produce new ones.
 
 ---
 
@@ -39,13 +67,18 @@ Execute this skill when any of the following occur:
 2. **Data Structure & API Audits**: Evaluating whether data structures represent domain problems naturally, or if code is compensating with convoluted branches.
 3. **Concurrency & Memory Safety Checks**: Verifying lock ordering, atomic refcounts, race hazards, object lifetimes, and pointer validity.
 4. **API Stability & Contract Review**: Checking public interfaces, ABI/API backwards compatibility, error conventions, and return value semantics.
-5. **Special-Case Elimination**: Identifying conditional proliferation and refactoring to make boundary conditions disappear naturally.
-6. **Explicit User Invocations**: User commands like `/torvalds`, `/linus-review`, `"review this in Linus Torvalds style"`, `"give me a brutal code review"`, or `"audit this diff for correctness"`.
+5. **Security Review**: Systematic control pass over a diff or module for injection, access control, secrets, and auth-flow defects.
+6. **Feedback Intake**: Review feedback arrived on your work and needs a verified, non-deferential response.
+7. **Findings Remediation**: A review report exists and its findings must become verified, individually-committed fixes.
+8. **Special-Case Elimination**: Identifying conditional proliferation and refactoring to make boundary conditions disappear naturally.
+9. **Explicit User Invocations**: User commands like `/torvalds`, `/linus-review`, `"review this in Linus Torvalds style"`, `"give me a brutal code review"`, or `"audit this diff for correctness"`.
 
 ### When NOT to Use
 - Do NOT trigger on exploratory early-stage brainstorming where interface contracts have not yet stabilized.
 - Do NOT trigger for purely cosmetic formatting or linting fixes that do not affect structure or behavior.
 - Do NOT use for personal attacks or abusive communication — the review standard is technically ruthless, impersonal, and strictly focused on code quality and correctness.
+- Do NOT trigger for writing code from scratch or language syntax questions — there must be existing code or a diff to review.
+- Do NOT trigger for UI/design audits (use `refactor-ui`) — this skill is for code correctness and structure.
 
 ---
 
@@ -70,8 +103,6 @@ Execute this skill when any of the following occur:
 
 ### The Karpathy Surgical Changes Doctrine (Diff Minimality & Focus)
 
-Synthesizes Andrej Karpathy's 4 core behavioral guidelines into the review discipline:
-
 | Principle | Review Standard | Anti-Pattern Trigger | Default Severity |
 | :--- | :--- | :--- | :--- |
 | **Think Before Coding** | State assumptions and trade-offs explicitly before implementation | Silently choosing an ambiguous interpretation without surfacing alternatives | **Request Changes** |
@@ -81,7 +112,14 @@ Synthesizes Andrej Karpathy's 4 core behavioral guidelines into the review disci
 
 ---
 
-## Procedure
+## Procedure (diff mode — the full review)
+
+**Mode gate first**: resolve the mode from the trigger *before* Step 1 and load only
+that mode's references. The steps below are the default `diff` path; `hotfix` runs
+Steps 1 → 4 → 5 → 6 → 7 only; `contract` runs the Quick Reference API row + Step 6
+and stops; `audit` runs everything with the diff boundary widened to the module and
+conventions discovered first; `security`, `receive`, and `fix` follow their own
+reference protocols instead of these steps.
 
 ### Step 1: Adopt the Reviewer Mindset
 
@@ -93,149 +131,32 @@ Synthesizes Andrej Karpathy's 4 core behavioral guidelines into the review disci
 6. **Trust at scale must be structured, not assumed.** Maintainer accountability and tamper-evident history trump goodwill.
 7. **Security is ordinary bug-fixing.** Security issues are almost always stupid bugs that no one thought of as security issues until exploited.
 
----
+### Step 2: Audit Against the 17 Review Themes
 
-### Step 2: Audit Against the 15 Review Themes
-
-Systematically review the submission against the three levels of triggers:
-
-#### Level 1: Global Invariants (Non-Negotiables — Default: Reject)
-
-##### Theme 1: Interface Stability and Compatibility
-- **Trigger 1.1 (Breaking Contract)**: Modifies, removes, or alters behavior of existing public interfaces, output formats, or documented contracts. (*Severity: Reject*)
-- **Trigger 1.2 (Data Layout Shift)**: Alters field offsets, alignment, padding, or struct serialization visible across boundaries. (*Severity: Reject*)
-- **Trigger 1.3 (Duplicate Entrypoint)**: Adds redundant new public interface when extending an existing interface with a flag/parameter works. (*Severity: Nitpick*)
-- **Trigger 1.4 (Ambiguous Returns)**: Introduces ambiguous return codes, returns 0 on write failure, or rejects common valid inputs. (*Severity: Request Changes*)
-
-##### Theme 2: Memory Safety and Object Lifetime
-- **Trigger 2.1 (Uncounted Shared Object)**: Shared mutable object crosses execution contexts without reference counting governing lifetime. (*Severity: Request Changes*)
-- **Trigger 2.2 (Compound Deallocation Check)**: Deallocation relies on compound condition (`ref == 0 || list_empty`) rather than atomic refcount decrement. (*Severity: Request Changes*)
-- **Trigger 2.3 (Escaped Stack Pointer)**: References stack-allocated memory after function returns (in callbacks/async tasks). (*Severity: Reject*)
-- **Trigger 2.4 (Memory Provenance Loss)**: Code allocates memory, forgets provenance, and guesses deallocation method at teardown. (*Severity: Reject*)
-- **Trigger 2.5 (Use-After-Free / Double-Free)**: Resource freed while still reachable, or code path can free the same resource twice. (*Severity: Request Changes*)
-- **Trigger 2.6 (Blind Allocation Without Size Validation)**: `malloc(size)` where `size` is derived from user input or unchecked arithmetic subject to integer overflow. (*Severity: Reject*)
-
-##### Theme 3: Concurrency Correctness
-- **Trigger 3.1 (Missing Memory Barrier)**: Shared flag read/written across threads without explicit atomic ordering or locks. (*Severity: Request Changes*)
-- **Trigger 3.2 (Inconsistent Lock Ordering)**: Acquires multiple locks of the same type without deterministic global ordering (e.g. address sort). (*Severity: Request Changes*)
-- **Trigger 3.3 (In-Place Read Lock Upgrade)**: Attempts to atomically convert shared lock to exclusive write lock without unlock. (*Severity: Reject*)
-- **Trigger 3.4 (Unlock-Before-Cleanup Violation)**: Error goto jumps to resource-freeing label while lock is still held. (*Severity: Request Changes*)
-- **Trigger 3.5 (Locking Unrelated State)**: Lock acquired around code that does not touch the protected invariant. (*Severity: Reject*)
-- **Trigger 3.6 (Recursive Lock / Lock Held Across Blocking Calls)**: Non-reentrant lock acquired twice in call stack, or lock held while calling into code that blocks or schedules. (*Severity: Reject*)
-
-##### Theme 4: Security Check Placement and Architecture
-- **Trigger 4.1 (Wrong-Time Security Check)**: Permission checked at consumption time (I/O) rather than access-grant time (open). (*Severity: Reject*)
-- **Trigger 4.2 (Uninitialized Security State)**: Untrusted callers allowed in before entropy, clocks, or security mechanisms initialize. (*Severity: Reject*)
-- **Trigger 4.3 (Special-Path Exemption)**: Security check bypassed because a path is "internal", "rare", or "special". (*Severity: Request Changes*)
-- **Trigger 4.4 (Information Disclosure Leak)**: Exposes uninitialized buffer padding, stack bytes, or over-allocated buffers. (*Severity: Request Changes*)
-- **Trigger 4.5 (Format String & Buffer Size Mismatch)**: Calls writing to buffers without destination size guarantees or with attacker-influenced format strings. (*Severity: Reject*)
-- **Trigger 4.6 (Insecure String Copy in Hardening Code)**: Using functions that truncate silently (`strlcpy`) in code claiming to harden security. (*Severity: Reject*)
-
----
-
-#### Level 2: Structural Patterns (Architecture-Level)
-
-##### Theme 5: Special Case Elimination Through Data Representation
-- **Trigger 5.1 (Boundary Conditional)**: Conditional branch exists solely for first/last element because data representation is suboptimal (e.g., pointer-to-pointer eliminates list-head special cases). (*Severity: Request Changes*)
-- **Trigger 5.2 (Mode/Startup Workaround Branch)**: `if (is_special)` branching instead of unifying the model so distinctions vanish. (*Severity: Request Changes*)
-- **Trigger 5.3 (Magic Constants / Invisible Assumptions)**: Numeric literals without named constants or trusting unvalidated external firmware/env data. (*Severity: Reject*)
-
-##### Theme 6: Root Cause Over Symptom Treatment
-- **Trigger 6.1 (Symptom Papering)**: Adding flags or checks at consumption sites instead of fixing the producer that emits bad data. (*Severity: Reject*)
-- **Trigger 6.2 (Bug-Masking Error Path)**: Suppressing errors with fallback defaults that hide corrupted state. (*Severity: Request Changes*)
-- **Trigger 6.3 (Disproportionate Fatal Panic)**: Using `panic!`, `BUG_ON()`, or `abort()` for recoverable runtime conditions. (*Severity: Reject*)
-- **Trigger 6.4 (Silent Error Swallowing)**: Catching an error and silently ignoring it without logging or returning status, allowing bad state to propagate. (*Severity: Reject*)
-
-##### Theme 7: Interface Honesty and Misuse Resistance
-- **Trigger 7.1 (Fabricated Data)**: Functions returning dummy/default data rather than honest errors. (*Severity: Reject*)
-- **Trigger 7.2 (Misuse-Prone API)**: Interface requires callers to memorize non-obvious sequencing or manual pointer cleanups. (*Severity: Reject*)
-- **Trigger 7.3 (Redundant Return Conventions)**: Returning input value on success instead of clear status/error code. (*Severity: Request Changes*)
-
-##### Theme 8: Abstraction Boundaries and Encapsulation
-- **Trigger 8.1 (Leaky Internal Structs)**: Exposing internal structs directly across module boundaries instead of opaque handles. (*Severity: Request Changes*)
-- **Trigger 8.2 (Duplicated Core Logic)**: Reimplementing complex logic instead of using established helpers. (*Severity: Request Changes*)
-- **Trigger 8.3 (Core Namespace Pollution)**: Adding niche/single-caller helper functions to global/shared core headers. (*Severity: Reject*)
-
-##### Theme 9: Trust Delegation and Review Structure
-- **Trigger 9.1 (Uncurated Monolithic Changes)**: Massive changes bypassing subsystem owners. (*Severity: Request Changes*)
-- **Trigger 9.2 (Mixed-Concern Commits)**: Bundling bug fixes with refactors or cosmetic cleanups. (*Severity: Request Changes*)
-- **Trigger 9.3 (Blind Tool-Report Application)**: Applying linter/static-analysis fixes without human verification of logic. (*Severity: Request Changes*)
-- **Trigger 9.4 (Out-of-Tree Dictation)**: Modifying core architecture solely to appease unsupported external/peripheral plugins. (*Severity: Reject*)
-- **Trigger 9.5 (Link-Only Commit Description)**: Relying solely on external URLs in `Link:` lines without self-contained rationale in commit body. (*Severity: Request Changes*)
-
----
-
-#### Level 3: Tactical Guidelines (Implementation-Level)
-
-##### Theme 10: Simplicity and Complexity Discipline
-- **Trigger 10.1 (Unnecessary Indirection)**: Complex layered solution where direct, straightforward code does the job with fewer moving parts. (*Severity: Nitpick / Request Changes*)
-- **Trigger 10.2 (Speculative Generality)**: Configurable parameters, generic abstractions, or buffer sizes for hypothetical future needs. (*Severity: Reject*)
-- **Trigger 10.3 (Pointless Wrapper Functions)**: Thin wrappers that do not add safety, ergonomics, or encapsulation. (*Severity: Reject*)
-- **Trigger 10.4 (Dead Code & Redundant Work)**: Unreachable fallback branches, unused variables, or duplicate flush operations. (*Severity: Request Changes*)
-
-##### Theme 11: Naming, Readability, and Style
-- **Trigger 11.1 (Generic or Colliding Identifiers)**: Vague names (`param`, `data`, `tmp`) or names shadowing existing symbols. (*Severity: Request Changes*)
-- **Trigger 11.2 (Obtuse Clever Arithmetic)**: Clever bit-shifts or arithmetic where plain constants (`4096`) are clearer. (*Severity: Nitpick*)
-- **Trigger 11.3 (Redundant Casts / Non-Standard Constructs)**: Pointless type coercions signaling fight with type system. (*Severity: Request Changes*)
-- **Trigger 11.4 (Symmetric Else with Return)**: `if (...) return; else { ... }` instead of clean early return. (*Severity: Nitpick*)
-
-##### Theme 12: Documentation and Communication Precision
-- **Trigger 12.1 (Missing Commit "Why")**: Commit message describes only what lines changed, omitting the rationale. (*Severity: Request Changes*)
-- **Trigger 12.2 (Contradictory / Stale Comments)**: Comments describing behavior the code does not exhibit. (*Severity: Request Changes*)
-- **Trigger 12.3 (Undocumented Synchronization Rules)**: Subtle lock invariants or memory fences without explanatory comments. (*Severity: Request Changes*)
-- **Trigger 12.4 (Misleading Error Messages)**: Error message naming the wrong subsystem or operation. (*Severity: Request Changes*)
-
-##### Theme 13: Testing and Verification
-- **Trigger 13.1 (Unverified Code Submission)**: Patches submitted without build receipts, test runs, or verification logs. (*Severity: Request Changes*)
-- **Trigger 13.2 (Happy-Path-Only Tests)**: Benchmarks or tests omitting unfavorable edge cases, high-concurrency loads, or non-default configs. (*Severity: Request Changes*)
-- **Trigger 13.3 (Fix Without Reproducer)**: Bug-fix PR without reproduction steps, crash traces, or workload profiles. (*Severity: Request Changes*)
-
-##### Theme 14: Performance Discipline
-- **Trigger 14.1 (Heavyweight Abstraction in Hot Loop)**: Dynamic dispatch, virtual calls, or extra allocations inside hot loops. (*Severity: Reject*)
-- **Trigger 14.2 (Uncontrolled Performance Claims)**: Claiming optimization without isolated A/B delta benchmarks on identical configs. (*Severity: Request Changes*)
-- **Trigger 14.3 (Pathological Algorithmic Scaling)**: Using $O(n^2)$ search or unbounded allocations where $O(n)$ exists. (*Severity: Request Changes*)
-
-##### Theme 15: Error Handling and Recovery
-- **Trigger 15.1 (Hard Crash on Unrecognized Input)**: Crashing instead of gracefully falling back to known-good general handler. (*Severity: Nitpick*)
-- **Trigger 15.2 (Unusable Error Returns)**: Returning errors the caller has no programmatic way to recover from or handle. (*Severity: Reject*)
-- **Trigger 15.3 (Silent Swallowing of Serious Bug)**: Silently ignoring "should never happen" bugs instead of logging a loud one-time warning. (*Severity: Request Changes*)
-
-#### Level 4: Surgical Scope & Diff Minimality (Karpathy Doctrine)
-
-##### Theme 16: Surgical Diff Discipline & Simplicity
-- **Trigger 16.1 (Drive-By Edits & Diff Bloat)**: PR modifies lines, comments, formatting, or imports outside the stated issue scope. (*Severity: Reject*)
-- **Trigger 16.2 (Speculative Abstraction)**: Introduces single-caller helpers, generic factory wrappers, or premature interfaces for hypothetical future use. (*Severity: Reject*)
-- **Trigger 16.3 (Silent Assumption Trap)**: Author guessed an ambiguous requirement without documenting alternatives or surfacing trade-offs. (*Severity: Request Changes*)
-- **Trigger 16.4 (Evidence-Free Claim)**: Patch claims performance gain or bug fix without providing concrete test execution output or reproducer trace. (*Severity: Request Changes*)
-
----
+Load [references/themes.md](references/themes.md) and systematically review the
+submission against the five levels of triggers. Findings cite exact trigger IDs
+(`Theme N, Trigger N.M`) so reports stay comparable across reviews and rounds.
 
 ### Step 3: Cross-File Invariant Review
 
-Triggers must be evaluated across the **entire changeset and call graph**, not in file-level isolation:
-
-1. **Header vs Implementation Consistency**: Verify that any type, signature, macro, or struct field introduced or modified in a header/interface file is consistently updated and used across all implementation files.
-2. **Caller vs Callee Contract**: Ensure every caller honors the error-return conventions of the callee (e.g. checking `-EINVAL`, handling `NULL`, checking for allocation failure).
-3. **Module Boundaries & Struct Leakage**: When a module exports a type, confirm internal/private struct fields are not exposed or accessed directly by external callers. Use opaque pointers or accessors.
-4. **Symbol Renames & Versioned ABI Breaks**: If a symbol is renamed or signature modified, audit all dependent modules across the entire repository to prevent silent compilation failures or ABI breakage.
-5. **Lock Lifecycle Across Call Stacks**: Verify that no spinlock, critical mutex, or atomic critical section is held while calling into external functions that may block, schedule, perform I/O, or acquire secondary locks.
-
----
+Load [references/cross-file-invariants.md](references/cross-file-invariants.md) and
+evaluate triggers across the **entire changeset and call graph** — header/impl
+consistency, caller/callee contracts, module boundaries, symbol renames, lock
+lifecycles. When an originating spec/issue exists, also run the two-axis output
+(standards + spec, side by side, never averaged).
 
 ### Step 4: Execute the [REASON] → [ACT] Protocol
 
 For every candidate issue, enforce the 6-step reasoning protocol to prevent false positives:
 
 ```text
-1. Identify the Trigger       → Map candidate to exact trigger in Theme 1–15 catalog.
+1. Identify the Trigger       → Map candidate to exact trigger in the theme catalog.
 2. Verify Trigger Conditions  → Read 50+ lines of surrounding context. Does the defect actually occur?
 3. Articulate the WHY         → Formulate the foundational design principle violated.
 4. Check for False Positives  → Is there a legitimate domain reason for this pattern?
-5. Calibrate Severity         → Run through the Category Practical Guidance & Decision Tree below.
+5. Calibrate Severity         → Run through the Practical Guidance Table & Decision Tree below.
 6. Issue Finding with Diff    → State what is wrong, cite the principle, and provide the concrete replacement code.
 ```
-
----
 
 ### Step 5: Calibrate Severity (Practical Guidance Table)
 
@@ -250,8 +171,6 @@ For every candidate issue, enforce the 6-step reasoning protocol to prevent fals
 | **Performance** | **Request Changes** (38.1%) | Reject heavyweight abstractions in hot paths; demand isolated A/B benchmark receipts with identical configs. |
 | **Style & Readability** | **Nitpick** (35.5%) | Use for naming, formatting, or minor early returns; escalate to Request Changes only if readability actively obscures bugs. |
 
----
-
 ### Step 6: Run the Severity Decision Tree
 
 ```mermaid
@@ -260,30 +179,28 @@ flowchart TD
     Q1 -- Yes --> Q1a{Data corruption, deadlock,<br/>use-after-free, or vuln?}
     Q1a -- Yes --> R1[REJECT]
     Q1a -- No --> RC1[REQUEST-CHANGES]
-    
+
     Q1 -- No --> Q2{Breaks existing public API<br/>or data layout?}
     Q2 -- Yes --> R2[REJECT]
-    
+
     Q2 -- No --> Q3{Papers over root cause<br/>at consumption site?}
     Q3 -- Yes --> R3[REJECT]
-    
+
     Q3 -- No --> Q4{Speculative generality or<br/>complexity without benefit?}
     Q4 -- Yes --> R4[REJECT]
-    
+
     Q4 -- No --> Q5{Hot-path abstraction cost or<br/>unverified perf claim?}
     Q5 -- Hot Path --> R5[REJECT]
     Q5 -- Unverified Claim --> RC5[REQUEST-CHANGES]
-    
+
     Q5 -- No --> Q6{Docs, naming, or style<br/>affects correctness?}
     Q6 -- Yes / Misleading --> RC6[REQUEST-CHANGES]
     Q6 -- Purely Cosmetic --> N6[NITPICK]
-    
+
     Q6 -- No --> Q7{Untested code or missing reproducer?}
     Q7 -- Yes --> RC7[REQUEST-CHANGES]
     Q7 -- No / Other --> Def[REQUEST-CHANGES / APPROVE]
 ```
-
----
 
 ### Step 7: Format the Review Output
 
@@ -324,6 +241,14 @@ Every review must output a clean, authoritative report structured as follows:
 
 ---
 
+### ✅ What's Good
+[Specific, calibrated positives — what the author got right and should keep doing. Keeps the review credible; omit this section and authors stop reading.]
+
+### ❓ Open Questions
+[Uncertainty made explicit instead of hidden as false certainty — items the reviewer could not verify and why.]
+
+---
+
 ### 📋 Invariant Verification Checklist
 - [ ] Correctness: No data races, memory leaks, blind allocations, or uncounted references
 - [ ] Interface Stability: Zero breaking API changes or silent data layout shifts
@@ -333,6 +258,7 @@ Every review must output a clean, authoritative report structured as follows:
 - [ ] Simplicity: No single-use wrappers, speculative generality, or premature abstractions
 - [ ] Evidence: Benchmarks isolated, tests present, reproducer verified
 - [ ] Cross-File: Header/implementation consistency, caller/callee contracts satisfied across repo
+- [ ] Test-Spec Integrity: Zero test/spec edits weakening expected behavior; spec changes reviewed as spec changes
 ```
 
 ---
@@ -345,6 +271,9 @@ Every review must output a clean, authoritative report structured as follows:
 - **Vague Rejections Without Code**: Never reject a patch with *"This is messy."* Provide the concrete, cleaner diff showing how a better representation eliminates the problem.
 - **Premature Abstraction Toleration**: Reject speculative helper functions that have only one caller (*"Don't create a whole new interface just to hide a single if statement"*).
 - **Silent Error Toleration**: Never approve catching an error and doing nothing (*"If you catch an error and do nothing, you've just hidden a bug that will bite later"*).
+- **Spec-Weakening Tolerance**: Approving a diff that edits tests or specs to make broken behavior pass — the spec is the source of truth; if the spec is wrong, that is a deliberate, separately reviewed spec change, never a hunk inside a bug fix.
+- **Generic-Convention Preaching**: Reviewing against generic ideals without discovering the project's own documented standards, test runner, and error conventions first (audit mode) — the repo as it is defines Axis A.
+- **Over-Loading**: Loading the full theme catalog for a one-liner hotfix or an API-contract check — the mode gate exists to prevent exactly this token waste.
 
 ---
 
@@ -359,3 +288,5 @@ Before finalizing a code review, verify that:
 6. **No Regressions Overlooked**: Verified that error handling, lock releasing, and API stability remain intact across all call paths.
 7. **Surgical Diff Discipline**: Verified that the diff contains zero drive-by refactorings, orthogonal comment edits, or single-use abstractions.
 8. **Goal-Driven Verification**: Confirmed that all changes are backed by executable oracle tests and terminal receipts.
+9. **Test-Spec Integrity**: Confirmed that test, spec, and snapshot diffs preserve expected behavior — changes there carry an explicit spec-change rationale, never a silent accommodation of broken implementation.
+10. **Mode Discipline Honored**: Only the resolved mode's references were loaded; findings cite trigger IDs (or SEC control IDs in security mode); report-only unless fixes were explicitly authorized.

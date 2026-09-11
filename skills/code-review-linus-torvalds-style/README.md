@@ -61,7 +61,31 @@ Trigger this skill using slash commands or natural language:
 
 ---
 
-## 📊 The 15 Review Themes
+## 🧩 Modes
+
+Every invocation resolves to exactly one mode, routed on the verb and blast radius.
+The SKILL.md is a router that loads only what the mode needs — token-minimal by design:
+
+| Mode | Use when | Loads |
+| :--- | :--- | :--- |
+| **diff** (default) | "review this PR" — full 17-theme adversarial review | `references/themes.md` |
+| **hotfix** | one-liner / single-hunk — correctness + surgical + tests only | nothing extra |
+| **audit** | whole module — discovers the project's own conventions first, two-axis (standards + spec) report | `references/themes.md`, `references/cross-file-invariants.md` |
+| **contract** | API/ABI stability only | nothing extra |
+| **security** | numbered control pass (SEC-01..10), evidence-first findings | `references/security-controls.md` |
+| **receive** | feedback arrived on your work — verify → implement / rebut / ask | `references/receiving-feedback.md` |
+| **fix** | findings → test-first fixes, one commit each, skip ledger, re-review to convergence | `references/fixing-findings.md` |
+
+## 📊 The 17 Review Themes
+
+The full trigger catalog lives in [`references/themes.md`](references/themes.md) —
+the table below is the summary view.
+
+> **Note for agents:** the per-skill README is a human reference, not agent
+> instructions — agents should load `SKILL.md` (and the mode's references), never
+> this file.
+
+
 
 ```text
 Level 1: Global Invariants (Non-Negotiables — Default: REJECT)
@@ -87,6 +111,9 @@ Level 3: Tactical Guidelines (Implementation-Level — Default: REQUEST CHANGES 
 
 Level 4: Surgical Scope & Diff Minimality (Karpathy Doctrine — Default: REJECT / REQUEST CHANGES)
 └── Theme 16: Surgical Diff Discipline (Zero drive-by edits, no speculative abstractions, oracle receipts)
+
+Level 5: Verification Integrity (Spec–Test Relationship — Default: REJECT / REQUEST CHANGES)
+└── Theme 17: Test-Spec Immutability (The test defines correct behavior — never weaken tests to match broken code; spec changes reviewed as spec changes)
 ```
 
 ---
@@ -144,4 +171,28 @@ Reviews must evaluate whole repository call-graphs and invariants:
 
 ## 📄 Example
 
-See [examples/sample-review.md](examples/sample-review.md) for a complete, realistic code review report generated using this skill.
+See [examples/sample-review.md](examples/sample-review.md) for a complete, realistic code review report generated using this skill — including a Theme 17 spec-weakening finding.
+
+## 📁 Structure
+
+```text
+code-review/
+├── SKILL.md                            # router: modes, mindset, calibration, output format
+├── README.md                           # this file — human reference (agents: load SKILL.md)
+├── references/
+│   ├── themes.md                       # full 17-theme trigger catalog (diff/audit)
+│   ├── security-controls.md            # SEC-01..10 control pass (security)
+│   ├── receiving-feedback.md           # verify → implement/rebut/ask protocol (receive)
+│   ├── fixing-findings.md              # findings ledger → verified fixes (fix)
+│   └── cross-file-invariants.md        # cross-file checks + two-axis output + consolidation
+└── examples/
+    └── sample-review.md                # worked review report
+```
+
+## 📜 Research provenance
+
+The method synthesizes 38,303 public review decisions (severity calibration) plus a
+63-source agent-skill corpus (fetched 2026-09-10 into `.agents/artifacts/code-review-research/`)
+that contributed the security control pass, the feedback-receiving lane, the
+findings-to-fixes ledger, the two-axis standards+spec report, and the quality-bar
+regression watch (Trigger 13.4).

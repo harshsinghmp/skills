@@ -54,3 +54,29 @@ If no previous session matches the current directory boundary:
 1. Do not hallucinate previous tasks or invent fictional history.
 2. Clearly state: `No prior session history found for this project directory.`
 3. Offer to start fresh or run `ai-ready` audit.
+
+## 4. Git Forensics Recipe (Ladder Rung 4)
+
+When no live file, memory, or project context exists, the repository itself
+is the last reliable witness. Reconstruct state in this order:
+
+```bash
+git status -sb          # branch + uncommitted work = in-flight state
+git log --oneline -5    # recent trajectory
+ls .agents/artifacts/ 2>/dev/null   # any prior packets despite no HANDOFF.md
+```
+
+1. Uncommitted modifications = the in-flight work; `git diff --stat` sizes it.
+2. The last commit subject = the most recently completed checkpoint.
+3. Untracked files distinguish scratch from staged intent.
+
+**Recovery duty**: after reconstructing, immediately write
+`.agents/artifacts/HANDOFF.md` (Mode C contract) so the next agent never
+digs again. Forensics is a one-time tax per workspace.
+
+## 5. Token Budget Compliance
+
+Resumption is a ramp, not a report:
+- Entry probe: one filesystem test before any analysis.
+- Output: ≤5 lines of state before the first productive action.
+- Detail (packets, references, memory records): load on demand only.
