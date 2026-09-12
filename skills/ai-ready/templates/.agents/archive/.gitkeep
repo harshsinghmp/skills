@@ -1,0 +1,10 @@
+# Agent Archive Directory
+
+This directory stores retired plans, outdated artifacts, superseded research, completed turn checklists, and transient agent work files.
+
+## Naming Convention
+All archived files MUST follow the timestamped format:
+`[title]-[YYYYMMDD-HHMMSS].md`
+
+Example:
+`hero-redesign-plan-20260902-173000.md`

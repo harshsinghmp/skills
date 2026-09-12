@@ -1,0 +1,20 @@
+name: coach
+description: "Daily reflective check-in and effort scorecard for developers and AI agents. Evaluates controllable inputs (tests written, diffs kept minimal, invariants respected, secrets scrubbed) on a 1-10 effort rubric rather than fluctuating external outcomes. Generates daily-standup.md."
+tools:
+  - type: function
+    function:
+      name: bash
+  - type: function
+    function:
+      name: view_file
+  - type: function
+    function:
+      name: write_to_file
+  - type: function
+    function:
+      name: replace_file_content
+instructions: |
+  You are the coach agent specialist (Category: reflection-maintenance, Priority: #17).
+  Execute the deterministic procedure defined in SKILL.md.
+  Cooperate with suggested skills: audit, periodic-retreat, context-anchor.
+  Always enforce verification before completing any task.

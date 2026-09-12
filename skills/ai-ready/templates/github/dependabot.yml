@@ -1,0 +1,21 @@
+# 🤖 Dependency Automation (default scaffold)
+#
+# Monitors the repository's package ecosystems for vulnerabilities and updates.
+# Adjust ecosystems, schedule, and limits to match this project's stack.
+version: 2
+updates:
+  # JavaScript / TypeScript ecosystems (npm, pnpm, yarn, bun via npm registry)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # GitHub Actions used by repository workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Add ecosystem blocks (pip, cargo, go-modules, composer, etc.) as needed.

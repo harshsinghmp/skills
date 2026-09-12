@@ -1,0 +1,23 @@
+# <Repository Name>
+
+> <One-line description of what this repository is and who it serves.>
+
+## Overview
+
+<2-3 sentences: the project's purpose, current scope, and install command.>
+
+## Documentation
+
+<!-- Link the real docs; agents and crawlers ingest this index. -->
+- [README](README.md): quickstart and usage.
+- [Contributing](CONTRIBUTING.md): branch model and commit protocol.
+- [Changelog](CHANGELOG.md): release history.
+
+## Key Entry Points
+
+<!-- Replace with actual paths. -->
+- `src/`: application source.
+- `tests/`: test suite (`bun test`).
+
+---
+Authored by `ai-ready --scaffold`; refine placeholders with real repository facts.

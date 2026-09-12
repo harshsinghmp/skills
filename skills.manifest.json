@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft-07/schema#",
   "version": "1.0.0",
   "description": "Downstream Curated Agent Skills Hub for Harsh Singh (harshsinghmp)",
-  "lastUpdated": "2026-09-07T05:53:56.192Z",
+  "lastUpdated": "2026-09-12T08:21:30.522Z",
   "skills": [
     {
       "name": "60fps-animation",
@@ -39,6 +39,18 @@
       "version": "1.0.0"
     },
     {
+      "name": "ai-ready",
+      "category": "marketing",
+      "description": "Synced from harshsinghmp/muse-skills",
+      "upstream": {
+        "repo": "harshsinghmp/muse-skills",
+        "branch": "main",
+        "sourcePath": "ai-ready",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "ai-second-brain",
       "category": "cognitive",
       "description": "Walks the user through Charlie Hills's AI Second Brain + Karpathy Wiki setup from the MarTech AI newsletter. Use whenever the user mentions building an AI second brain, the Karpathy wiki, organising their ChatGPT/Claude exports in Obsidian, setting up a living wiki with Claude Code, connecting iMessage Channels, or installing the /today, /ideas, /create slash commands. Trigger on phrases like \"set up my second brain\", \"build the Karpathy wiki\", \"follow Charlie's newsletter setup\", \"organise my AI conversations\", \"Obsidian + Claude Code setup\", \"I exported my ChatGPT data what now\", or any reference to MarTech AI's Karpathy Wiki issue. Use even if the user only mentions one of the three steps (AI Brain, Karpathy Wiki, or Channels + slash commands).",
@@ -68,6 +80,18 @@
         "repo": "emilkowalski/skills",
         "branch": "main",
         "sourcePath": "skills/animate",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "animate-2",
+      "category": "general",
+      "description": "Synced from harshsinghmp/muse-skills",
+      "upstream": {
+        "repo": "harshsinghmp/muse-skills",
+        "branch": "main",
+        "sourcePath": "animate",
         "host": "github"
       },
       "autoAdded": true
@@ -139,6 +163,18 @@
         "repo": "emilkowalski/skills",
         "branch": "main",
         "sourcePath": "skills/ask-sonner",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "audit",
+      "category": "general",
+      "description": "Synced from harshsinghmp/muse-skills",
+      "upstream": {
+        "repo": "harshsinghmp/muse-skills",
+        "branch": "main",
+        "sourcePath": "audit",
         "host": "github"
       },
       "autoAdded": true
@@ -250,6 +286,18 @@
       "autoAdded": true
     },
     {
+      "name": "clean-system-cache",
+      "category": "general",
+      "description": "Synced from harshsinghmp/muse-skills",
+      "upstream": {
+        "repo": "harshsinghmp/muse-skills",
+        "branch": "main",
+        "sourcePath": "clean-system-cache",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "close",
       "category": "delivery",
       "description": "Close a session out properly — find every loose end the session created and either finish it or hand it back as a single named decision. Use whenever the user says \"close\", \"/close\", \"close out\", \"close this out\", \"close this session\", \"close this chat\", \"close off here\", \"are we good to close?\", \"can I close this?\", \"shall we close?\", \"just fix it and then we close\", \"wrap this up\", \"tie off the loose ends\", \"anything left?\", \"is anything left to wrap up here?\", \"what's still open?\", \"make sure nothing's left\", \"did we miss anything\", \"is that everything\", or otherwise signals a session is ending and wants the residue dealt with rather than listed back to him. Runs AFTER save-progress: save-progress banks the LEARNINGS into canon, close executes the remaining ACTIONS. Reach for it even when he does not say \"close\" — any time a session is ending and you are about to leave work undone, close it out first. Not for handing work to a teammate (that is `handover`), and not for banking lessons on its own (that is `save-progress`).",
@@ -259,6 +307,18 @@
         "sourcePath": "skills/close"
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "coach",
+      "category": "general",
+      "description": "Synced from harshsinghmp/muse-skills",
+      "upstream": {
+        "repo": "harshsinghmp/muse-skills",
+        "branch": "main",
+        "sourcePath": "coach",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "code-review-linus-torvalds-style",
@@ -303,6 +363,18 @@
       "version": "1.0.0"
     },
     {
+      "name": "coupling-router",
+      "category": "general",
+      "description": "Synced from harshsinghmp/muse-skills",
+      "upstream": {
+        "repo": "harshsinghmp/muse-skills",
+        "branch": "main",
+        "sourcePath": "coupling-router",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "crm-hygiene",
       "category": "delivery",
       "description": "Dedupes, enriches, and tidies a contact or CRM table so the records are clean, current, and free of duplicates. Claude should use this skill when the user says \"clean my CRM\", \"dedupe my contacts\", \"tidy my CRM\", \"fix my contact list\", \"merge duplicate contacts\", \"sort out my Airtable/Notion/HubSpot contacts\", or wants stale, half-filled, or double-entered records fixed. Propose-and-confirm only. Merges and deletes are always shown as a change list first and never run on their own.",
@@ -340,6 +412,18 @@
       "version": "1.0.0"
     },
     {
+      "name": "dispatching-parallel-agents",
+      "category": "general",
+      "description": "Synced from obra/superpowers",
+      "upstream": {
+        "repo": "obra/superpowers",
+        "branch": "main",
+        "sourcePath": "skills/dispatching-parallel-agents",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "doc-drafter",
       "category": "delivery",
       "description": "Produces a solid first draft of a business document or contract from a short brief. Covers SOW / statement of work, NDA, proposal, MSA, service agreement, engagement letter, and offer letter. Claude should use this skill when the user says \"draft a contract\", \"first draft of this doc\", \"draft an SOW / NDA / proposal\", \"write me a first draft\", or hands over a brief and wants a document built. Draft only, for human and legal review. It is not legal advice, is never final or execution-ready, and never sends or signs anything.",
@@ -358,6 +442,18 @@
         "repo": "emilkowalski/skills",
         "branch": "main",
         "sourcePath": "skills/emil-design-eng",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "evidence-ledger",
+      "category": "general",
+      "description": "Synced from harshsinghmp/muse-skills",
+      "upstream": {
+        "repo": "harshsinghmp/muse-skills",
+        "branch": "main",
+        "sourcePath": "evidence-ledger",
         "host": "github"
       },
       "autoAdded": true
@@ -419,6 +515,18 @@
       "autoAdded": true
     },
     {
+      "name": "finishing-a-development-branch",
+      "category": "general",
+      "description": "Synced from obra/superpowers",
+      "upstream": {
+        "repo": "obra/superpowers",
+        "branch": "main",
+        "sourcePath": "skills/finishing-a-development-branch",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "follow-up-chaser",
       "category": "delivery",
       "description": "Finds the email threads where you are waiting on someone else, then drafts the nudge for you to send. Claude should use this skill whenever the user asks \"who owes me a reply\", \"what am I waiting on\", \"chase my follow-ups\", \"nudge them\", \"chase that up\", \"which of my emails went unanswered\", or wants to sweep sent mail for stalled threads and get polite chase drafts. Reads email (Gmail or Microsoft 365, including sent mail) and Google Calendar for context. Draft-only. The user always sends.",
@@ -434,6 +542,18 @@
       "category": "creative",
       "description": "Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one. Helps with aesthetic direction, typography, and making choices that don't read as templated defaults.",
       "version": "1.0.0"
+    },
+    {
+      "name": "gauntlet-loop",
+      "category": "general",
+      "description": "Synced from harshsinghmp/muse-skills",
+      "upstream": {
+        "repo": "harshsinghmp/muse-skills",
+        "branch": "main",
+        "sourcePath": "gauntlet-loop",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "gemini-carousel",
@@ -456,6 +576,18 @@
         "sourcePath": "skills/gemini-infographic"
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "git",
+      "category": "general",
+      "description": "Synced from harshsinghmp/muse-skills",
+      "upstream": {
+        "repo": "harshsinghmp/muse-skills",
+        "branch": "main",
+        "sourcePath": "git",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "glassmorphism",
@@ -502,6 +634,18 @@
         "sourcePath": "skills/hook-generator"
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "humanize",
+      "category": "general",
+      "description": "Synced from harshsinghmp/muse-skills",
+      "upstream": {
+        "repo": "harshsinghmp/muse-skills",
+        "branch": "main",
+        "sourcePath": "humanize",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "improve-animations",
@@ -618,6 +762,18 @@
       "version": "1.0.0"
     },
     {
+      "name": "muse-brief-2",
+      "category": "cognitive",
+      "description": "Synced from harshsinghmp/musememory",
+      "upstream": {
+        "repo": "harshsinghmp/musememory",
+        "branch": "main",
+        "sourcePath": "skills/muse-brief",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "muse-capture",
       "category": "cognitive",
       "description": "Autonomous post-fix and architectural decision distillation. Captures atomic, verified knowledge units with inline Vibeguard secret defense and supersedes outdated patterns.",
@@ -626,6 +782,18 @@
         "sourcePath": ".agents/skills/muse-capture"
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "muse-capture-2",
+      "category": "cognitive",
+      "description": "Synced from harshsinghmp/musememory",
+      "upstream": {
+        "repo": "harshsinghmp/musememory",
+        "branch": "main",
+        "sourcePath": "skills/muse-capture",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "muse-current",
@@ -638,6 +806,30 @@
       "version": "1.0.0"
     },
     {
+      "name": "muse-current-2",
+      "category": "cognitive",
+      "description": "Synced from harshsinghmp/musememory",
+      "upstream": {
+        "repo": "harshsinghmp/musememory",
+        "branch": "main",
+        "sourcePath": "skills/muse-current",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "muse-drift",
+      "category": "cognitive",
+      "description": "Synced from harshsinghmp/musememory",
+      "upstream": {
+        "repo": "harshsinghmp/musememory",
+        "branch": "main",
+        "sourcePath": ".agents/skills/muse-drift",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "muse-graph",
       "category": "cognitive",
       "description": "AST code-aware symbol graph investigation and indexing. Integrates CodeGraph and Graphify to map codebase identifiers, auto-tag memories, and rank symbol-matching decisions with graph overlap bonuses.",
@@ -646,6 +838,18 @@
         "sourcePath": ".agents/skills/muse-graph"
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "muse-graph-2",
+      "category": "cognitive",
+      "description": "Synced from harshsinghmp/musememory",
+      "upstream": {
+        "repo": "harshsinghmp/musememory",
+        "branch": "main",
+        "sourcePath": "skills/muse-graph",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "muse-ground",
@@ -658,6 +862,66 @@
       "version": "1.0.0"
     },
     {
+      "name": "muse-ground-2",
+      "category": "cognitive",
+      "description": "Synced from harshsinghmp/musememory",
+      "upstream": {
+        "repo": "harshsinghmp/musememory",
+        "branch": "main",
+        "sourcePath": "skills/muse-ground",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "muse-health",
+      "category": "cognitive",
+      "description": "Synced from harshsinghmp/musememory",
+      "upstream": {
+        "repo": "harshsinghmp/musememory",
+        "branch": "main",
+        "sourcePath": ".agents/skills/muse-health",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "muse-mesh",
+      "category": "cognitive",
+      "description": "Synced from harshsinghmp/musememory",
+      "upstream": {
+        "repo": "harshsinghmp/musememory",
+        "branch": "main",
+        "sourcePath": ".agents/skills/muse-mesh",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "muse-sync",
+      "category": "cognitive",
+      "description": "Synced from harshsinghmp/musememory",
+      "upstream": {
+        "repo": "harshsinghmp/musememory",
+        "branch": "main",
+        "sourcePath": ".agents/skills/muse-sync",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "muse-why",
+      "category": "cognitive",
+      "description": "Synced from harshsinghmp/musememory",
+      "upstream": {
+        "repo": "harshsinghmp/musememory",
+        "branch": "main",
+        "sourcePath": ".agents/skills/muse-why",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "muse-wiki",
       "category": "cognitive",
       "description": "Obsidian-compatible knowledge compounding and entity graph generation. Compiles confirmed memories into interlinked Markdown concept pages and tracks named entity co-occurrences.",
@@ -666,6 +930,18 @@
         "sourcePath": ".agents/skills/muse-wiki"
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "muse-wiki-2",
+      "category": "cognitive",
+      "description": "Synced from harshsinghmp/musememory",
+      "upstream": {
+        "repo": "harshsinghmp/musememory",
+        "branch": "main",
+        "sourcePath": "skills/muse-wiki",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "new-project",
@@ -700,6 +976,18 @@
       "version": "1.0.0"
     },
     {
+      "name": "oklch-skill",
+      "category": "general",
+      "description": "Synced from harshsinghmp/muse-skills",
+      "upstream": {
+        "repo": "harshsinghmp/muse-skills",
+        "branch": "main",
+        "sourcePath": "ai-ready/templates/.agents/skills/oklch-skill",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "page-transition-animation",
       "category": "general",
       "description": "This skill should be used when the user asks to \"animate page or route transitions\", \"add a page transition or crossfade between views\", \"animate route changes in Next.js App Router\", \"use the View Transitions API\", \"AnimatePresence exit doesn't fire on navigation\", or \"Framer Motion exit animation not working / exit animation before unmount in Next.js\". Covers enter/exit page-transition animation with the View Transitions API and Framer Motion, for Next.js App Router and general SPA routing.",
@@ -707,6 +995,18 @@
         "repo": "iart-ai/web-animation-skills",
         "branch": "main",
         "sourcePath": "skills/page-transition-animation",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "periodic-retreat",
+      "category": "general",
+      "description": "Synced from harshsinghmp/muse-skills",
+      "upstream": {
+        "repo": "harshsinghmp/muse-skills",
+        "branch": "main",
+        "sourcePath": "periodic-retreat",
         "host": "github"
       },
       "autoAdded": true
@@ -812,6 +1112,18 @@
       "version": "1.0.0"
     },
     {
+      "name": "receiving-code-review",
+      "category": "engineering",
+      "description": "Synced from obra/superpowers",
+      "upstream": {
+        "repo": "obra/superpowers",
+        "branch": "main",
+        "sourcePath": "skills/receiving-code-review",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "reels-scripting",
       "category": "creative",
       "description": "Turn a reference Instagram Reel into a script for your own Reel, tuned to your voice and repurposed from your newsletter content. Takes a Reel URL or Notion reference link, uses Apify to scrape the video, sends it to Gemini 2.5 Flash for full transcript + hook + structure analysis, then writes a new script applying the same patterns to your newsletter topic. Use this skill whenever the user says \"script a reel\", \"reels scripting\", \"turn this into a reel\", pastes an Instagram Reel URL, or references their Notion outlier reels database. Requires APIFY_API_TOKEN and GOOGLE_AI_API_KEY environment variables.",
@@ -821,6 +1133,18 @@
         "sourcePath": "skills/reels-scripting"
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "refactor-ui",
+      "category": "creative",
+      "description": "Synced from harshsinghmp/muse-skills",
+      "upstream": {
+        "repo": "harshsinghmp/muse-skills",
+        "branch": "main",
+        "sourcePath": "refactor-ui",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "requesting-code-review",
@@ -865,6 +1189,18 @@
         "sourcePath": "."
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "secretary",
+      "category": "governance",
+      "description": "Synced from harshsinghmp/muse-skills",
+      "upstream": {
+        "repo": "harshsinghmp/muse-skills",
+        "branch": "main",
+        "sourcePath": "secretary",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "secure-code-guardian",
@@ -1000,6 +1336,18 @@
       "version": "1.0.0"
     },
     {
+      "name": "updatedocs",
+      "category": "general",
+      "description": "Synced from harshsinghmp/muse-skills",
+      "upstream": {
+        "repo": "harshsinghmp/muse-skills",
+        "branch": "main",
+        "sourcePath": "updatedocs",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "using-git-worktrees",
       "category": "engineering",
       "description": "Use when starting feature work that needs isolation from current workspace or before executing implementation plans - ensures an isolated workspace exists via native tools or git worktree fallback",
@@ -1033,6 +1381,18 @@
         "repo": "jakubkrehel/skills",
         "branch": "main",
         "sourcePath": "skills/variant",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "verification-before-completion",
+      "category": "general",
+      "description": "Synced from obra/superpowers",
+      "upstream": {
+        "repo": "obra/superpowers",
+        "branch": "main",
+        "sourcePath": "skills/verification-before-completion",
         "host": "github"
       },
       "autoAdded": true
@@ -1086,6 +1446,18 @@
         "sourcePath": "skills/writing-plans"
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "writing-skills",
+      "category": "general",
+      "description": "Synced from obra/superpowers",
+      "upstream": {
+        "repo": "obra/superpowers",
+        "branch": "main",
+        "sourcePath": "skills/writing-skills",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "youtube-thumbnail",

@@ -1,8 +1,8 @@
 ---
 name: new-project
 aliases: ["Agent Engine","DOX Engine","agent-engine","dox-engine"]
-description: "Purpose-First interactive project creator, companion configurator, DOX Engine, and Agent Engine provisioner. Implements a 6-stage sequential execution pipeline: Stage 1 (Purpose-First Root Prompt), Stage 2 (Hierarchical Decision Tree with Tradeoff Engine), Stage 3 (Official Package Installation & Full End-to-End Companion Wiring), Stage 4 (Modern OKLCH Tokens & Fluid BEM System), Stage 5 (Client Intake Brief with post-scaffold agent onboarding), and Stage 6 (Closeout). Bootstraps the Agents-First architecture (AGENTS.md, 9-folder .agents/ container, 13 modular standards, brand tokens, and cognitive memory) before interactively composing project intent, framework (Next.js 16, Astro v7, Instatic HTML, Roots Bedrock, Expo), styling (Hybrid UnoCSS Wind 4 + BEM), animations (CSS presets, Motion.dev, GSAP), state management (NanoStores cross-island store), mobile conversion (Ionic Capacitor for Astro/Next.js to iOS/APK, Expo for React), CMS (Payload 3.0 + Puck, Keystatic, StudioCMS, Git-based CMS), e-commerce (Medusa v2 sovereign backend, Payload E-Commerce, Stripe, Razorpay, Vendure), and database (Drizzle ORM with typed schema, Neon, Supabase, Postgres Docker, SQLite). Trigger whenever the user asks for 'new-project', 'Agent Engine', 'DOX Engine', 'scaffold Project OS', or to initialize an agent-governed workspace."
-version: 2.5.0
+description: "Purpose-First interactive project creator, companion configurator, DOX Engine, and Agent Engine provisioner. Implements a 6-stage sequential execution pipeline: Stage 1 (Purpose-First Root Prompt), Stage 2 (Hierarchical Decision Tree with Tradeoff Engine), Stage 3 (Official Package Installation & Full End-to-End Companion Wiring), Stage 4 (Modern OKLCH Tokens & Fluid BEM System), Stage 5 (Client Intake Brief with post-scaffold agent onboarding), and Stage 6 (Closeout). Bootstraps the Agents-First architecture (AGENTS.md, 9-folder .agents/ container, 13 modular standards, brand tokens, and cognitive memory) before interactively composing project intent, framework (Next.js 16, Astro v7, Instatic HTML, Roots Bedrock, Expo), styling (Hybrid UnoCSS Wind 4 + BEM), animations (CSS presets, Motion.dev, GSAP), state management (NanoStores cross-island store), mobile conversion (Ionic Capacitor for Astro/Next.js to iOS/APK, Expo for React), CMS (Payload 3.0 + Puck, Atomic Payload website builder, Keystatic, StudioCMS, Git-based CMS), e-commerce (Medusa v2 sovereign backend, Payload E-Commerce, Stripe, Razorpay, Vendure), and database (Drizzle ORM with typed schema, Neon, Supabase, Postgres Docker, SQLite). Trigger whenever the user asks for 'new-project', 'Agent Engine', 'DOX Engine', 'scaffold Project OS', or to initialize an agent-governed workspace."
+version: 2.6.0
 author: DOX Engine Provisioner
 license: MIT
 platforms: [macos, linux, windows]
@@ -78,8 +78,9 @@ Interactive project creator and Project Operating System provisioner. Implements
 | `--preset=pure-html` | Standalone Static Site | Pure HTML5 + Semantic BEM CSS + Fluid OKLCH Tokens (Zero build step, instant load) |
 | `--preset=mobile` | Cross-Platform App | React Native (Expo `@latest`) + NativeWind + Supabase Backend |
 | `--preset=astro-mobile` | Web-to-APK / Mobile App | Astro v7 + Hybrid UnoCSS + Hardware CSS Animations + NanoStores + Aria Builder + **Ionic Capacitor** (iOS/APK) |
+| `--preset=atomic-payload` | Website Builder (Admin-Driven) | Atomic Payload official template (`pro-laico`) — Payload 3 + Next.js 16 + Tailwind with every `@pro-laico/*` plugin, MongoDB + Vercel Blob (admin at `localhost:42100/admin`) |
 
-**Aria isolation rule**: any preset or flag set selecting `ariabuilder` provisions the official `ariabuilder/aria` clone only (Astro + UnoCSS with Wind 4 preset + CMS + SQLite included). Every other companion in the preset is skipped with a printed notice and added only on explicit request.
+**Isolated official scaffold rule**: any preset or flag set selecting `ariabuilder` OR `atomic-payload` provisions the official isolated scaffold only (Aria Builder ships its own Astro + UnoCSS with Wind 4 preset + CMS + SQLite; Atomic Payload ships its own Payload 3 + Next.js 16 + Tailwind with every `@pro-laico/*` plugin). Every other companion in the preset is skipped with a printed notice and added only on explicit request.
 
 ---
 
@@ -126,6 +127,7 @@ Each selection prunes irrelevant downstream choices while explicitly surfacing a
   - *Next.js 16 (React 19 App Router)*:
     - **Payload CMS 3.0 + Puck Visual Builder** — Full-stack database collections with interactive visual block editing.
     - **Payload CMS 3.0 Standard** — Lexical rich text editor and typed collections.
+    - **Atomic Payload** (`pro-laico`) — official website-builder template: Payload + Next.js + Tailwind with every `@pro-laico/*` plugin (site, atomic, styles, fonts, icons, images, mux-video, tracking, seed, richtext, zap, core); pages composed in the admin render immediately. Isolated official scaffold — all other companions are skipped. Not an e-commerce engine: add commerce later via the Payload E-Commerce plugin.
     - **Keystatic** — Flat-file Git collections.
   - *Roots Bedrock*: Modern 12-factor WordPress with Composer and Gutenberg blocks.
 - **Branch C (Ecommerce Storefront)**: E-Commerce Tradeoff Questionnaire (Aria Builder never pairs here — it provisions as the isolated official scaffold; pair Medusa with plain Astro or Next.js instead):
@@ -161,6 +163,10 @@ The provisioner enforces **Zero Half-Baked Stubs**. Every selected technology is
   - `git clone https://github.com/ariabuilder/aria.git` into the target, `npm install` (skipped with `--skip-install`), `npm run dev`.
   - Open `http://localhost:4321/admin`; first visit completes setup at `http://localhost:4321/admin/setup` to create the first administrator.
   - Engine ensures the UnoCSS **Wind 4 preset** in `./uno.user.config.ts` (upstream ships Wind3) and leaves everything else byte-identical to upstream. No `bun create astro`, no companion overlays, no token injection, no package.json rewrite.
+- **Atomic Payload (isolated official scaffold)**: upstream ships a complete Payload 3 + Next.js 16 + Tailwind stack with every `@pro-laico/*` plugin, so selecting it provisions the official published template untouched and adds nothing else unless explicitly requested:
+  - Extracts the official published template via `npm pack @pro-laico/create-atomic-payload` (the official CLI cannot run in-place once engine governance files exist), merges it in with skip-if-exists so engine files are never overwritten, copies `.env.example` → `.env` (only if absent, per the official CLI's own behavior), merges the upstream gitignore under an `# Atomic Payload Upstream Defaults` header, and runs `pnpm install` (the official package manager) unless `--skip-install`.
+  - Never: re-scaffolds the framework, overlays companion configs, injects engine tokens, or rewrites the upstream package.json.
+  - Run `pnpm generate:types && pnpm generate:importmap`, `pnpm dev`, open `http://localhost:42100/admin` (create the first admin user; seed via the 'Seed database' dashboard banner).
 - **Content Management Systems (CMS)**:
   - *Payload CMS 3.0 & E-Commerce Module*: `payload.config.ts`, strongly-typed collections (`Users.ts`, `Media.ts`, `Pages.ts`, `Products.ts`, `Orders.ts`, `Customers.ts`), Next.js App Router admin UI (`src/app/(payload)/admin/page.tsx`), REST API route handler (`src/app/(payload)/api/[...slug]/route.ts`), Stripe checkout endpoint (`src/app/api/payload-checkout/route.ts`), and `importMap.js`.
   - *StudioCMS*: `studiocms.config.mjs`, Astro DB integration, and `astro.config.mjs` integration wiring (`studioCMS()`).
@@ -262,13 +268,13 @@ bun new-project/scripts/new-project.ts <targetPath> \
 | `--agent-role <role>` | String | Lead agent functional role description |
 | `--constraint <text>` | String | Primary operational constraint or invariant |
 | `-i, --intent <intent>` | String | `brochure` \| `content` \| `ecommerce` \| `app` \| `mobile` \| `governance` |
-| `--preset <preset>` | String | `powerhouse` \| `publisher` \| `edge` \| `visual` \| `instatic` \| `mobile` \| `astro-mobile` |
+| `--preset <preset>` | String | `powerhouse` \| `astro-commerce` \| `publisher` \| `edge` \| `visual` \| `astro-visual` \| `plain-astro` \| `git-cms` \| `instatic` \| `pure-html` \| `mobile` \| `astro-mobile` \| `atomic-payload` |
 | `-t, --type <framework>` | String | `nextjs` \| `astro` \| `instatic` \| `wordpress` \| `expo` \| `custom` \| `none` |
 | `-s, --styling <styling>` | String | `hybrid` (UnoCSS Wind 4 + BEM) \| `unocss` \| `bem` \| `tailwind` \| `custom` \| `none` |
 | `-a, --animation <anim>` | String | `css` (Hardware presets) \| `motion` \| `gsap` \| `webgl` \| `custom` \| `none` |
 | `--state <engine>` | String | `nanostores` (Sub-1KB cross-island store) \| `custom` \| `none` |
 | `-m, --mobile <target>` | String | `capacitor` (Ionic Capacitor iOS/APK wrapper) \| `expo` (React Native) \| `custom` \| `none` |
-| `-c, --cms <cms>` | String | `ariabuilder` \| `studiocms` \| `tina` \| `keystatic` \| `emdash` \| `payload` \| `wollycms` \| `decap` \| `keystone` \| `sanity` \| `strapi` \| `custom` \| `none` |
+| `-c, --cms <cms>` | String | `ariabuilder` \| `atomic-payload` \| `studiocms` \| `tina` \| `keystatic` \| `emdash` \| `payload` \| `wollycms` \| `decap` \| `keystone` \| `sanity` \| `strapi` \| `custom` \| `none` |
 | `--puck` | Boolean | Enable Puck Visual Builder (for Payload CMS) |
 | `-e, --ecommerce <ecom>` | String | `payload` \| `medusa` \| `vendure` \| `fastrr` \| `razorpay` \| `stripe` \| `custom` \| `none` |
 | `--db <db>` | String | `neon` \| `supabase` \| `postgres` \| `sqlite` \| `custom` \| `none` |
@@ -301,6 +307,14 @@ Follow the official overview: https://payloadcms.com/docs/ecommerce/overview
 3. `npm run dev`
 4. Open `http://localhost:4321/admin`. On first visit, complete setup at `http://localhost:4321/admin/setup` to create the first administrator.
 5. The engine additionally ensures the UnoCSS **Wind 4 preset** in `./uno.user.config.ts` (upstream ships Wind3). Nothing else is added or overlaid — no framework re-scaffold, no companion wiring, no token injection. Request extra features after scaffolding and they will be layered on explicitly.
+
+### Atomic Payload (isolated official scaffold — Payload + Next.js + Tailwind website builder)
+1. `npx @pro-laico/create-atomic-payload my-site` (or `.` for the current directory; `--template atomic-payload` skips the prompt; minimal examples `fonts-only` / `icons-only` / `images-only` / `styles-only`). Project names must be lowercase/hyphens; the CLI exits 1 on an existing non-empty target.
+2. The CLI copies the official template, installs with pnpm, rebuilds sharp, and copies `.env.example` to `.env`.
+3. Fill `.env`: `MONGODB_URI` (MongoDB Atlas), `BLOB_READ_WRITE_TOKEN` (Vercel Blob), `PAYLOAD_SECRET`, `PREVIEW_SECRET`, `NEXT_PUBLIC_SERVER_URL` (plus `FONT_DOWNLOAD_URL` when using the fonts plugin).
+4. `pnpm generate:types && pnpm generate:importmap && pnpm generate:icons` (the icon-usage manifest runs automatically in `prebuild`), then `pnpm dev`.
+5. Open `http://localhost:42100/admin` (dev server port is 42100, NOT 3000): create the first admin user on first visit, then seed via the 'Seed database' dashboard banner; per upstream docs, afterwards pass `enabled: false` to `seedPlugin()` in `src/plugins/index.ts` to drop the seed endpoint. Not an e-commerce engine — commerce is added later via the Payload E-Commerce plugin (payloadcms.com/docs/ecommerce/overview).
+6. Engine path note: the engine extracts the official published template untouched — no overlays, no companion wiring, no token injection. Full docs at atomicpayload.com (upstream is not affiliated with Payload CMS).
 
 ### WollyCMS (self-hosted headless CMS for Astro)
 1. New WollyCMS project: `npx create-wolly@latest my-site && cd my-site && npm run migrate && npm run seed && npm run dev` (requires Node.js 22 LTS; API + admin at `http://localhost:4321`, default login `admin@wollycms.local` / `admin123`). Templates: `blog`, `marketing`, `wordpress`, `drupal`, `college` via `--template=<name>`.
@@ -380,6 +394,7 @@ Bring your own: wire the CMS strictly per its official documentation, keep crede
 - **Committing Secrets**: Ensure `.env` is listed in `.gitignore` and `.env.example` exists. Follow the Vibeguard protocol.
 - **Monolithic Memory Dumps**: Keep `.memory/CURRENT.md` for machine real-time invariants and `.agents/context/current.md` for durable shipped reality.
 - **Never Ship Half-Baked Companion Stubs**: Never provision an SDK or integration flag without the accompanying route handlers, client SDKs, schemas, admin UIs, or container configs needed to actually run it. Every technology must be immediately runnable from a clean checkout.
+- **Isolated Official Scaffolds (Aria Builder, Atomic Payload)**: these upstreams ship complete stacks — never overlay engine extras (framework re-scaffold, companion configs, tokens, CI, package.json rewrites); the isolation gate zeroes companion selections with a printed notice and extras are added only on explicit request after scaffolding.
 
 ---
 
@@ -393,10 +408,11 @@ After scaffolding, verify the project:
 5. **Database & Auth Completeness**: If database or auth is provisioned, verify `src/lib/schema.ts`, `src/lib/db.ts`, `src/lib/auth-client.ts`, and API route handlers (`/api/auth/[...all]`) exist and compile cleanly.
 6. **CMS & Visual Builder Completeness**: If Payload, Keystatic, or Puck is enabled, verify config files (`payload.config.ts`, `keystatic.config.ts`), collection schemas, and admin UI pages exist.
 7. **Aria Builder Isolation**: If Aria is enabled, verify the target holds the official upstream clone (`package.json` named `@ariabuilder/aria`, `astro.config.ts`, `uno.user.config.ts` with the Wind 4 preset) plus engine governance only — no `aria.config.mjs`, no `Aria*.astro` components, no `backend/`, no engine tokens/CI. Run `npm run dev` and complete first-admin setup at `http://localhost:4321/admin/setup`.
-8. **Backend Engine**: If Medusa is provisioned, check `./backend/medusa-config.ts`, `./backend/docker-compose.yml`, and `./backend/package.json`. If PostgreSQL container is requested, check `./docker-compose.yml`.
-8. **Day-1 Starter Dashboard**: Check that `src/app/page.tsx` (Next.js) or `src/pages/index.astro` (Astro) is provisioned with live stack badges and quick links.
-9. **Deployment & CI/CD**: Verify `.github/workflows/ci.yml` is present, alongside `Dockerfile` / `wrangler.toml` / `vercel.json` matching `--deploy`.
-10. **Quality Gates & Test Suite**: Run `bun test` inside the scaffolded workspace to confirm `tests/health.test.ts` passes cleanly.
-11. **Day-1 Secret Defense**: Verify `scripts/pre-commit.sh` exists and is executable.
-12. **Dynamic ADRs & Product DOX**: Check that `.agents/context/decisions.md` contains ADR-001 through ADR-006, and `.agents/context/product.md` reflects the interview scope.
-13. **Secret Defense**: Verify no secrets or credentials appear in `.env` or git status. Run `bun ~/.config/LIFEOS/runtime/TOOLS/SecretScan.ts .` to ensure compliance with the Vibeguard protocol.
+8. **Atomic Payload Isolation**: If Atomic is enabled, verify the target holds the official upstream template (`package.json` named `atomic-payload`, `src/payload.config.ts` with `buildConfig` + `mongooseAdapter`, `next.config.ts` with `withPayload`) plus engine governance only — no `src/styles/tokens.css`, no `uno.config.ts`, no Drizzle/CI/pre-commit overlays. Run `pnpm install`, `pnpm generate:types`, `pnpm dev`, open `http://localhost:42100/admin`, create the first admin, seed via the dashboard banner.
+9. **Backend Engine**: If Medusa is provisioned, check `./backend/medusa-config.ts`, `./backend/docker-compose.yml`, and `./backend/package.json`. If PostgreSQL container is requested, check `./docker-compose.yml`.
+10. **Day-1 Starter Dashboard**: Check that `src/app/page.tsx` (Next.js) or `src/pages/index.astro` (Astro) is provisioned with live stack badges and quick links.
+11. **Deployment & CI/CD**: Verify `.github/workflows/ci.yml` is present, alongside `Dockerfile` / `wrangler.toml` / `vercel.json` matching `--deploy`.
+12. **Quality Gates & Test Suite**: Run `bun test` inside the scaffolded workspace to confirm `tests/health.test.ts` passes cleanly.
+13. **Day-1 Secret Defense**: Verify `scripts/pre-commit.sh` exists and is executable.
+14. **Dynamic ADRs & Product DOX**: Check that `.agents/context/decisions.md` contains ADR-001 through ADR-006, and `.agents/context/product.md` reflects the interview scope.
+15. **Secret Defense**: Verify no secrets or credentials appear in `.env` or git status. Run `bun ~/.config/LIFEOS/runtime/TOOLS/SecretScan.ts .` to ensure compliance with the Vibeguard protocol.

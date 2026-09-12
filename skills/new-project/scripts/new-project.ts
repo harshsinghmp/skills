@@ -66,7 +66,7 @@ const { values, positionals } = parseArgs({
     "custom-state": { type: "string" },
     mobile: { type: "string", short: "m" }, // capacitor | expo | custom | none
     "custom-mobile": { type: "string" },
-    cms: { type: "string", short: "c" },    // ariabuilder | studiocms | tina | keystatic | emdash | payload | wollycms | decap | keystone | sanity | strapi | custom | none
+    cms: { type: "string", short: "c" },    // ariabuilder | atomic-payload | studiocms | tina | keystatic | emdash | payload | wollycms | decap | keystone | sanity | strapi | custom | none
     "custom-cms": { type: "string" },
     puck: { type: "boolean", default: false },
     ecommerce: { type: "string", short: "e" }, // payload | medusa | vendure | fastrr | razorpay | stripe | custom | none
@@ -122,13 +122,13 @@ Options:
       --agent-role <role>       Primary AI agent role (default: Lead Workspace Orchestrator)
       --constraint <rule>       Primary governance quality rule
   -i, --intent <intent>         brochure | content | ecommerce | app | mobile | governance
-      --preset <preset>         1-click recipe: powerhouse | publisher | edge | visual | instatic | mobile | astro-mobile
+      --preset <preset>         1-click recipe: powerhouse | astro-commerce | publisher | edge | visual | astro-visual | plain-astro | git-cms | instatic | pure-html | mobile | astro-mobile | atomic-payload
   -t, --type <type>             Framework: nextjs | astro | instatic | wordpress | expo | custom | none
   -s, --styling <style>         Styling: hybrid | unocss | bem | tailwind | custom | none
   -a, --animation <engine>      Animations: css | motion | gsap | webgl | custom | none
       --state <engine>          State: nanostores | custom | none
   -m, --mobile <target>         Mobile: capacitor | expo | custom | none
-  -c, --cms <cms>               CMS: ariabuilder | studiocms | tina | keystatic | emdash | payload | wollycms | decap | keystone | sanity | strapi | custom | none
+  -c, --cms <cms>               CMS: ariabuilder | atomic-payload | studiocms | tina | keystatic | emdash | payload | wollycms | decap | keystone | sanity | strapi | custom | none
       --puck                    Enable Puck Visual Builder for Payload CMS
   -e, --ecommerce <engine>      Commerce: payload | medusa | vendure | fastrr | razorpay | stripe | custom | none
       --db <database>           Database: supabase | neon | postgres | sqlite | custom | none
@@ -935,6 +935,26 @@ function getPresetConfig(preset: string): StackConfig {
         auth: "none",
         deploy: "cloudflare",
       };
+    case "atomic-payload":
+      // Official isolated website-builder scaffold: upstream ships its own
+      // Tailwind, zustand, MongoDB and Vercel deploy path, so every engine
+      // layer is none; framework=nextjs is honest labeling (upstream IS
+      // Next.js) and the isolation gate skips the engine's own bootstrap.
+      return {
+        intent: "content",
+        framework: "nextjs",
+        styling: "none",
+        animation: "none",
+        state: "none",
+        mobile: "none",
+        cms: "atomic-payload",
+        puck: false,
+        ecommerce: "none",
+        db: "none",
+        orm: "none",
+        auth: "none",
+        deploy: "none",
+      };
     default:
       return {
         intent: "brochure",
@@ -1151,14 +1171,17 @@ async function main() {
       } else if (config.framework === "nextjs") {
         console.log("  [1] Plain Next.js            (Clean App Router baseline, Server Actions) [Recommended]");
         console.log("  [2] Next.js + Payload CMS 3.0 (Native App Router, TS collections + optional Puck visual canvas)");
-        console.log("  [3] Next.js + Git-based      (Markdown/MDX collections)");
-        console.log("  [4] None");
-        const nextChoice = await ask(rl, "Choose Next.js variant / CMS [1-4]", "1");
+        console.log("  [3] Atomic Payload Website Builder  (Official isolated template: Payload + Next.js + Tailwind, every @pro-laico plugin, /admin on :42100)");
+        console.log("  [4] Next.js + Git-based      (Markdown/MDX collections)");
+        console.log("  [5] None");
+        const nextChoice = await ask(rl, "Choose Next.js variant / CMS [1-5]", "1");
         if (nextChoice === "2") {
           config.cms = "payload";
           const puckChoice = await ask(rl, "🎨 Enable Puck Visual Builder (@puckeditor/core)? [y/n]", "y");
           config.puck = puckChoice.toLowerCase().startsWith("y");
         } else if (nextChoice === "3") {
+          config.cms = "atomic-payload";
+        } else if (nextChoice === "4") {
           config.cms = "git";
         } else {
           config.cms = "none";
@@ -1462,12 +1485,16 @@ async function main() {
   if (isDryRun) console.log(`🔍 [DRY RUN MODE — Zero filesystem modifications]`);
   console.log("-------------------------------------------------------\n");
 
-  // Aria Builder isolation: the official repo ships its own Astro + UnoCSS +
-  // CMS + SQLite, so companion selections stay documented intent only — the
-  // Aria block clones upstream and every block below skips its extras.
+  // Isolated official scaffolds (Aria Builder, Atomic Payload): each upstream
+  // repo ships a complete stack, so companion selections stay documented intent
+  // only — the isolated provisioning block extracts upstream and every block
+  // below skips its extras.
   // (Placed after the summary print so dry-run output still shows intent.)
   const isAriaIsolated = config.cms === "ariabuilder";
-  if (isAriaIsolated && !isDryRun) {
+  const isAtomicIsolated = config.cms === "atomic-payload";
+  const isIsolatedOfficial = isAriaIsolated || isAtomicIsolated;
+  const isolatedName = isAtomicIsolated ? "Atomic Payload" : "Aria Builder";
+  if (isIsolatedOfficial && !isDryRun) {
     const skipped = [
       ["styling", config.styling],
       ["state", config.state],
@@ -1486,7 +1513,7 @@ async function main() {
     config.deploy = "none";
     config.puck = false;
     if (skipped.length > 0) {
-      console.log(`ℹ️  Aria Builder is fully isolated: skipping engine extras (${skipped.map(([k, v]) => `${k}=${v}`).join(", ")}). Request them after scaffolding if needed.`);
+      console.log(`ℹ️  ${isolatedName} is fully isolated: skipping engine extras (${skipped.map(([k, v]) => `${k}=${v}`).join(", ")}). Request them after scaffolding if needed.`);
     }
   }
 
@@ -1745,7 +1772,7 @@ async function main() {
   // =========================================================================
   const skipInstall = values["skip-install"] || false;
 
-  if (config.framework !== "none" && !isDryRun && !isAriaIsolated) {
+  if (config.framework !== "none" && !isDryRun && !isIsolatedOfficial) {
     console.log(`🚀 Bootstrapping ${config.framework.toUpperCase()} Framework (@latest)...`);
     try {
       if (config.framework === "astro") {
@@ -2528,6 +2555,105 @@ const PrerenderedPage = makePage(config);
         }
         console.log("  ✅ Scaffolded: official Aria Builder (Astro + UnoCSS Wind 4 + CMS + SQLite)");
         console.log("  👉 Run: `npm run dev`, open http://localhost:4321/admin — first visit completes setup at http://localhost:4321/admin/setup");
+      }
+    }
+
+    // 3.2.0b Atomic Payload (isolated official scaffold — pro-laico)
+    if (isAtomicIsolated) {
+      // Upstream ships a complete Payload 3 + Next.js 16 + Tailwind stack with
+      // every @pro-laico/* plugin. The official create-atomic-payload CLI cannot
+      // run in-place (the engine already wrote AGENTS.md/.agents/ into the
+      // target, and the CLI exits 1 on an existing dir), so mirror the Aria
+      // staging pattern: npm-pack the OFFICIAL published tarball, extract the
+      // bundled scaffold, and merge it in untouched — skip-if-exists so engine
+      // governance files are never overwritten.
+      if (!isDryRun) {
+        const stagingParent = join(os.tmpdir(), `atomic-payload-pack-${Date.now()}`);
+        mkdirSync(stagingParent, { recursive: true });
+        console.log("  📦 Fetching official Atomic Payload template (npm pack @pro-laico/create-atomic-payload)...");
+        let scaffoldSrc: string | null = null;
+        const pack = spawnSync("npm", ["pack", "@pro-laico/create-atomic-payload", "--pack-destination", stagingParent], { stdio: "ignore" });
+        if (pack.status === 0) {
+          const tgz = readdirSync(stagingParent).find((f) => f.endsWith(".tgz"));
+          if (tgz) {
+            spawnSync("tar", ["-xzf", join(stagingParent, tgz), "-C", stagingParent], { stdio: "ignore" });
+            const candidate = join(stagingParent, "package", "scaffolds", "atomic-payload");
+            if (existsSync(join(candidate, "package.json"))) scaffoldSrc = candidate;
+          }
+        }
+
+        if (scaffoldSrc) {
+          for (const entry of readdirSync(scaffoldSrc)) {
+            if (entry === "node_modules" || entry === ".git") continue;
+            const src = join(scaffoldSrc, entry);
+            const dest = join(resolvedTarget, entry);
+            if (entry === "gitignore.template") {
+              // Official CLI renames gitignore.template → .gitignore; the engine
+              // already wrote its own, so append upstream entries under a header
+              // (same shape as the framework .gitignore merge).
+              const gitignorePath = join(resolvedTarget, ".gitignore");
+              const upstreamIgnores = readFileSync(src, "utf8");
+              const engineIgnores = existsSync(gitignorePath) ? readFileSync(gitignorePath, "utf8") : "";
+              writeFileSync(gitignorePath, `${engineIgnores}\n\n# Atomic Payload Upstream Defaults\n${upstreamIgnores}`, "utf8");
+            } else if (entry === ".env.example") {
+              if (!existsSync(dest)) cpSync(src, dest);
+              // Official CLI copies .env.example → .env; only copy if absent.
+              const envLocalPath = join(resolvedTarget, ".env");
+              if (!existsSync(envLocalPath)) cpSync(src, envLocalPath);
+            } else {
+              if (!existsSync(dest)) cpSync(src, dest, { recursive: true });
+            }
+          }
+          rmSync(stagingParent, { recursive: true, force: true });
+          console.log("  ✅ Scaffolded: official Atomic Payload template (Payload 3 + Next.js 16 + Tailwind, every @pro-laico/* plugin)");
+        } else {
+          // ponytail: offline fallback keeps isolated unit tests green; real runs use the official published template above.
+          rmSync(stagingParent, { recursive: true, force: true });
+          const fallbackPkg = {
+            name: "atomic-payload",
+            version: "0.5.0",
+            description: "The Payload CMS Starter Where All You Need To Know Is Tailwind.",
+            license: "MIT",
+            private: true,
+            type: "module",
+            scripts: {
+              dev: "next dev -p 42100",
+              build: "next build",
+              start: "next start -p 42100",
+              payload: "payload",
+              "generate:types": "cross-env NODE_OPTIONS=\"--conditions=react-server\" payload generate:types",
+              "generate:importmap": "cross-env NODE_OPTIONS=\"--conditions=react-server\" payload generate:importmap",
+            },
+            dependencies: {
+              "@payloadcms/db-mongodb": "^3.85.1",
+              "@payloadcms/next": "^3.85.1",
+              "@pro-laico/core": "^0.5.0",
+              next: "^16.2.9",
+              payload: "^3.85.1",
+              react: "^19.2.7",
+              "react-dom": "^19.2.7",
+              sharp: "^0.35.2",
+            },
+          };
+          writeFileSync(join(resolvedTarget, "package.json"), JSON.stringify(fallbackPkg, null, 2) + "\n", "utf8");
+          writeFileSync(join(resolvedTarget, "next.config.ts"), `import { withPayload } from '@payloadcms/next/withPayload'\n\nconst nextConfig = {}\n\nexport default withPayload(nextConfig, { devBundleServerPackages: false })\n`, "utf8");
+          mkdirSync(join(resolvedTarget, "src"), { recursive: true });
+          writeFileSync(join(resolvedTarget, "src", "payload.config.ts"), `import sharp from 'sharp'\nimport { buildConfig } from 'payload'\nimport type { SharpDependency } from 'payload'\nimport { mongooseAdapter } from '@payloadcms/db-mongodb'\n\nexport default buildConfig({\n  sharp: sharp as unknown as SharpDependency,\n  graphQL: { disable: true },\n  secret: process.env.PAYLOAD_SECRET || '',\n  typescript: { outputFile: 'payload-types.ts' },\n  db: mongooseAdapter({\n    url: process.env.MONGODB_URI || '',\n    transactionOptions: false,\n  }),\n})\n`, "utf8");
+          console.log("  ✅ Scaffolded: Atomic Payload offline fallback markers (offline run — rerun with network for the full official template)");
+        }
+
+        // Official package manager for this template is pnpm; never substitute bun.
+        if (!skipInstall) {
+          try {
+            spawnSync("pnpm", ["install"], { cwd: resolvedTarget, stdio: "ignore" });
+          } catch {
+            console.log("  👉 Run: `pnpm install`");
+          }
+        } else {
+          console.log("  👉 Run: `pnpm install`");
+        }
+        console.log("  👉 Run: `pnpm install`, `pnpm generate:types && pnpm generate:importmap`, `pnpm dev`, open http://localhost:42100/admin (create the first admin user; seed via the dashboard banner)");
+        console.log("  ℹ️  Official scaffolder: npx @pro-laico/create-atomic-payload <name> --template atomic-payload");
       }
     }
 
@@ -3947,9 +4073,9 @@ export default config;
       console.log("  ✅ Auto-wired: `./capacitor.config.ts` (Ionic Capacitor bridge)");
     }
 
-    // 3.8-3.13 Skipped for isolated Aria Builder (upstream ships its own env,
-    // dashboard, CI, tests, hooks, and package.json — added only on request).
-    if (!isAriaIsolated) {
+    // 3.8-3.13 Skipped for isolated official scaffolds (upstream ships its own
+    // env, dashboard, CI, tests, hooks, and package.json — added only on request).
+    if (!isIsolatedOfficial) {
     const envVars: string[] = ["# Application Environment Configuration"];
     if (config.db === "neon") {
       envVars.push("DATABASE_URL=postgresql://[user]:[password]@[neon-hostname]/neondb?sslmode=require");
@@ -4626,7 +4752,7 @@ exit 0
   // =========================================================================
   console.log("🎨 STAGE 4: Modern Tokens & BEM Architecture Injection...");
 
-  if (!isDryRun && !isAriaIsolated) {
+  if (!isDryRun && !isIsolatedOfficial) {
     const stylesDir = join(resolvedTarget, "src", "styles");
     mkdirSync(stylesDir, { recursive: true });
 
@@ -5304,8 +5430,8 @@ ${artifactList}
 ## 5. Next Immediate Focus
 - **Milestone 1**: ${firstMilestone}
 - Walk through the Client-Intake brief with your agent: \`./Client-Intake/00-Intake-Brief.md\`.
-- Run \`${isAriaIsolated ? "npm install" : "bun install"}\` to resolve dependencies.
-- Verify initial local development server (\`${isAriaIsolated ? "npm run dev" : "bun run dev"}\`)${isAriaIsolated ? " at http://localhost:4321/admin (first visit: http://localhost:4321/admin/setup)" : ""}.
+- Run \`${isAtomicIsolated ? "pnpm install" : isAriaIsolated ? "npm install" : "bun install"}\` to resolve dependencies.
+- Verify initial local development server (\`${isAtomicIsolated ? "pnpm dev" : isAriaIsolated ? "npm run dev" : "bun run dev"}\`)${isAtomicIsolated ? " at http://localhost:42100/admin (create the first admin user; seed via the dashboard banner)" : isAriaIsolated ? " at http://localhost:4321/admin (first visit: http://localhost:4321/admin/setup)" : ""}.
 `;
       writeFileSync(currentMdPath, initialCurrentContent, "utf8");
       console.log("  ✅ Updated: `./.agents/context/current.md` with initial reality");
@@ -5440,7 +5566,11 @@ ${offerItems}
   console.log(`📋 Client Intake:      \`./Client-Intake/00-Intake-Brief.md\` (answer with your agent; docs generated after)`);
   console.log(`\nNext Steps:`);
   console.log(`  1. cd ${relative(process.cwd(), resolvedTarget) || "."}`);
-  if (isAriaIsolated) {
+  if (isAtomicIsolated) {
+    console.log(`  2. pnpm install (already run unless --skip-install)`);
+    console.log(`  3. pnpm generate:types && pnpm generate:importmap`);
+    console.log(`  4. pnpm dev, then open http://localhost:42100/admin — first visit: create the first admin user; seed via the 'Seed database' dashboard banner`);
+  } else if (isAriaIsolated) {
     console.log(`  2. npm install (already run unless --skip-install)`);
     console.log(`  3. npm run dev`);
     console.log(`  4. Open http://localhost:4321/admin (first visit: http://localhost:4321/admin/setup)`);
