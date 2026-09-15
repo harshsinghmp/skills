@@ -2,6 +2,8 @@
 name: context-anchor
 aliases: ["anchor","session-anchor","working-reference","park","switch-task"]
 description: "Drop a working reference anchor at any point in a session to prevent cascading context drift, and park parallel client workstreams under named anchors for instant switching. The intra-session focus layer that folds into handoff's HANDOFF.md for cross-session continuity. Use when switching tasks, parking a client workstream, or refocusing mid-session."
+argument-hint: "[anchor|park|switch|checkpoint]"
+user-invocable: true
 version: 1.1.1
 author: Harsh Singh
 license: MIT
@@ -9,20 +11,20 @@ platforms: [macos, linux, windows]
 category: context-orchestration
 metadata:
   skill_orchestration:
-    post: ["handoff"]
+    post: ["relay"]
     optional: ["audit"]
   category: context-orchestration
   priority: 8
   aliases: ["anchor","session-anchor","working-reference","park","switch-task"]
-  suggested_skills: ["handoff","updateagents","dead-letter","audit"]
+  suggested_skills: ["relay","updateagents","dead-letter","audit"]
   hermes:
     tags: [context, memory, state, session, focus, anchor, workstreams, reliability, confidentiality]
-    related_skills: [handoff, updateagents, dead-letter, audit]
-    suggested_skills: [handoff, updateagents, dead-letter, audit]
+    related_skills: [relay, updateagents, dead-letter, audit]
+    suggested_skills: [relay, updateagents, dead-letter, audit]
     requires_tools: [view_file, write_to_file]
   openclaw:
     category: context-orchestration
-    suggested_skills: [handoff, updateagents, dead-letter, audit]
+    suggested_skills: [relay, updateagents, dead-letter, audit]
     primary_triggers: ["drop anchor","save working reference","checkpoint context","prevent context drift","park this workstream","switch workstream","list anchors"]
     requires_tools: [view_file, write_to_file]
   compatibility: [hermes, openclaw, claude-code, codex, cursor, gemini-cli, opencode]

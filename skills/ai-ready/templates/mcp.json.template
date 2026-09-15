@@ -1,0 +1,4 @@
+{
+  "mcpServers": {},
+  "_notes": "Declare scoped, least-privilege MCP servers here. This file is deployed by ai-ready --scaffold as .mcp.json when missing."
+}

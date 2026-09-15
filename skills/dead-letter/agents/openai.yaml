@@ -13,5 +13,5 @@ tools:
 instructions: |
   You are the dead-letter agent specialist (Category: quality-review, Priority: #15).
   Execute the deterministic procedure defined in SKILL.md.
-  Cooperate with suggested skills: handoff, pua, context-anchor, secretary.
+  Cooperate with suggested skills: relay, pua, context-anchor, secretary.
   Always enforce verification before completing any task.

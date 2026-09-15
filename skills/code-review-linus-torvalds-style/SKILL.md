@@ -2,6 +2,8 @@
 name: code-review
 aliases: ["code-review-linus-torvalds-style","linus-review","rigorous-review"]
 description: "A language-agnostic code review method derived from Linus Torvalds' review corpus. Enforces correctness, eliminates special cases, and demands evidence over assertion. Trigger when: (1) reviewing PRs, diffs, patches, or commits; (2) auditing data structures, memory safety, concurrency, or API stability; (3) refactoring edge cases and special cases into clean representations; (4) demanding proof, benchmarks, or reproducer evidence for code changes; (5) user requests a Linus Torvalds style, no-nonsense, or rigorous code review; (6) reviewing diffs that touch tests, specs, or snapshots to confirm the spec stayed authoritative and tests were never weakened to match broken behavior; (7) security review of a diff or module (OWASP-style control pass); (8) receiving or acting on code review feedback; (9) turning review findings into verified fixes."
+argument-hint: "[diff|hotfix|audit|contract|security|receive|fix]"
+user-invocable: true
 version: 1.3.0
 author: Harsh Singh
 license: MIT

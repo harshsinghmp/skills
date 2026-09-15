@@ -25,7 +25,7 @@
 - **🎭 High-Performance Animations**: Hardware-accelerated CSS presets (`.fade-in`, `.slide-up`, `.stagger-group`, `.reveal-on-scroll`, `.hover-lift`) alongside Motion.dev and GSAP ScrollTrigger.
 - **🧠 NanoStores Cross-Island State Engine**: Sub-1KB, framework-agnostic reactive state sharing across Astro islands (React, Vue, Svelte, vanilla) and Next.js components.
 - **📱 Native Mobile Conversion**: Converts Astro, Next.js, or static HTML web applications into native iOS and Android APK binaries via **Ionic Capacitor** (`@capacitor/cli`), or managed React Native via **Expo**.
-- **📦 Sovereign Open-Source CMS & Commerce**: Priority support for Payload CMS (+ Puck Visual Builder), Medusa v2, Aria Builder (`ariabuilder.io`), StudioCMS, and Git-based CMS (Tina, Keystatic).
+- **📦 Sovereign Open-Source CMS & Commerce**: Priority support for Payload CMS (+ Puck Visual Builder), the Atomic Payload isolated official website-builder scaffold (`pro-laico`), Medusa v2, Aria Builder (`ariabuilder.io`), StudioCMS, and Git-based CMS (Tina, Keystatic).
 - **🗄️ Database & Auth**: Native Drizzle ORM configuration for Neon, Supabase, Self-Hosted Postgres, and SQLite, paired with Better Auth.
 - **⚡ Strict `@latest` Resolution**: All scaffolders and dependencies resolve to the latest stable release.
 
@@ -71,6 +71,7 @@ bun new-project/scripts/new-project.ts <targetPath> \
 | `--preset=instatic` | Pure HTML Site | Instatic SSG + Semantic BEM CSS + Hardware CSS Animations (Zero JS runtime) |
 | `--preset=mobile` | Mobile Application | React Native (Expo `@latest`) + NativeWind + Supabase |
 | `--preset=astro-mobile` | Web-to-APK / Mobile App | Astro v7 + Hybrid UnoCSS + Hardware CSS Animations + NanoStores + Aria Builder + **Ionic Capacitor** (iOS/APK) |
+| `--preset=atomic-payload` | Website Builder (Admin-Driven) | Atomic Payload official template (`pro-laico`) — Payload 3 + Next.js 16 + Tailwind with every `@pro-laico/*` plugin, MongoDB + Vercel Blob (admin at `localhost:42100/admin`) |
 
 ### CLI Flags
 
@@ -91,13 +92,13 @@ bun new-project/scripts/new-project.ts <targetPath> \
 | `--agent-role <role>` | String | Lead agent functional role description |
 | `--constraint <text>` | String | Primary operational constraint or invariant |
 | `-i, --intent <intent>` | String | `brochure` \| `content` \| `ecommerce` \| `app` \| `mobile` \| `governance` |
-| `--preset <preset>` | String | `powerhouse` \| `publisher` \| `edge` \| `visual` \| `instatic` \| `mobile` \| `astro-mobile` |
+| `--preset <preset>` | String | `powerhouse` \| `astro-commerce` \| `publisher` \| `edge` \| `visual` \| `astro-visual` \| `plain-astro` \| `git-cms` \| `instatic` \| `pure-html` \| `mobile` \| `astro-mobile` \| `atomic-payload` |
 | `-t, --type <framework>` | String | `nextjs` \| `astro` \| `instatic` \| `wordpress` \| `expo` \| `custom` \| `none` |
 | `-s, --styling <styling>` | String | `hybrid` (UnoCSS Wind 4 + BEM) \| `unocss` \| `bem` \| `tailwind` \| `custom` \| `none` |
 | `-a, --animation <anim>` | String | `css` (Hardware presets) \| `motion` \| `gsap` \| `webgl` \| `custom` \| `none` |
 | `--state <engine>` | String | `nanostores` (Sub-1KB cross-island store) \| `custom` \| `none` |
 | `-m, --mobile <target>` | String | `capacitor` (Ionic Capacitor iOS/APK wrapper) \| `expo` (React Native) \| `custom` \| `none` |
-| `-c, --cms <cms>` | String | `ariabuilder` \| `studiocms` \| `tina` \| `keystatic` \| `emdash` \| `payload` \| `wollycms` \| `decap` \| `keystone` \| `sanity` \| `strapi` \| `custom` \| `none` |
+| `-c, --cms <cms>` | String | `ariabuilder` \| `atomic-payload` \| `studiocms` \| `tina` \| `keystatic` \| `emdash` \| `payload` \| `wollycms` \| `decap` \| `keystone` \| `sanity` \| `strapi` \| `custom` \| `none` |
 | `--puck` | Boolean | Inject Puck Visual Builder configuration |
 | `-e, --ecommerce <ecom>` | String | `payload` \| `medusa` \| `vendure` \| `fastrr` \| `razorpay` \| `stripe` \| `custom` \| `none` |
 | `--db <db>` | String | `neon` \| `supabase` \| `postgres` \| `sqlite` \| `custom` \| `none` |

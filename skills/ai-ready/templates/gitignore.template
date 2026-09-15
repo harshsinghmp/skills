@@ -1,0 +1,278 @@
+# ==============================================================================
+# Security, Credentials & Secrets (Zero-Leakage Protocol)
+# ==============================================================================
+.e[n]v
+.e[n]v.*
+!.e[n]v.example
+!.e[n]v.template
+*.e[n]v
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+id_[r]sa
+id_[e]d25519
+*.secret
+*.credentials
+secrets.*
+
+# Databases & Local SQLite
+*.sqlite
+*.sqlite3
+*.db
+*.db-*
+*.db-journal
+*.db-wal
+*.db-shm
+*.rdb
+
+# ==============================================================================
+# Personal Identity & Principal Context (Option A Strict Privacy)
+# ==============================================================================
+USER.md
+PRINCIPAL_*.md
+DA_IDENTITY.md
+*.personal.*
+*.identity.*
+.lifeos/
+.pulse/
+pulse-state/
+
+# ==============================================================================
+# AI Agents, Tools, Contexts & Instructions (Internal Cockpit - Stays Local)
+# ==============================================================================
+# Agent Context, Standards & Root DOX Rails
+.agents/
+AGENTS.md
+AGENTS.local.md
+AGENTS.override.md
+AGENTS_*.md
+skills-lock.json
+CLAUDE.md
+
+# Modern AI Agent CLI & IDE Workspaces
+.gemini/
+.antigravity/
+.claude/
+.opencode/
+.openclaw/
+.aider*
+.cline/
+.roo/
+.hermes/
+.continue/
+.omo/
+.crush/
+.codex/
+.codex-*/
+.trae/
+.windsurf/
+.cursor/
+.cursorrules.local
+.windsurfrules
+.clinerules
+.roomodes
+.superpowers/
+
+# Specialized Agent Engines & Local Scratchpads
+.codegraph/
+.jez/
+.slim/
+.artifacets/
+.artifacts/
+.system_generated/
+subagents/
+
+# Conversation transcripts, token logs & raw chat dumps
+*.transcript.jsonl
+*.trajectory.jsonl
+*.chat.json
+*.prompt.md
+*.prompt.tmp
+*.scratchpad.md
+transcripts/
+chat-logs/
+session-logs/
+agent-transcripts/
+
+# ==============================================================================
+# Memory Systems, Scratchpads & Runtime Data
+# ==============================================================================
+.memory/
+.musememory/
+memory.db
+memory.db-*
+audit.jsonl
+observations.jsonl
+optimization_meta.json
+harvested-transcripts.json
+graph-symbols.json
+
+# Local Scratchpads, Drafts & Patches
+scratch/
+tmp/
+temp/
+*.tmp
+*.scratch.*
+*.draft.*
+*.patch
+*.diff
+*.rej
+*.orig
+dogfood-output/
+
+# Local Configuration Overrides
+*.local
+*.local.*
+!*.example
+
+# ==============================================================================
+# Frameworks, Bundlers & Runtimes (Astro, React, Vite, Next.js)
+# ==============================================================================
+# Build outputs
+dist/
+build/
+out/
+.output/
+export/
+
+# Astro
+.astro/
+
+# Medusa E-Commerce Engine
+.medusa/
+
+# Next.js, React, Vite & Turborepo
+.next/
+.turbo/
+.cache/
+.parcel-cache/
+.vite/
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+
+# Static asset exports
+public/build/
+public/dist/
+
+# ==============================================================================
+# Package Managers & Dependencies
+# ==============================================================================
+node_modules/
+.pnpm-store/
+jspm_packages/
+web_modules/
+
+# Runtime caches
+.npm/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+.bun/
+
+# ==============================================================================
+# WordPress (CMS Core, Uploads, Caches & Config)
+# ==============================================================================
+# WordPress Core & Configs
+wp-config.php
+wp-config-sample.php
+wp-load.php
+wp-settings.php
+wp-activate.php
+wp-blog-header.php
+wp-comments-post.php
+wp-cron.php
+wp-links-opml.php
+wp-login.php
+wp-mail.php
+wp-signup.php
+wp-trackback.php
+xmlrpc.php
+license.txt
+readme.html
+
+# Core Directories
+wp-admin/
+wp-includes/
+
+# Uploads, Backups, Caches & Upgrade transients
+wp-content/uploads/
+wp-content/blogs.dir/
+wp-content/upgrade/
+wp-content/backup-db/
+wp-content/backups/
+wp-content/cache/
+wp-content/w3tc-config/
+wp-content/advanced-cache.php
+wp-content/wp-cache-config.php
+
+# Database dumps & export files
+*.sql
+*.sql.gz
+*.sql.tar.gz
+
+# ==============================================================================
+# Testing, Logs & Coverage
+# ==============================================================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+bun.log*
+
+# Playwright, Cypress & Coverage Reports
+.playwright/
+playwright-report/
+test-results/
+coverage/
+.nyc_output/
+cypress/videos/
+cypress/screenshots/
+
+# ==============================================================================
+# OS & IDE Configurations
+# ==============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+
+# Linux
+*~
+.directory
+.fuse_hidden*
+
+# VS Code & JetBrains & IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.sublime-workspace
+*.sublime-project
+.zed/
+.zed-context/
+
+# ==============================================================================
+# Git Worktrees (Isolated Parallel Agent Lanes)
+# ==============================================================================
+.worktrees/
+worktrees/

@@ -17,5 +17,5 @@ instructions: |
   HANDOFF.md at session close (see references/layering-protocol.md), and enforce the
   client-confidentiality guard: codenames under NDA, zero secrets, archive or wipe at
   project close. Never duplicate HANDOFF.md as a second truth. Cooperate with suggested
-  skills: handoff, updateagents, dead-letter, audit. Always enforce verification before
+  skills: relay, updateagents, dead-letter, audit. Always enforce verification before
   completing any task.

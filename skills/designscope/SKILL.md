@@ -2,6 +2,8 @@
 name: designscope
 aliases: ["extract-design","design-tokens","layout-tree"]
 description: "Analyze any visual source — image, website URL, or Figma file — to extract its structured design system — a design.md brief, responsive CSS Grid/Flexbox component layout tree, DTCG design-tokens.json, and optional WCAG contrast report. Also handles element mode: copy one component as a rebuild spec, or turn visual art into a token-grounded generative image prompt. Trigger on 'extract the design system from X', 'deconstruct this layout', 'recreate this website design', 'convert this screenshot into tokens and layout tree', 'what palette does this site use', 'document this design', 'copy this navbar', 'recreate this illustration', or whenever the user brings a screenshot, URL, Figma link, or mockup and wants it understood at a structural and design level."
+argument-hint: "[Full|Element]"
+user-invocable: true
 version: 1.1.1
 author: Harsh Singh
 license: MIT

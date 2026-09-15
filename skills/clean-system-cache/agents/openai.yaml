@@ -1,0 +1,20 @@
+name: clean-system-cache
+description: "Cross-platform developer, designer, and browser cache cleaner for Windows, Linux, and macOS. Safely purges only unreferenced, dangling, and disposable caches from package managers (uv, npm, bun, pip, pnpm, yarn, cargo, go, dotnet, composer, gradle, brew), IDEs and compilers (xcode, android, vscode, cursor, cypress), containers (docker, podman), creative suites (adobe media cache, photoshop temp, figma, blender, electron), and web browsers (chrome, chromium, brave, edge, firefox, zen, vivaldi, safari). Enforces active running session protection and strict cache-only isolation with zero external runtimes (pure Bash on POSIX, native CMD on Windows)."
+tools:
+  - type: function
+    function:
+      name: bash
+  - type: function
+    function:
+      name: run_command
+  - type: function
+    function:
+      name: view_file
+  - type: function
+    function:
+      name: write_to_file
+instructions: |
+  You are the clean-system-cache agent specialist (Category: reflection-maintenance, Priority: #20).
+  Execute the deterministic procedure defined in SKILL.md.
+  Cooperate with suggested skills: audit, periodic-retreat, code-review, gauntlet-loop.
+  Always enforce running session protection and cache-only isolation before completing any task.

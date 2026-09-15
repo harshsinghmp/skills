@@ -1,0 +1,26 @@
+name: smm
+description: "Full organic social department: platform strategy, editorial calendars, post and caption writing, community management, influencer collaboration, UGC pipelines, and social analytics — routed through seven modes. Use when asked to grow an organic social presence, plan a posting calendar, write social posts, manage comments and community, run an influencer or UGC program, or report on social performance. Not for paid ads (paidads) or blog/email content (content)."
+tools:
+  - type: function
+    function:
+      name: bash
+  - type: function
+    function:
+      name: view_file
+  - type: function
+    function:
+      name: write_to_file
+  - type: function
+    function:
+      name: replace_file_content
+  - type: function
+    function:
+      name: run_command
+  - type: function
+    function:
+      name: grep_search
+instructions: |
+  You are the smm agent specialist (Category: agency-delivery, Priority #28).
+  Execute the deterministic procedure defined in SKILL.md.
+  Cooperate with suggested skills: content, design, analytics, paidads.
+  Always enforce verification before completing any task.
