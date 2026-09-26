@@ -27,21 +27,21 @@ else
 fi
 
 # 3. Check MuseMemory boundary (.memory/** must never be in instruction files)
-if grep -q "\.memory/memory\.db" "$FILE" 2>/dev/null; then
+if rg -q "\.memory/memory\.db" "$FILE" 2>/dev/null || grep -q "\.memory/memory\.db" "$FILE" 2>/dev/null; then
   echo "❌ Safety Error: Found raw .memory database references in instruction file"
   exit 1
 fi
 echo "✅ MuseMemory hard boundary respected"
 
 # 4. Check for Core Invariants or Essential Sections
-if grep -q "Core Turn Invariants" "$FILE" || grep -q "DOX Rail" "$FILE" || grep -q "Quick Start" "$FILE"; then
+if rg -q "Core Turn Invariants" "$FILE" 2>/dev/null || grep -q "Core Turn Invariants" "$FILE" || rg -q "DOX Rail" "$FILE" 2>/dev/null || grep -q "DOX Rail" "$FILE" || rg -q "Quick Start" "$FILE" 2>/dev/null || grep -q "Quick Start" "$FILE"; then
   echo "✅ Recognized governance architecture verified"
 else
   echo "⚠️  Notice: Custom governance structure detected"
 fi
 
 # 5. Check for accidental credentials/tokens
-if grep -iE '(sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{20,}|BEGIN (RSA|EC|OPENSSH) PRIVATE KEY)' "$FILE" 2>/dev/null; then
+if rg -i '(sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{20,}|BEGIN (RSA|EC|OPENSSH) PRIVATE KEY)' "$FILE" 2>/dev/null || grep -iE '(sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{20,}|BEGIN (RSA|EC|OPENSSH) PRIVATE KEY)' "$FILE" 2>/dev/null; then
   echo "❌ Critical Security Error: Credential pattern detected in instruction file!"
   exit 1
 fi

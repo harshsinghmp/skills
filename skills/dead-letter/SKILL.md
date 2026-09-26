@@ -2,6 +2,8 @@
 name: dead-letter
 aliases: ["failure-triage","blocked-task","dead-letter-queue"]
 description: "Capture a failed or blocked task before it disappears. Categorizes the failure mode, distinguishes transient from permanent failures, verifies actual state before any retry, preserves partial work and orphaned resources, and generates either a bounded autonomous retry packet with the root cause fixed or an escalation message with a specific decision question. Recovery follows a strict ordered sequence with baseline regression comparison against the last-known-good state, close-out can generate a repro test pack (exact reproduction steps, preconditions, expected-vs-actual, minimal failing test) for Dev/QA handoff, and the status sweep clusters open records by root cause so repeated failures across tasks surface as one systemic finding with one fix — with a findings ledger that deduplicates recurring sweeps and measures convergence."
+argument-hint: "task failed, blocked task, retry or escalate"
+user-invocable: true
 version: 1.5.0
 author: Harsh Singh
 license: MIT
@@ -11,15 +13,15 @@ metadata:
   category: quality-review
   priority: 15
   aliases: ["failure-triage","blocked-task","dead-letter-queue"]
-  suggested_skills: ["handoff","pua","context-anchor","secretary"]
+  suggested_skills: ["relay","pua","context-anchor","secretary"]
   hermes:
     tags: [triage, error-handling, debugging, subagents, escalation, reliability, retry-gate, state-verification, orphan-cleanup, recovery-sequence, baseline-regression, repro-pack, cluster-triage]
-    related_skills: [handoff, pua, context-anchor, secretary]
-    suggested_skills: [handoff, pua, context-anchor, secretary]
+    related_skills: [relay, pua, context-anchor, secretary]
+    suggested_skills: [relay, pua, context-anchor, secretary]
     requires_tools: [bash, view_file, write_to_file]
   openclaw:
     category: quality-review
-    suggested_skills: [handoff, pua, context-anchor, secretary]
+    suggested_skills: [relay, pua, context-anchor, secretary]
     primary_triggers: ["task failed","blocked on error","dead letter capture","escalate failure","retry failed task","dead letter status","repro pack","reproduction steps for the bug","triage open failures","nightly failure triage"]
     requires_tools: [bash, view_file, write_to_file]
   compatibility: [hermes, openclaw, claude-code, codex, cursor, gemini-cli, opencode]

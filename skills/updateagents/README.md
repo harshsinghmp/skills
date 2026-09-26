@@ -14,7 +14,8 @@ This skill is not merely an `AGENTS.md` updater. It determines what project info
 - **🔒 HARD BOUNDARY — MuseMemory (`.memory/**`)**: The `.memory/` directory is exclusively owned and managed by MuseMemory. `updateagents` **never** reads, writes, modifies, deletes, or validates `.memory/**`.
 - **🌐 Workspace-Scoped**: Operates strictly within the current working directory. Never traverses above the workspace.
 - **🛠️ Smart DOX Retrofit**: If a workspace lacks the Progressive Disclosure DOX architecture, `updateagents` safely provisions the 9-folder `.agents/` container, migrates existing facts into `.agents/context/`, and archives legacy instruction files.
-- **🔄 Single Source of Truth**: Pulls updated universal standards (`.agents/standards/`) and brand baselines directly from `ai-ready/templates/` (13 modular standards, including modern WordPress) with **zero duplicate templates**.
+- **🔄 Single Source of Truth**: Pulls updated universal standards (`.agents/standards/`) and brand baselines directly from `ai-ready/templates/` (17 modular standards, including modern WordPress, fintech gateways, boundary governance, client reporting, and motion diagrams) with **zero duplicate templates**.
+- **⚖️ Global Invariant Atom Table Telemetry**: Audits active global invariant atoms against the $\le 20$ atom attention cap to prevent model instruction fatigue and context bloat.
 - **📏 Compact Size Control**: Enforces concise instruction files (<5KB preferred, <10KB hard ceiling).
 
 ---
@@ -71,7 +72,7 @@ Updated Agent Context
 6. **Determine Targets**: Targets smallest correct scope.
 7. **Preserve Existing Knowledge**: Protects intentional human notes and ADRs.
 8. **DOX Scaffolding & Context Placement**: Checks existing agent files, scaffolds if absent, and merges custom content into context files without clobbering.
-9. **Standards Synchronization**: Syncs the 13 rulebooks from `ai-ready/templates/` (including WordPress).
+9. **Standards Synchronization**: Syncs all 17 rulebooks from `ai-ready/templates/` (including modern WordPress, fintech gateways, boundary governance, client reporting, and motion diagrams) and displays the Invariant Atom Table telemetry.
 10. **Capture Commands**: Verifies commands against actual package scripts.
 11. **Capture Architecture**: Documents system boundaries and data flows.
 12. **Capture Sources of Truth**: Explicitly records authoritative files.

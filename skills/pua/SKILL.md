@@ -2,6 +2,8 @@
 name: pua
 aliases: ["pip","ai-pip","performance-plan"]
 description: "Put your AI on a Performance Improvement Plan. Forces exhaustive problem-solving with Western big-tech performance culture rhetoric and structured debugging. Trigger when: (1) task failed 2+ times or stuck tweaking same approach; (2) about to say 'I cannot', suggest manual work, or blame environment without verifying; (3) being passive—not searching, not reading source, just waiting; (4) user frustration: 'try harder', 'stop giving up', 'figure it out', 'again???', or similar. Also for complex debugging, env issues, config/deployment failures. All task types: code, config, research, writing, deployment, infra, API. Do NOT trigger on first-attempt failures or when a known fix is executing."
+argument-hint: "try harder, stop giving up, failed twice"
+user-invocable: true
 version: 1.1.0
 author: Harsh Singh
 license: MIT
@@ -148,6 +150,55 @@ When L3 or above is triggered, complete and report each item:
 - [ ] **Invert assumptions**: Tested the opposite hypothesis.
 - [ ] **Minimal isolation**: Reproduced issue in minimal isolated reproduction.
 - [ ] **Change direction**: Switched tools, frameworks, or fundamental architectural angles.
+
+---
+
+### 5. Debug Discipline: Red-Capable Loop + Falsifiable Hypotheses
+
+When L2+ debugging stalls, procedure above is not enough — add this
+discipline block (source: `mattpocock/skills` `diagnosing-bugs`, full-raw
+per lane-d-abubakar.md #1–2; enrich-only, no new skill).
+
+#### 5a. Red-capable loop ladder (loop first, hypothesise second)
+
+Everything else is mechanical: with a tight pass/fail signal that goes red
+on *this* bug, cause follows; without one, staring at code fails. Build the
+loop before any theory. Ladder, roughly cheapest first:
+
+1. **Failing test** at whatever seam reaches the bug (unit/integration/e2e).
+2. **Curl/HTTP script** against running dev server.
+3. **CLI invocation** with fixture input, diffing stdout vs known-good snapshot.
+4. **Headless browser script** (Playwright/Puppeteer) asserting DOM/console/network.
+5. **Replayed captured trace** (real request/payload/event log saved to disk, replayed in isolation).
+6. **Throwaway harness** (minimal subset, mocked deps, single function call).
+7. **Property/fuzz loop** (1000 random inputs when bug is "sometimes wrong output").
+8. **Bisection harness** (`git bisect run`-able boot-at-X-check-repeat).
+9. **Differential loop** (same input through old vs new version/config, diff outputs).
+10. **HITL bash script** (last resort; human driven by script so loop stays structured).
+
+Tighten loop once it exists: faster (seconds, not minutes), sharper (assert
+exact symptom, not "didn't crash"), deterministic (pin time, seed RNG,
+isolate FS/network). Flakes: raise reproduction rate (loop 100×,
+parallelise, stress) until debuggable.
+
+**No-loop-no-hypothesise gate:** no red-capable command run at least once =
+no Phase hypothesise. Catching yourself theorising before command exists =
+stop, build loop. Genuinely no loop possible = say so, list tried options,
+ask user for repro env / redacted artifact / prod-instrumentation permission.
+
+#### 5b. Falsifiable hypotheses + tagged probes + seam-checked regression
+
+- **3–5 ranked hypotheses before testing any.** Each falsifiable:
+  `If <X> is cause, then <changing Y> makes bug disappear / <changing Z>
+  makes it worse.` No prediction = vibe, discard. Show ranked list to user
+  before testing (cheap checkpoint, re-ranks fast).
+- **One variable per probe.** Debugger/REPL first, then targeted logs at
+  hypothesis-distinguishing boundaries — never log-everything-and-grep. Tag
+  every debug log `[DEBUG-xxxx]`; cleanup = single grep. Perf regressions:
+  baseline measurement + bisect, not logs.
+- **Regression test before fix, only at correct seam.** Seam must exercise
+  real bug pattern as it occurs at call site. No correct seam = finding
+  itself: architecture prevents locking bug down, flag it, document absence.
 
 ---
 

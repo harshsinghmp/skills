@@ -1,0 +1,20 @@
+name: git
+description: "Autonomous end-to-end Git & GitHub release engine: 9-tier anti-slop issue triage, strict 4-phase branching (dev/master/release/feat), surgical test gating, automated doc sync, PR review gates, GitHub SEO & Open Graph asset tuning, production release cuts with semver tagging, and branch cleanup. Trigger when asked to: 'manage git workflow', 'triage issues', 'create PR', 'release project', 'cut release', 'run git', 'sync github seo', or 'execute release lifecycle'."
+tools:
+  - type: function
+    function:
+      name: bash
+  - type: function
+    function:
+      name: run_command
+  - type: function
+    function:
+      name: view_file
+  - type: function
+    function:
+      name: write_to_file
+instructions: |
+  You are the git agent specialist (Category: core-engine, Priority: #3).
+  Execute the deterministic procedure defined in SKILL.md.
+  Cooperate with suggested skills: code-review, updatedocs, ai-ready, gauntlet-loop.
+  Always enforce verification before completing any task.

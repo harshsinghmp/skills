@@ -76,6 +76,12 @@ The SKILL.md is a router that loads only what the mode needs — token-minimal b
 | **receive** | feedback arrived on your work — verify → implement / rebut / ask | `references/receiving-feedback.md` |
 | **fix** | findings → test-first fixes, one commit each, skip ledger, re-review to convergence | `references/fixing-findings.md` |
 
+### Specialized References & Boundary Governance
+
+- `references/boundary-governance.md`: Odai 5-checkpoint mission-focused boundary governance (Goal, Facts, Method, Proof, Boundaries) enforcing zero unauthorized scope expansion and evidence-backed execution.
+- `references/security-process.md`: Deep security audit process and threat vector containment.
+- `references/triage-matrix.md`: Multi-dimensional issue triage matrix and priority scoring.
+
 ## 📊 The 17 Review Themes
 
 The full trigger catalog lives in [`references/themes.md`](references/themes.md) —
@@ -181,6 +187,7 @@ code-review/
 ├── README.md                           # this file — human reference (agents: load SKILL.md)
 ├── references/
 │   ├── themes.md                       # full 17-theme trigger catalog (diff/audit)
+│   ├── boundary-governance.md          # Odai 5-checkpoint mission-focused boundary governance
 │   ├── security-controls.md            # SEC-01..10 control pass (security)
 │   ├── receiving-feedback.md           # verify → implement/rebut/ask protocol (receive)
 │   ├── fixing-findings.md              # findings ledger → verified fixes (fix)

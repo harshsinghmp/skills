@@ -2,6 +2,8 @@
 name: updateagents
 aliases: ["sync-agents","update-memory","agent-sync"]
 description: "Synchronize AI-agent instructions and project context with the actual current state of the workspace. Identifies durable agent-relevant knowledge, enforces strict MuseMemory isolation, retrofits Progressive Disclosure DOX architecture, and synchronizes standards from the single template canon."
+argument-hint: "[sync-context|update-memory|sync-AGENTS]"
+user-invocable: true
 version: 2.0.0
 author: Agency Council
 license: MIT
@@ -11,15 +13,15 @@ metadata:
   category: core-engine
   priority: 2
   aliases: ["sync-agents","update-memory","agent-sync"]
-  suggested_skills: ["updatedocs","new-project","handoff","context-anchor"]
+  suggested_skills: ["updatedocs","new-project","relay","context-anchor"]
   hermes:
     tags: [memory, documentation, context, agents, workspace, synchronization, dox]
-    related_skills: [updatedocs, new-project, handoff, context-anchor]
-    suggested_skills: [updatedocs, new-project, handoff, context-anchor]
+    related_skills: [updatedocs, new-project, relay, context-anchor]
+    suggested_skills: [updatedocs, new-project, relay, context-anchor]
     requires_tools: [bash, view_file, write_to_file, grep_search]
   openclaw:
     category: core-engine
-    suggested_skills: [updatedocs, new-project, handoff, context-anchor]
+    suggested_skills: [updatedocs, new-project, relay, context-anchor]
     primary_triggers: ["update agents","sync project context","update memory","sync AGENTS.md"]
     requires_tools: [bash, view_file, write_to_file, grep_search]
   compatibility: [hermes, openclaw, claude-code, codex, cursor, gemini-cli, opencode]
@@ -170,6 +172,10 @@ Update the smallest correct scope (root instructions vs package instructions). D
 ### Step 7 — Preserve Existing Knowledge
 Preserve valid human-authored content, architectural decisions, project-specific constraints, and meaningful warnings. Remove obsolete guidance only when obsolescence is confirmed.
 
+Glossary sparring (source: lane D #5 — pocock grill-with-docs/domain-modeling): challenge fuzzy terms inline while syncing — sharpen vague language, cross-reference each term to code, update CONTEXT.md as-you-go.
+ADR offer filter — propose an ADR only when all three hold (hard-to-reverse + surprising + real-tradeoff), else skip.
+Lazy file creation: never scaffold context files speculatively; create only on confirmed agent need.
+
 ### Step 8 — Check Existing Agent Files & Scaffolding Gate
 1. Check if any agent engine files exist (`AGENTS.md`, `CLAUDE.md`, `.cursorrules`, `.agents/`, etc.).
 2. **If NONE Found**:
@@ -186,7 +192,7 @@ Preserve valid human-authored content, architectural decisions, project-specific
    - Deploy lean root `AGENTS.md` DOX rail (<50 lines) pointing to the newly organized `.agents/` context files.
 
 ### Step 9 — Synchronize Standards from Single Canon
-Synchronize `.agents/standards/` (all 13 rulebooks, including modern WordPress) and `.agents/brand/` baseline tokens directly from `ai-ready/templates/`. Never touch or overwrite `.agents/context/*` custom facts or project source files.
+Synchronize `.agents/standards/` (all 17 modular rulebooks, including modern WordPress, fintech gateways, boundary governance, client reporting, and motion diagrams) and `.agents/brand/` baseline tokens directly from `ai-ready/templates/`. Never touch or overwrite `.agents/context/*` custom facts or project source files.
 
 ### Step 10 — Capture Commands Precisely
 Document commands only when verified in `package.json` or project tooling (Install, Dev, Build, Test, Typecheck, Lint). Never invent commands.
@@ -200,6 +206,9 @@ Explicitly document authority relationships (package scripts authoritative for c
 ### Step 13 — Capture Agent-Specific Rules
 Record operational rules (Vibeguard, test gates, token usage) supported by actual project policy.
 
+### Step 13b — Skill Authoring & Instruction Engineering (TDD Protocol)
+When authoring, scaffolding, or updating agent skills or behavioral guidance, enforce the TDD Skill Engineering Protocol: Red-Green-Refactor for agent instructions, baseline adversarial pressure testing, and anti-rationalization loophole closures (see [references/skill-authoring.md](references/skill-authoring.md)). When extracting recurring patterns into reusable skills via `bun scripts/extract-skill.ts`, all 4 Extraction Gates (Recurrence, Verification, Generalization, and TDD Engineering) must pass.
+
 ### Step 14 — Synchronize Related Knowledge
 Propagate downstream effects (e.g. API changes affecting types and tests) when future agent behavior should change.
 
@@ -208,6 +217,12 @@ Propagate downstream effects (e.g. API changes affecting types and tests) when f
 - **Warning**: `≥ 5KB`
 - **Hard Limit**: `≥ 10KB`
 Remove duplication and move verbose reference material to dedicated documentation.
+- **Conditional-block writing** (source: humanlayer improve-claude-md, mechanism-only — buyer archives CLAUDE.md, applies to DOX rail sections only): wrap domain guidance in `<important if="narrow-trigger">…</important>` scoped to one DOX section (`.agents/context/*` or router); one narrow trigger per rule, never group unrelated triggers.
+- **Bare-vs-wrap test**: bare (no wrapper) when rule applies to 90%+ tasks (identity, map, stack); wrap only domain guidance (testing, API, state, i18n).
+- **Keep-all commands**: keep every verified command; present as a single commands table/block (Step 10 verified-only still holds — never invent).
+- **Cut rules**: cut linter-enforceable patterns, code-discoverable patterns, and vague instructions; replace code snippets with path refs unless the snippet itself is the durable gotcha.
+- **Apply proc (compressed)**: identity → map → stack → commands table → split rules → wrap domains → cut linter/snippets/vague → size-check → validate.
+- Note (validator-later): narrow-condition lint (one trigger per block, no grouped triggers) proposed for `scripts/validate-memory-file.sh`; not implemented here.
 
 ### Step 16 — Validate
 Run `validate-memory-file.sh` to confirm size, structure, command accuracy, and verify `.memory/**` was untouched.

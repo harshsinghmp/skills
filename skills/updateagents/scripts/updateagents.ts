@@ -1,9 +1,10 @@
 #!/usr/bin/env bun
+
 /**
  * 🧠 updateagents — Project Agent Context Synchronization Engine
- * 
+ *
  * Synchronizes AI-agent instructions and project context with the actual current state of the workspace.
- * 
+ *
  * Logic:
  *   1. Check if any agent engine files exist (AGENTS.md, CLAUDE.md, .cursorrules, .agents/, etc.).
  *   2. If NONE found: Scaffolds fresh Agent Engine DOX architecture from ai-ready/templates/.
@@ -11,21 +12,20 @@
  *      .agents/context/{product,architecture,decisions,current}.md files without clobbering,
  *      deploys the lean root AGENTS.md DOX rail, archives legacy files, and synchronizes 13 standards.
  *   4. Generates a comprehensive change report for the user detailing what was modified, merged, and preserved.
- * 
+ *
  * Invariants:
  *   - Current workspace boundary only (never traverse above cwd).
  *   - HARD BOUNDARY: Never read, write, modify, delete, or validate .memory/**.
  *   - Single Source of Truth: Pulls standards and DOX blueprints from ai-ready/templates/.
  *   - Size & Noise Control: Keeps instruction files compact (<5KB preferred, <10KB max).
- * 
+ *
  * Usage:
  *   bun path/to/updateagents.ts [options] [targetPath]
  */
 
-import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, statSync, cpSync, renameSync } from "node:fs";
-import { resolve, join, basename, relative } from "node:path";
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
+import { basename, join, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { spawnSync } from "node:child_process";
 
 // Template source of truth located in ai-ready/templates/
 const SCRIPT_DIR = resolve(import.meta.dir, "..");
@@ -141,7 +141,9 @@ const hasAnyAgentFiles = discoveredFiles.length > 0 || hasAgentsDir;
 if (!hasAnyAgentFiles) {
   console.log("  ℹ️  No existing agent files or .agents/ container found.");
 } else {
-  console.log(`  ℹ️  Active agent files detected: ${discoveredFiles.length} file(s), .agents/ dir: ${hasAgentsDir ? "Yes" : "No"}`);
+  console.log(
+    `  ℹ️  Active agent files detected: ${discoveredFiles.length} file(s), .agents/ dir: ${hasAgentsDir ? "Yes" : "No"} (standards: ${hasStandards ? "Yes" : "No"}, context: ${hasContext ? "Yes" : "No"})`,
+  );
 }
 
 // Step 3: Inspect Project Environment
@@ -176,7 +178,10 @@ if (existsSync(composerJsonPath)) {
   try {
     const comp = JSON.parse(readFileSync(composerJsonPath, "utf8"));
     if (comp.name && projectName === basename(workspaceDir)) projectName = comp.name;
-    if (comp.require && (comp.require["roots/bedrock"] || comp.require["roots/wordpress"] || comp.require["johnpbloch/wordpress"])) {
+    if (
+      comp.require &&
+      (comp.require["roots/bedrock"] || comp.require["roots/wordpress"] || comp.require["johnpbloch/wordpress"])
+    ) {
       frameworkDetected = "wordpress";
     }
     console.log(`  ✅ Parsed composer.json: Framework="${frameworkDetected}"`);
@@ -185,7 +190,11 @@ if (existsSync(composerJsonPath)) {
 
 // Check for WordPress markers if not yet detected
 if (frameworkDetected === "generic") {
-  if (existsSync(join(workspaceDir, "wp-config.php")) || existsSync(join(workspaceDir, "web/wp-config.php")) || existsSync(join(workspaceDir, "wp-content"))) {
+  if (
+    existsSync(join(workspaceDir, "wp-config.php")) ||
+    existsSync(join(workspaceDir, "web/wp-config.php")) ||
+    existsSync(join(workspaceDir, "wp-content"))
+  ) {
     frameworkDetected = "wordpress";
     console.log(`  ✅ Detected WordPress file hierarchy`);
   }
@@ -298,11 +307,11 @@ if (hasAnyAgentFiles) {
   console.log("\n🔄 Step 4B: Custom agent files detected — Extracting and intelligently placing context...");
 
   // Collect all text from discovered legacy files
-  let aggregatedCustomRules: string[] = [];
+  const aggregatedCustomRules: string[] = [];
   let extractedProjectPurpose = "";
-  let extractedArchCommands: string[] = [];
-  let extractedDecisions: string[] = [];
-  let extractedCurrentNotes: string[] = [];
+  const extractedArchCommands: string[] = [];
+  const extractedDecisions: string[] = [];
+  const extractedCurrentNotes: string[] = [];
 
   for (const item of discoveredFiles) {
     const sections = extractSections(item.content);
@@ -310,13 +319,35 @@ if (hasAnyAgentFiles) {
     for (const [title, content] of Object.entries(sections)) {
       if (!content.trim()) continue;
 
-      if (title.includes("overview") || title.includes("purpose") || title.includes("about") || title.includes("scope")) {
+      if (
+        title.includes("overview") ||
+        title.includes("purpose") ||
+        title.includes("about") ||
+        title.includes("scope")
+      ) {
         extractedProjectPurpose += `\n### From ${item.relPath} (${title})\n${content}\n`;
-      } else if (title.includes("command") || title.includes("script") || title.includes("build") || title.includes("stack") || title.includes("run")) {
+      } else if (
+        title.includes("command") ||
+        title.includes("script") ||
+        title.includes("build") ||
+        title.includes("stack") ||
+        title.includes("run")
+      ) {
         extractedArchCommands.push(`### From ${item.relPath} (${title})\n${content}`);
-      } else if (title.includes("decision") || title.includes("adr") || title.includes("principle") || title.includes("rule")) {
+      } else if (
+        title.includes("decision") ||
+        title.includes("adr") ||
+        title.includes("principle") ||
+        title.includes("rule")
+      ) {
         extractedDecisions.push(`### From ${item.relPath} (${title})\n${content}`);
-      } else if (title.includes("task") || title.includes("todo") || title.includes("current") || title.includes("progress") || title.includes("status")) {
+      } else if (
+        title.includes("task") ||
+        title.includes("todo") ||
+        title.includes("current") ||
+        title.includes("progress") ||
+        title.includes("status")
+      ) {
         extractedCurrentNotes.push(`### From ${item.relPath} (${title})\n${content}`);
       } else {
         aggregatedCustomRules.push(`### From ${item.relPath} (${title})\n${content}`);
@@ -371,14 +402,24 @@ if (hasAnyAgentFiles) {
 
   if (existsSync(rootAgentsPath)) {
     const rootContent = readFileSync(rootAgentsPath, "utf8");
-    const isLeanRail = rootContent.includes("DOX Rail:") || rootContent.includes("Core Turn Invariants") || rootContent.split("\n").length <= 60;
+    // A curated/curated-rail AGENTS.md already wired into the DOX architecture is managed —
+    // preserve it. Only a genuine pre-DOX monolithic legacy file (no .agents/ wiring, no rail
+    // markers, oversized) gets archived and replaced with the lean rail. This stops a delivered
+    // AGENTS.md from being clobbered by an unfilled template rail ({{PROJECT_NAME}} foot-gun).
+    const isManagedRail =
+      rootContent.includes("DOX Rail:") ||
+      rootContent.includes("Core Turn Invariants") ||
+      rootContent.includes(".agents/context") ||
+      rootContent.includes(".agents/standards") ||
+      rootContent.split("\n").length <= 60;
+    const isUnfilledTemplate = rootContent.includes("{{PROJECT_NAME}}") || rootContent.includes("{{AGENT_NAME}}");
 
-    if (!isLeanRail && !isDryRun) {
+    if ((!isManagedRail || isUnfilledTemplate) && !isDryRun) {
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
       const archivePath = join(agentsDir, "archive", `AGENTS.legacy-${timestamp}.md`);
       renameSync(rootAgentsPath, archivePath);
       report.archived.push(`AGENTS.md ➔ .agents/archive/AGENTS.legacy-${timestamp}.md`);
-      console.log(`  📦 Archived monolithic AGENTS.md ➔ .agents/archive/AGENTS.legacy-${timestamp}.md`);
+      console.log(`  📦 Archived AGENTS.md ➔ .agents/archive/AGENTS.legacy-${timestamp}.md`);
 
       // Deploy lean router
       const railTemplate = join(TEMPLATES_DIR, "AGENTS.md");
@@ -387,6 +428,9 @@ if (hasAnyAgentFiles) {
         report.scaffolded.push("AGENTS.md (Lean DOX Rail)");
         console.log("  ✅ Deployed lean root AGENTS.md DOX rail (<50 lines)");
       }
+    } else {
+      report.preserved.push("AGENTS.md");
+      console.log("  ✅ Preserved existing AGENTS.md (managed DOX rail / curated content)");
     }
   } else {
     // Deploy lean router if missing
@@ -412,7 +456,7 @@ if (hasAnyAgentFiles) {
 // =========================================================================
 // Step 5: Synchronize Standards & Brand Tokens from Master Canon
 // =========================================================================
-console.log("\n🔄 Step 5: Synchronizing 13 standards & brand tokens from ai-ready/templates/...");
+console.log("\n🔄 Step 5: Synchronizing standards & brand tokens from ai-ready/templates/...");
 
 if (existsSync(TEMPLATES_DIR)) {
   // Sync .agents/standards/
@@ -476,6 +520,21 @@ if (existsSync(rootAgentsFile)) {
   console.log(`  📄 AGENTS.md size: ${size} bytes (<5KB: ${size < 5120 ? "PASSED" : "REVIEW"})`);
 }
 
+// Taste State & Global Invariant Atom Table Check
+const tasteStateFile = join(agentsDir, "context/taste-state.json");
+if (existsSync(tasteStateFile)) {
+  try {
+    const tasteData = JSON.parse(readFileSync(tasteStateFile, "utf8"));
+    const activeAtoms = (tasteData.atoms || []).filter((a: { status?: string }) => a.status === "active");
+    const cap = tasteData.activeAtomCap || 20;
+    console.log(
+      `  🧠 Invariant Atom Table: ${activeAtoms.length}/${cap} active atoms (${activeAtoms.length <= cap ? "PASSED" : "EXCEEDS CAP"})`,
+    );
+  } catch {
+    // Non-blocking telemetry
+  }
+}
+
 // =========================================================================
 // Step 7: Detailed User Report
 // =========================================================================
@@ -508,5 +567,6 @@ console.log(`\n✅ SYNCHRONIZED FROM AI-READY CANON:`);
 console.log(`   • Standards:   ${report.standardsSynced.length} rulebooks in .agents/standards/`);
 console.log(`   • Brand:       Design tokens & guidelines in .agents/brand/`);
 console.log(`   • Router:      Lean root AGENTS.md DOX rail active`);
+console.log(`   • Cognitive:   Taste & Invariant Atom Table verified`);
 console.log(`   • Safety:      Application code & .memory/** 100% untouched`);
 console.log("============================================================\n");
