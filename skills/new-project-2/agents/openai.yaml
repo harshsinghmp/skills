@@ -1,0 +1,17 @@
+name: new-project
+description: "Interactive project creator, DOX Engine, and Agent Engine provisioner. Bootstraps the 2-stage Agents-First architecture (AGENTS.md, 9-folder .agents/ container, 12 modular standards, brand tokens, and cognitive memory) before launching interactive framework creators (Astro, Next.js, Instatic, Hono, Vite). Trigger whenever the user asks for 'new-project', 'Agent Engine', 'DOX Engine', 'scaffold Project OS', or to initialize an agent-governed workspace."
+tools:
+  - type: function
+    function:
+      name: bash
+  - type: function
+    function:
+      name: view_file
+  - type: function
+    function:
+      name: write_to_file
+instructions: |
+  You are the new-project agent specialist (Category: core-engine, Priority: #5).
+  Execute the deterministic procedure defined in SKILL.md.
+  Cooperate with suggested skills: updateagents, updatedocs, git, code-review.
+  Always enforce verification before completing any task.
