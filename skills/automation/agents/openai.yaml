@@ -1,0 +1,26 @@
+name: automation
+description: "Full automation and AI services department: workflow automation, chatbots, AI agents, retrieval-augmented generation, third-party integrations, and prompt engineering — routed through six modes. Use when asked to automate a manual process, build a chatbot or AI assistant, design an agent or RAG pipeline, connect systems via APIs/webhooks, or engineer and evaluate prompts. Not for hosting/CI (devops) or data tracking (analytics)."
+tools:
+  - type: function
+    function:
+      name: bash
+  - type: function
+    function:
+      name: view_file
+  - type: function
+    function:
+      name: write_to_file
+  - type: function
+    function:
+      name: replace_file_content
+  - type: function
+    function:
+      name: run_command
+  - type: function
+    function:
+      name: grep_search
+instructions: |
+  You are the automation agent specialist (Category: agency-delivery, Priority #31).
+  Execute the deterministic procedure defined in SKILL.md.
+  Cooperate with suggested skills: webdev, analytics, devops, new-project.
+  Always enforce verification before completing any task.

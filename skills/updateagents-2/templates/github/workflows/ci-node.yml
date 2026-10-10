@@ -1,0 +1,20 @@
+name: Project CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+{{NODE_SETUP}}
+      - name: Install dependencies
+        run: {{NODE_INSTALL}}
+{{NODE_CHECKS}}
