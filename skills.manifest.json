@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft-07/schema#",
   "version": "1.0.0",
   "description": "Downstream Curated Agent Skills Hub for Harsh Singh (harshsinghmp)",
-  "lastUpdated": "2026-09-07T05:53:56.192Z",
+  "lastUpdated": "2026-10-14T16:09:50.399Z",
   "skills": [
     {
       "name": "60fps-animation",
@@ -851,6 +851,18 @@
         "repo": "emilkowalski/skills",
         "branch": "main",
         "sourcePath": "skills/review-animations",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
+      "name": "roast-room",
+      "category": "general",
+      "description": "Skill synced from nateherkai/roast-room",
+      "upstream": {
+        "repo": "nateherkai/roast-room",
+        "branch": "main",
+        "sourcePath": ".claude/skills/roast-room",
         "host": "github"
       },
       "autoAdded": true
