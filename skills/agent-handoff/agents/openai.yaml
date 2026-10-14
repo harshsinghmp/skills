@@ -1,4 +1,4 @@
-name: handoff
+name: relay
 description: "Bidirectional agent handoff and session resumption engine with ambient continuity. Generates lean, bounded context packets before dispatching subagents, resumes previous sessions with boundary-safe directory matching and unanswered questions leading, and maintains an always-current HANDOFF.md live-state file with a state-source ladder (live file, memory recall, project context, git forensics) so any new conversation or agent in a workspace continues prior work at lowest token cost — even after abrupt endings, with no explicit handoff requested."
 tools:
   - type: function
@@ -25,4 +25,4 @@ instructions: |
   output, on-demand detail, ≤30-line live file. Push durable decisions through the
   runtime's memory-write tool when one exists; never touch .memory/** by hand.
   Cooperate with suggested skills: context-anchor, dead-letter, coupling-router,
-  updateagents, ai-ready. Always enforce verification before completing any task.
+  updateagents, updatedocs. Always enforce verification before completing any task.

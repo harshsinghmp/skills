@@ -72,9 +72,16 @@ The SKILL.md is a router that loads only what the mode needs — token-minimal b
 | **hotfix** | one-liner / single-hunk — correctness + surgical + tests only | nothing extra |
 | **audit** | whole module — discovers the project's own conventions first, two-axis (standards + spec) report | `references/themes.md`, `references/cross-file-invariants.md` |
 | **contract** | API/ABI stability only | nothing extra |
-| **security** | numbered control pass (SEC-01..10), evidence-first findings | `references/security-controls.md` |
+| **security** | numbered control pass (SEC-01..13), evidence-first findings, EDR & runtime safety | `references/security-controls.md`, `references/edr-and-execution-safety.md` |
 | **receive** | feedback arrived on your work — verify → implement / rebut / ask | `references/receiving-feedback.md` |
 | **fix** | findings → test-first fixes, one commit each, skip ledger, re-review to convergence | `references/fixing-findings.md` |
+
+### Specialized References & Boundary Governance
+
+- `references/edr-and-execution-safety.md`: Antivirus/EDR false-positive heuristic rules, runtime pitfall prevention, Conventional Comments taxonomy, and lockfile supply chain auditing.
+- `references/boundary-governance.md`: Odai 5-checkpoint mission-focused boundary governance (Goal, Facts, Method, Proof, Boundaries) enforcing zero unauthorized scope expansion and evidence-backed execution.
+- `references/security-process.md`: Deep security audit process and threat vector containment.
+- `references/triage-matrix.md`: Multi-dimensional issue triage matrix and priority scoring.
 
 ## 📊 The 17 Review Themes
 
@@ -181,6 +188,7 @@ code-review/
 ├── README.md                           # this file — human reference (agents: load SKILL.md)
 ├── references/
 │   ├── themes.md                       # full 17-theme trigger catalog (diff/audit)
+│   ├── boundary-governance.md          # Odai 5-checkpoint mission-focused boundary governance
 │   ├── security-controls.md            # SEC-01..10 control pass (security)
 │   ├── receiving-feedback.md           # verify → implement/rebut/ask protocol (receive)
 │   ├── fixing-findings.md              # findings ledger → verified fixes (fix)

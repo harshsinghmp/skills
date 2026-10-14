@@ -18,15 +18,18 @@ Sequence, and a retry resumes from the first unchecked step.
 - Previously seen: yes/no (count)
 - Classification: transient / permanent
 - Autonomy: auto / confirm / escalate
+- Circuit Breaker Status: CLOSED / TRIPPED / HALF-OPEN (see `references/circuit-breaker.md`)
 - Parent record (if re-open): [path — a repeated failure of the same root cause re-opens the parent record, never a duplicate]
 
-## Precondition Check
-[Command/query verifying retryable state — run it; record the observed result]
+## Precondition Check & Delta Assertion
+- Verification Command: [Command/query verifying retryable state — run it; record the observed result]
+- Observed Result: [Exact stdout/exit code]
+- Precondition Delta: [What concretely changed in the environment/code since failure? e.g. "Exported STRIPE_SECRET_KEY in .env". If Delta is empty/none, retry is FORBIDDEN]
 
 ## Recovery Sequence
 1. [x] Classify failure mode
-2. [x] Recovery decision (transient/permanent, autonomy level)
-3. [x] Precondition check
+2. [x] Recovery decision (transient/permanent, autonomy level, circuit check)
+3. [x] Precondition check & delta assertion
 4. [ ] Apply fix
 5. [ ] Verify against baseline
 6. [ ] Close out (cleanup + repro pack if deterministic + resolve/escalate)
@@ -65,7 +68,7 @@ Sequence, and a retry resumes from the first unchecked step.
 [PRs opened, branches pushed, processes spawned, temp files left behind by the failed task — each with its cleanup command. None: write "None."]
 
 ## Diagnostic Artifacts
-[Paths to raw evidence — JSON dumps, full logs, stack traces — written outside the tracked tree and never committed. The record links them; it does not inline them.]
+[Paths to raw evidence — JSON dumps, full logs, stack traces — written outside the tracked tree and never committed. All stack traces MUST be passed through zero-credential sanitization (see `references/circuit-breaker.md`) to mask tokens, auth headers, and database credentials before linking. The record links them; it does not inline them.]
 ```
 
 ## Field notes

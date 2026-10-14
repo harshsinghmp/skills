@@ -1,7 +1,9 @@
 ---
-name: handoff
+name: relay
 aliases: ["agent-handoff","subagent-handoff","context-packet","resume","where-were-we"]
 description: "Bidirectional agent handoff and session resumption engine with ambient continuity. Generates lean, bounded context packets before dispatching subagents, resumes previous sessions with boundary-safe directory matching and unanswered questions leading, and maintains an always-current HANDOFF.md live-state file with a state-source ladder (live file, memory recall, project context, git forensics) probed on every workspace entry so any new conversation or agent continues prior work at lowest token cost — even after abrupt endings, with no explicit handoff requested. Dispatches embed the worktree-lease gate for shared checkouts."
+argument-hint: "[resume|handoff|dispatch|context-packet]"
+user-invocable: true
 version: 2.2.1
 author: Harsh Singh
 license: MIT
@@ -14,21 +16,21 @@ metadata:
   category: context-orchestration
   priority: 6
   aliases: ["agent-handoff","subagent-handoff","context-packet","resume","where-were-we"]
-  suggested_skills: ["context-anchor","dead-letter","coupling-router","updateagents","ai-ready"]
+  suggested_skills: ["context-anchor","dead-letter","coupling-router","updateagents"]
   hermes:
     tags: [subagents, handoff, resume, orchestration, context, governance, reliability, ambient-continuity, session-state, git-forensics]
-    related_skills: [context-anchor, dead-letter, coupling-router, updateagents, ai-ready]
-    suggested_skills: [context-anchor, dead-letter, coupling-router, updateagents, ai-ready]
+    related_skills: [context-anchor, dead-letter, coupling-router, updateagents]
+    suggested_skills: [context-anchor, dead-letter, coupling-router, updateagents]
     requires_tools: [bash, view_file, write_to_file]
   openclaw:
     category: context-orchestration
-    suggested_skills: [context-anchor, dead-letter, coupling-router, updateagents, ai-ready]
+    suggested_skills: [context-anchor, dead-letter, coupling-router, updateagents]
     primary_triggers: ["where were we","resume","pick up where I left off","handoff to subagent","create context packet","dispatch worker","self-handoff","continue the last session","new conversation in this workspace"]
     requires_tools: [bash, view_file, write_to_file]
   compatibility: [hermes, openclaw, claude-code, codex, cursor, gemini-cli, opencode]
 ---
 
-# 🤝 handoff — Bidirectional Handoff, Resumption & Ambient Continuity Engine
+# 🤝 relay — Bidirectional Handoff, Resumption & Ambient Continuity Engine
 
 > **Aliases**: `agent-handoff` | `subagent-handoff` | `context-packet` | `resume` | `where-were-we`
 
@@ -88,7 +90,7 @@ On workspace entry, resolve prior state by climbing the ladder; stop at the firs
 2. **Memory recall** — query the runtime's session-memory tool (e.g. `memory_sessions` / `memory_recall`), strictly filtered to this directory boundary.
 3. **Project context** — `.agents/context/current.md` and `.agents/context/index.md` (maintained by `updateagents` conventions).
 4. **Git forensics** — reconstruct from the repository itself (recipe in [references/resumption-protocol.md](references/resumption-protocol.md)); after reconstructing, **write HANDOFF.md immediately** so the next agent never digs again.
-5. **Cold start** — declare honestly: `No prior session history found for this project directory.` Never invent history. Offer the `ai-ready` audit.
+5. **Cold start** — declare honestly: `No prior session history found for this project directory.` Never invent history. Offer the `updateagents` audit.
 
 ### The Live Handoff File (`.agents/artifacts/HANDOFF.md`)
 
@@ -150,18 +152,33 @@ Omit empty sections. Full schema and write-trigger contract: [references/ambient
 
 ### 📦 Mode B: Outbound Subagent Dispatch Procedure
 
+0. **Triage + approval gate** (source: `obra/superpowers`, `skills/brainstorming/SKILL.md`): map the task to one path — spike (throwaway probe), bounded (fixed scope), or architectural (multi-session design) — announce it aloud, then ratchet one way only (spike → bounded → architectural; never downgrade). On every path, get explicit human approval before ANY code is written or dispatched; a dispatch prompt without that approval is a procedure failure.
 1. **Extract Operational Facts**:
    - **Objective**: Exact 1-sentence goal starting with an imperative verb.
    - **Decisions Made**: Irreversible choices not to be re-litigated.
    - **Ruled-Out Paths**: Approaches tried and eliminated with failure reasons.
    - **Target Scope**: Exact files to touch.
    - **Hard Constraints**: Forbidden files, libraries, or credentials (`MUST NOT`).
-   - **Deterministic Verification**: Exact test or build command.
-   - **If Blocked**: Escalation fallback.
-2. **Write Handoff Packet** to `.agents/artifacts/handoff-<timestamp>.md` (structure in [README](README.md#-packet-structure) and worked example in [examples/sample-handoff.md](examples/sample-handoff.md)).
+    - **Deterministic Verification**: Exact test or build command.
+    - **Interfaces** (source: `obra/superpowers`, `skills/writing-plans/SKILL.md`): every file in Target Scope gets a consumes/produces line — what it reads, what it returns or changes. Unlisted coupling is out of scope.
+    - **No placeholders** (same source): `TBD`, "appropriate handling", and "etc." fail the packet — every section carries exact paths, verbatim code, or a concrete command.
+    - **If Blocked**: Escalation fallback.
+    - **Assumptions-first + spec template** (source: `addyosmani/agent-skills` `spec-driven-development`): every packet opens with an assumptions block (each assumption evidence-backed or flagged for the human gate), then fills the 6-area spec template — Objective / Commands / Structure / Style / Testing / 3-tier Boundaries. Human gate per phase: SPECIFY → PLAN → TASKS → IMPLEMENT never advances on an unapproved phase.
+2. **Write Handoff Packet** to `.agents/artifacts/handoff-<timestamp>.md` (structure in [README](README.md#packet-structure) and worked example in [examples/sample-handoff.md](examples/sample-handoff.md)).
 3. **Lease hand-off to workers** (shared checkouts): if the packet's Target Scope includes git mutations (branch switches, stashes, commits to shared surfaces), embed the worktree-lease instruction in the dispatch prompt — the worker probes `.agents/artifacts/WORKTREE-LEASE.md` before its first git mutation and inherits or acquires per the lease protocol (`coupling-router` Step 0). Never dispatch two workers whose scopes overlap on one checkout.
 4. **Echo & Dispatch**: Embed the packet directly into the subagent invocation prompt.
 5. **Refresh the live file**: update HANDOFF.md to point at the dispatched task so an interrupting conversation still lands correctly.
+6. **Close the loop (#51)**: when the dispatched task returns and you are authorized, perform the delivery action programmatically via the available tools — commit + PR, merge, or issue/checklist update — rather than only describing it. Update the ticket/checklist to the real resulting state so the loop is closed, not narrated. Only describe-and-defer when the action itself requires a human (approval, merge to protected branch, secrets); leave ONE explicit ready-to-run command for that step.
+
+### 🧭 Route: multi-mode batching & config (#52)
+
+Before dispatching, map the incoming task to the **combination of existing modes/references** — not a single one — that should act on it in parallel. Decide per sub-task which of relay's own modes (Resume/Dispatch/Ambient) plus which other skills' references each worker runs, and whether the outputs are independent (parallel) or ordered (sequential pipeline). Record the mapping in the packet's Target Scope so workers never re-derive it.
+
+Optional auto-trigger config: where the runtime supports it, document a project-level config (e.g. `.agents/relay-config.yaml`) that maps trigger keywords → the resolved mode/reference combination, so the same choreography fires without re-deciding each time. Tool-independent — it's a contract, not a tool. Skip the config unless a project runs the same handoff pattern frequently.
+
+### 🗺️ Decision map: multi-session handoff artifact
+
+For work spanning sessions, attach a wayfinder map to the timestamped packet (source: `mattpocock/skills`, `skills/wayfinder/SKILL.md` via abubakar collection) — five lines, refreshed per session: Destination (one-line goal) · Notes (live context) · Decisions (made, not re-litigated) · Not-yet-specified (fog) · Out-of-scope (never touch). Fog-of-war graduation rule: ticket the sharp edges only (research / prototype / task, each marked HITL vs AFK), leave fog as fog — never ticket what is not yet specified. One ticket per session; refer to decisions by name.
 
 ### 🌊 Mode C: Ambient Continuity Procedure
 
@@ -211,6 +228,7 @@ Handoff integrates with whatever memory system the runtime provides (e.g. museme
 - **Journal Bloat**: HANDOFF.md is a pointer, not a diary. If it exceeds ~30 lines it has become a session log — prune or demote detail to a timestamped packet.
 - **Ladder Skipping**: Do not run deep analysis before the entry probe; the cheapest rung that yields state wins.
 - **Silent Cold Starts**: Never invent prior context when the ladder returns nothing — say "cold start" and move.
+- **Ticketing Fog**: Never write a ticket against a Not-yet-specified map item — fog graduates to tickets, never starts as one.
 
 ---
 
@@ -224,6 +242,10 @@ Handoff integrates with whatever memory system the runtime provides (e.g. museme
 - [ ] Resumption output stayed within the ≤5-line budget before the first productive action.
 - [ ] Memory integration used the runtime's tool API (or reported the durable fact) — `.memory/**` never touched by hand.
 - [ ] All 7 outbound packet sections are populated with zero placeholder text.
+- [ ] Mode B dispatch announced its triage path (spike / bounded / architectural) and carried explicit human approval before any code.
+- [ ] Outbound packet carries an Interfaces consumes/produces block covering every file in scope.
+- [ ] Outbound packet opens with an assumptions block and fills the 6-area spec template; no phase advanced without human approval.
+- [ ] Multi-session work attached a decision map; fog items carry no tickets.
 - [ ] In shared checkouts, dispatched workers carry the worktree-lease instruction, and entry respected any active lease before mutating.
 
 ---

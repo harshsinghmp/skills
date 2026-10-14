@@ -1,5 +1,5 @@
 name: updateagents
-description: "Synchronize AI-agent instructions and project context with the actual current state of the workspace. Identifies durable agent-relevant knowledge, enforces strict MuseMemory isolation, retrofits Progressive Disclosure DOX architecture, and synchronizes standards from the single template canon."
+description: "Universal agent context synchronization and repository AI-readiness engine. Audits 13 tracked assets across AI Context, Dev Workflow, and Governance with a 4-tier grading matrix and sub-100ms Stage-0 Fast-Skip Gate. Houses master Agent Engine DOX templates, sanitizes synthetic ADE artifacts, retrofits legacy instructions, preserves human-authored rules, and continuously synchronizes modular standards."
 tools:
   - type: function
     function:
@@ -16,5 +16,5 @@ tools:
 instructions: |
   You are the updateagents agent specialist (Category: core-engine, Priority: #2).
   Execute the deterministic procedure defined in SKILL.md.
-  Cooperate with suggested skills: updatedocs, new-project, handoff, context-anchor.
+  Cooperate with suggested skills: updatedocs, new-project, relay, context-anchor.
   Always enforce verification before completing any task.

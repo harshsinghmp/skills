@@ -1,8 +1,10 @@
 ---
 name: updateagents
-aliases: ["sync-agents","update-memory","agent-sync"]
-description: "Synchronize AI-agent instructions and project context with the actual current state of the workspace. Identifies durable agent-relevant knowledge, enforces strict MuseMemory isolation, retrofits Progressive Disclosure DOX architecture, and synchronizes standards from the single template canon."
-version: 2.0.0
+aliases: ["sync-agents","update-memory","agent-sync","ai-ready","repo-ai-ready","ai-audit"]
+description: "Universal agent context synchronization and repository AI-readiness engine. Audits 13 tracked assets across AI Context, Dev Workflow, and Governance with a 4-tier grading matrix and sub-100ms Stage-0 Fast-Skip Gate. Houses master Agent Engine DOX templates, sanitizes synthetic ADE artifacts, retrofits legacy instructions, preserves human-authored rules, and continuously synchronizes modular standards."
+argument-hint: "[sync|audit|sanitize|scaffold]"
+user-invocable: true
+version: 2.3.0
 author: Agency Council
 license: MIT
 platforms: [macos, linux, windows]
@@ -10,17 +12,17 @@ category: core-engine
 metadata:
   category: core-engine
   priority: 2
-  aliases: ["sync-agents","update-memory","agent-sync"]
-  suggested_skills: ["updatedocs","new-project","handoff","context-anchor"]
+  aliases: ["sync-agents","update-memory","agent-sync","ai-ready","repo-ai-ready","ai-audit"]
+  suggested_skills: ["updatedocs","new-project","relay","context-anchor"]
   hermes:
-    tags: [memory, documentation, context, agents, workspace, synchronization, dox]
-    related_skills: [updatedocs, new-project, handoff, context-anchor]
-    suggested_skills: [updatedocs, new-project, handoff, context-anchor]
+    tags: [memory, documentation, context, agents, workspace, synchronization, dox, ai-ready, readiness, audit]
+    related_skills: [updatedocs, new-project, relay, context-anchor]
+    suggested_skills: [updatedocs, new-project, relay, context-anchor]
     requires_tools: [bash, view_file, write_to_file, grep_search]
   openclaw:
     category: core-engine
-    suggested_skills: [updatedocs, new-project, handoff, context-anchor]
-    primary_triggers: ["update agents","sync project context","update memory","sync AGENTS.md"]
+    suggested_skills: [updatedocs, new-project, relay, context-anchor]
+    primary_triggers: ["update agents","sync project context","update memory","sync AGENTS.md","make repo AI-ready","audit AI readiness"]
     requires_tools: [bash, view_file, write_to_file, grep_search]
   compatibility: [hermes, openclaw, claude-code, codex, cursor, gemini-cli, opencode]
 ---
@@ -57,6 +59,17 @@ Use `updateagents` when:
 Do **not** run merely because files changed.
 
 Run when the change has a reasonable chance of affecting what future agents need to know.
+
+---
+
+## Modes
+
+| Mode | Focus | Key Output | Reference Document |
+| :--- | :--- | :--- | :--- |
+| **`sync`** (Default) | Synchronize instructions with codebase reality, preserve human rules, sync 19 standards | Updated `.agents/context/*`, lean `AGENTS.md` router, standards sync | [references/memory-file-priorities.md](references/memory-file-priorities.md) |
+| **`audit`** | 13-asset AI readiness scorecard, Stage-0 Fast-Skip, and `--fail-under` CI gating | Readiness report & maturity medal (🏆 AI-Ready to 🥉 Getting Started) | [references/twelve-asset-matrix.md](references/twelve-asset-matrix.md) |
+| **`sanitize`** | Strip synthetic ADE/IDE markers (`ORCA_RICH_MD`, Cursor, Windsurf) | Sanitized clean codebase without proprietary token wrappers | [references/pr-review-mining.md](references/pr-review-mining.md) |
+| **`scaffold`** | Direct Day-0 provisioning of agent context, AGENTS.md, .github templates, .env.example | Workspace instruction & governance templates | [references/fast-skip-protocol.md](references/fast-skip-protocol.md) |
 
 ---
 
@@ -98,9 +111,9 @@ The workspace boundary is the **current working directory**:
 
 ### Authority & Priority Heuristic
 ```text
-AGENTS.md → CLAUDE.md → .cursorrules → .github/copilot-instructions.md → GEMINI.md → CODEX.md
+Explicit user instruction → nearest-scope project instruction → root AGENTS.md → imported source rules → runtime adapter
 ```
-This is a heuristic, not permission to overwrite or delete lower-priority files. Never consolidate files automatically.
+`AGENTS.md` is the shared engine. Runtime-specific files are adapters; imported user rules stay active through `.agents/context/imported-agent-instructions.md`.
 
 ### Canonical Source Detection
 Identify the project's source of truth before documenting behavior:
@@ -134,12 +147,12 @@ bun path/to/updateagents/scripts/updateagents.ts [options]
 ```
 
 ### Step 0 — Stage-0 Fast-Skip Gate (Pre-Flight)
-Before performing deep inspection or delta generation, run the `ai-ready` fast-skip verification:
+Before performing deep inspection or delta generation, run the `updateagents` fast-skip verification:
 1. Verify `AGENTS.md` exists and is `<50 lines`.
 2. Verify `.agents/standards` and `.agents/context` exist and are populated.
 3. If instructions are already aligned with project reality:
    ```text
-   [ai-ready] Agent instructions and DOX container verified. Skipping pass.
+   [updateagents] Agent instructions and DOX container verified. Skipping pass.
    ```
    Exit immediately with 0 changes and zero token waste. Proceed only when structural drift or new project requirements are detected.
 
@@ -147,7 +160,7 @@ Before performing deep inspection or delta generation, run the `ai-ready` fast-s
 Determine current directory, repository status, project type, language/runtime, package manager, and application boundaries. Exclude parent directories and `.memory/**`.
 
 ### Step 2 — Discover Agent Context
-Discover supported agent files (`AGENTS.md`, `CLAUDE.md`, `.cursorrules`, etc.). Determine scope, authority, priority, and directory applicability. Read relevant files before editing them.
+Recursively discover supported instruction files inside the workspace, including nested `AGENTS.md`; Claude, Gemini, Codex and OpenCode instruction files; Cursor, Windsurf, Cline, Roo, Copilot and Continue rules; `*.instructions.md` / `CONVENTIONS.md`; and Markdown/text files inside directories named `agent(s)`, `rule(s)`, `instruction(s)` or `prompt(s)` for other runtimes. Skip `.git`, `.agents`, `.memory`, dependency/build outputs, and symlinks. Read each candidate and retain its relative path and scope metadata. Never search above the workspace.
 
 ### Step 3 — Inspect Project State
 Inspect only authoritative sources (`package.json`, `tsconfig.json`, `README`, CI configs, source structure). Explicitly exclude `.memory/**`.
@@ -170,23 +183,29 @@ Update the smallest correct scope (root instructions vs package instructions). D
 ### Step 7 — Preserve Existing Knowledge
 Preserve valid human-authored content, architectural decisions, project-specific constraints, and meaningful warnings. Remove obsolete guidance only when obsolescence is confirmed.
 
+Glossary sparring (source: lane D #5 — pocock grill-with-docs/domain-modeling): challenge fuzzy terms inline while syncing — sharpen vague language, cross-reference each term to code, update CONTEXT.md as-you-go.
+ADR offer filter — propose an ADR only when all three hold (hard-to-reverse + surprising + real-tradeoff), else skip.
+Lazy file creation: never scaffold context files speculatively; create only on confirmed agent need.
+
 ### Step 8 — Check Existing Agent Files & Scaffolding Gate
 1. Check if any agent engine files exist (`AGENTS.md`, `CLAUDE.md`, `.cursorrules`, `.agents/`, etc.).
 2. **If NONE Found**:
-   - Scaffold the entire fresh Agent Engine DOX architecture directly from `ai-ready/templates/`.
-   - Provision `.agents/` 9-folder tree (`archive`, `artifacts`, `brand`, `context`, `goals`, `research`, `skills`, `standards`, `workflows`).
-   - Deploy lean root `AGENTS.md` router (<50 lines) and initialize `.agents/context/` files based on repository discovery.
-3. **If ANY Found (Custom Content Present)**:
-   - Do NOT overwrite human work. Parse and extract custom sections:
-     - Project Purpose / Scope → Merge into `.agents/context/product.md`
-     - Build Commands / Tech Stack / Database → Merge into `.agents/context/architecture.md`
-     - Architectural Decisions / Rules / ADRs → Merge into `.agents/context/decisions.md`
-     - In-flight tasks / active notes → Merge into `.agents/context/current.md`
-   - Safely archive un-split legacy files to `.agents/archive/AGENTS.legacy-[timestamp].md` or `.agents/archive/CLAUDE.legacy-[timestamp].md`.
-   - Deploy lean root `AGENTS.md` DOX rail (<50 lines) pointing to the newly organized `.agents/` context files.
+   - Scaffold the entire fresh Agent Engine DOX architecture directly from `updateagents/templates/`.
+   - Render compact `AGENTS.md` from the template with detected project purpose, repository, governance, toolchain, and installed modern CLI tools. Core standards are required; detected or selected standards become required and link to their full files.
+   - Create root `CLAUDE.md` from `templates/CLAUDE.md`; it must contain only `@AGENTS.md` so Claude agents read the same project instructions.
+   - Create `.agents/dump/<category>/` for user-provided URLs, data, logs, exports, or other content submitted for extraction. Keep working material under `.agents/artifacts/` or `.agents/dump/`, not the repo root or `.memory/`; never store secrets in dumps.
+   - Use the agent name configured by the user in their own agent system; ask if unavailable rather than inventing a persona. Keep personal identity in the global identity directory; never copy it into the project.
+   - Secretary dispatch is invoked by instructions on the first prompt and each new task; it is not a background process. Close out every completed task even if the session continues.
+3. **If ANY Found (custom content present)**:
+   - Before changing an instruction file, snapshot its exact bytes under `.agents/archive/agent-instructions/`; record source path and SHA-256 in `manifest.json`.
+   - Import complete source contents, including rules, workflows, configuration notes, definitions and scope metadata, into `.agents/context/imported-agent-instructions.md`. Do not section-guess, truncate or silently drop content. Preserve each source’s path and keep changed versions as additional snapshots.
+   - Make `AGENTS.md` the compact shared router. Replace supported runtime-specific files with small adapters only after snapshot + import succeeds; keep relevant frontmatter/scope metadata. Claude’s root `CLAUDE.md` remains exactly `@AGENTS.md`. Preserve non-instruction configuration files untouched.
+   - Read imported instructions before every task, apply each within its recorded source scope, and report conflicting rules with both source paths; ask the user instead of silently choosing.
+   - Report every source → archive snapshot → canonical context mapping so users can find both their active rules and exact originals. Never delete an original snapshot.
+   - When refreshing a generated `AGENTS.md`, reconcile conditional-standard links with project evidence. Ask about ambiguous applicability; only unlink standards the user confirms are inapplicable, retaining their files.
 
 ### Step 9 — Synchronize Standards from Single Canon
-Synchronize `.agents/standards/` (all 13 rulebooks, including modern WordPress) and `.agents/brand/` baseline tokens directly from `ai-ready/templates/`. Never touch or overwrite `.agents/context/*` custom facts or project source files.
+Synchronize standards and baseline brand tokens from `updateagents/templates/` without overwriting project context or source. Core standards are always required. Detected or selected standards are required for that project. During later runs, ask about ambiguous conditional standards; unlink only standards the user confirms are inapplicable, while retaining their files.
 
 ### Step 10 — Capture Commands Precisely
 Document commands only when verified in `package.json` or project tooling (Install, Dev, Build, Test, Typecheck, Lint). Never invent commands.
@@ -198,7 +217,16 @@ Document relationships, data flows, and module boundaries rather than simple dir
 Explicitly document authority relationships (package scripts authoritative for commands, migrations authoritative for DB).
 
 ### Step 13 — Capture Agent-Specific Rules
-Record operational rules (Vibeguard, test gates, token usage) supported by actual project policy.
+Record operational rules supported by project policy. Imported rules remain verbatim and source-scoped in `.agents/context/imported-agent-instructions.md`; do not paraphrase them into oblivion or resolve conflicts without the user.
+
+### Step 13b — Skill Authoring & Instruction Engineering (TDD Protocol)
+When authoring, scaffolding, or updating agent skills or behavioral guidance, enforce the TDD Skill Engineering Protocol: Red-Green-Refactor for agent instructions, baseline adversarial pressure testing, and anti-rationalization loophole closures (see [references/skill-authoring.md](references/skill-authoring.md)). When extracting recurring patterns into reusable skills via `bun scripts/extract-skill.ts`, all 4 Extraction Gates (Recurrence, Verification, Generalization, and TDD Engineering) must pass.
+
+### Step 13c — Keep Secretary Dispatch Explicit
+Generated `AGENTS.md` instructs agents to invoke `secretary:dispatch` on the first prompt and each new task, triage the request, and read the selected skill and mode. This is prompt-driven routing, not a background process. Route Coach only when relevant; it does not replace task closeout.
+
+### GitHub project assets
+When scaffolding or synchronizing a confirmed GitHub project, render community files and `CHANGELOG.md` from the shared templates using verified project/repository metadata. Workflow templates currently cover Node/Bun scripts, Python manifests, and Composer/PHP; preserve user-edited files and do not invent workflows for other stacks. If `origin` is not GitHub and `.github/workflows/` exists, ask before removing anything; removal is limited to files in that directory and requires explicit confirmation (`--confirm-remove-github-workflows`). If the host, contact, contributor identity, or workflow choice is unknown, ask the user, record their answer, and continue without guessing. With no repository evidence, interactive scaffolding asks; non-interactive runs defer GitHub assets until confirmed with `--github` or `--no-github`. Never copy this source repository's username, slug, or credentials into the target.
 
 ### Step 14 — Synchronize Related Knowledge
 Propagate downstream effects (e.g. API changes affecting types and tests) when future agent behavior should change.
@@ -208,6 +236,12 @@ Propagate downstream effects (e.g. API changes affecting types and tests) when f
 - **Warning**: `≥ 5KB`
 - **Hard Limit**: `≥ 10KB`
 Remove duplication and move verbose reference material to dedicated documentation.
+- **Conditional-block writing** (source: humanlayer improve-claude-md, mechanism-only — buyer archives CLAUDE.md, applies to workspace instruction sections only): wrap domain guidance in `<important if="narrow-trigger">…</important>` scoped to one workspace section (`.agents/context/*` or router); one narrow trigger per rule, never group unrelated triggers.
+- **Bare-vs-wrap test**: bare (no wrapper) when rule applies to 90%+ tasks (identity, map, stack); wrap only domain guidance (testing, API, state, i18n).
+- **Keep-all commands**: keep every verified command; present as a single commands table/block (Step 10 verified-only still holds — never invent).
+- **Cut rules**: cut linter-enforceable patterns, code-discoverable patterns, and vague instructions; replace code snippets with path refs unless the snippet itself is the durable gotcha.
+- **Apply proc (compressed)**: identity → map → stack → commands table → split rules → wrap domains → cut linter/snippets/vague → size-check → validate.
+- Note (validator-later): narrow-condition lint (one trigger per block, no grouped triggers) proposed for `scripts/validate-memory-file.sh`; not implemented here.
 
 ### Step 16 — Validate
 Run `validate-memory-file.sh` to confirm size, structure, command accuracy, and verify `.memory/**` was untouched.
@@ -249,6 +283,7 @@ After synchronization, execute and verify:
    ```
 2. **Boundary Audit**: Confirm `git status` shows zero modifications in `.memory/**` and zero changes to application source code.
 3. **DOX Integrity**: If retrofitted, verify all 9 folders exist in `.agents/` and `.agents/context/current.md` lists verified live deliverables.
+   - Verify root `CLAUDE.md` is present and contains only `@AGENTS.md`; it must not become a second rules source.
 4. **Size Check**: Verify all instruction files remain under 5KB (hard ceiling 10KB).
 5. **Completion Criteria Checklist**:
    - Relevant agent files discovered

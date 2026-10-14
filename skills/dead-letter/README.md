@@ -145,8 +145,9 @@ Sweep open records any time with `dead-letter status`: inventory (open records w
 ## ⚖️ Rules & Best Practices
 
 - **Explicit Failure Code First**: Never output vague errors like "something broke". Always specify `BLOCKED-CRED`, `FAILED-LOGIC`, etc.
-- **Recovery Gate Before Retry**: Classify transient vs permanent before authoring any retry packet; permanent failures (defective logic, missing capability) get escalation or re-scope, never a third silent retry.
-- **Precondition Check Before Retry**: Verify the actual system state — a "failed" state can be mid-backoff, mid-poll, or half-applied.
+- **Circuit Breaker on Toxic Loops**: If the same `(code, root-cause)` fails $\ge 2$ times or cascading blast radius $\ge 3$, trip the circuit immediately to freeze execution and halt subagent waste.
+- **Precondition Delta Assertion**: Retrying is forbidden if nothing in the environment or code changed since the failure.
+- **Zero-Credential Sanitization**: Pass all captured stderr, stdout, and error dumps through the redaction filter (`Bearer [REDACTED]`, `sk-[REDACTED]`, `postgres://...`) before saving records.
 - **Resume From the Record**: The Recovery Sequence is the single resume point for any retry — never an arbitrary step.
 - **Baseline Over Exit Codes**: Verify against the last-known-good state; a clean exit that regresses the baseline fails.
 - **Preserve Partial Progress**: Record all files written before failure so downstream agents don't discard valid work.
@@ -172,6 +173,7 @@ dead-letter/
 ├── SKILL.md                        # taxonomy, capture procedure, close-out, verification
 ├── README.md                       # this file — human reference (agents: load SKILL.md)
 ├── references/
+│   ├── circuit-breaker.md          # toxic loop freeze, zero-credential redaction, atomic persistence
 │   ├── record-schema.md            # full record template (loaded when authoring a record)
 │   └── sweep-protocol.md           # status sweep & cluster triage (loaded when sweeping)
 └── examples/

@@ -34,7 +34,7 @@
       "description": "Generate a structured context packet before dispatching any subagent. Prevents context drift, hallucinated constraints, and re-exploring dead ends.",
       "upstream": {
         "repo": "harshsinghmp/muse-skills",
-        "sourcePath": "handoff"
+        "sourcePath": "skills/context-orchestration/relay"
       },
       "version": "1.0.0"
     },
@@ -266,7 +266,7 @@
       "description": "A language-agnostic code review method derived from Linus Torvalds' review corpus. Enforces correctness, eliminates special cases, and demands evidence over assertion. Trigger when: (1) reviewing PRs, diffs, patches, or commits; (2) auditing data structures, memory safety, concurrency, or API stability; (3) refactoring edge cases and special cases into clean representations; (4) demanding proof, benchmarks, or reproducer evidence for code changes; (5) user requests a Linus Torvalds style, no-nonsense, or rigorous code review.",
       "upstream": {
         "repo": "harshsinghmp/muse-skills",
-        "sourcePath": "code-review"
+        "sourcePath": "skills/quality-review/code-review"
       },
       "version": "1.0.0"
     },
@@ -298,7 +298,7 @@
       "description": "Drop a working reference at any point in a session to prevent cascading context drift. Use when switching tasks, resuming after a break, or handing off between agents.",
       "upstream": {
         "repo": "harshsinghmp/muse-skills",
-        "sourcePath": "context-anchor"
+        "sourcePath": "skills/context-orchestration/context-anchor"
       },
       "version": "1.0.0"
     },
@@ -325,7 +325,7 @@
       "description": "Capture a failed or blocked task before it disappears. Categorizes the failure mode, extracts what was learned, and generates either a retry packet with the root cause fixed or an escalation message with specific decision points.",
       "upstream": {
         "repo": "harshsinghmp/muse-skills",
-        "sourcePath": "dead-letter"
+        "sourcePath": "skills/quality-review/dead-letter"
       },
       "version": "1.0.0"
     },
@@ -335,7 +335,7 @@
       "description": "Analyze any visual source — image, website URL, or Figma file — to extract its structured design system: a design.md brief plus DTCG design-tokens.json and an optional WCAG contrast report. Also handles element mode: copy one component as a rebuild spec, or turn visual art into a token-grounded generative image prompt. Trigger on 'extract the design system from X', 'what palette does this site use', 'document this design', 'convert this screenshot into tokens', 'copy this navbar', 'recreate this illustration', or whenever the user brings a screenshot, URL, Figma link, or mockup and wants it understood at a design level.",
       "upstream": {
         "repo": "harshsinghmp/muse-skills",
-        "sourcePath": "designscope"
+        "sourcePath": "skills/design-interface/designscope"
       },
       "version": "1.0.0"
     },
@@ -673,7 +673,7 @@
       "description": "Interactive project creator and Project OS provisioner. Bootstraps canonical /docs/, 8-stage reality machine (STATE.md), .agentrules, AGENTS.md (Muse Council), dynamic llms.txt, .gitignore, and selective skill bundles into any repository or directory.",
       "upstream": {
         "repo": "harshsinghmp/muse-skills",
-        "sourcePath": "new-project"
+        "sourcePath": "skills/core-engine/new-project"
       },
       "version": "1.0.0"
     },
@@ -796,7 +796,7 @@
       "description": "Put your AI on a Performance Improvement Plan. Forces exhaustive problem-solving with Western big-tech performance culture rhetoric and structured debugging. Trigger when: (1) task failed 2+ times or stuck tweaking same approach; (2) about to say 'I cannot', suggest manual work, or blame environment without verifying; (3) being passive—not searching, not reading source, just waiting; (4) user frustration: 'try harder', 'stop giving up', 'figure it out', 'again???', or similar. Also for complex debugging, env issues, config/deployment failures. All task types: code, config, research, writing, deployment, infra, API. Do NOT trigger on first-attempt failures or when a known fix is executing.",
       "upstream": {
         "repo": "harshsinghmp/muse-skills",
-        "sourcePath": "pua"
+        "sourcePath": "skills/quality-review/pua"
       },
       "version": "1.0.0"
     },
@@ -995,7 +995,7 @@
       "description": "Automatically discovers, reads, and updates agent memory files (AGENTS.md, CLAUDE.md, .cursorrules, etc.) in the current working directory. Integrates with cavemem, codegraph, rtk, memoryagent, and ponytail for enhanced context discovery. Workspace-scoped only.",
       "upstream": {
         "repo": "harshsinghmp/muse-skills",
-        "sourcePath": "updateagents"
+        "sourcePath": "skills/core-engine/updateagents"
       },
       "version": "1.0.0"
     },

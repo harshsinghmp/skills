@@ -51,9 +51,12 @@ Trigger this skill when:
 
 ```text
 pua/
-├── SKILL.md                    # 7-point checklist, pitfalls table, team integration, verification
+├── SKILL.md                        # 7-point checklist, pitfalls table, team integration, verification
+├── README.md                       # this file — human reference (agents: load SKILL.md)
 └── references/
-    └── flavor-packs.md         # 8 corporate flavor packs + situational auto-selector
+    ├── audit.md                    # audit mode checklist, severity classes, and routing table
+    ├── flavor-packs.md             # 8 corporate flavor packs + situational auto-selector
+    └── receipt-verification.md     # receipt-or-rejection gate, ghost file probe, churn analyzer
 ```
 
 > **Note for agents:** the per-skill README is a human reference, not agent
@@ -64,4 +67,4 @@ pua/
 
 ## 📄 License
 
-[MIT](../LICENSE) © [Harsh](https://github.com/harshsinghmp)
+[MIT](../../../LICENSE) © [Harsh Singh](https://github.com/harshsinghmp)

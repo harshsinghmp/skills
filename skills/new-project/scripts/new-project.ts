@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * 🏛️ Purpose-First Hierarchical Decision Engine & Project OS Provisioner (Agent Engine / DOX Engine)
- * 
+ *
  * 6 Sequential Execution Stages:
  *   Stage 1: Purpose-First Root Prompt & Project Identity
  *   Stage 2: Hierarchical Decision Tree (Choice -> Sub-choice -> Sub-sub-choice)
@@ -9,7 +9,7 @@
  *   Stage 4: Modern Tokens (Wide-gamut OKLCH + Fluid clamp) & BEM Architecture Injection
  *   Stage 5: Client Intake Brief (employee checklist + agent-produced docs)
  *   Stage 6: Closeout (context sync, health check)
- * 
+ *
  * Usage:
  *   bun new-project/scripts/new-project.ts [targetPath] [options]
  */
@@ -19,18 +19,33 @@ process.on("unhandledRejection", (reason) => {
   process.exit(1);
 });
 
-import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, cpSync, rmSync, chmodSync } from "node:fs";
-import { resolve, join, basename, isAbsolute, relative, dirname } from "node:path";
-import os from "node:os";
-import { parseArgs } from "node:util";
-import { createInterface } from "node:readline/promises";
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
+import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
+import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
+import { createInterface } from "node:readline/promises";
+import { parseArgs } from "node:util";
+import {
+  detectAgentTemplateProfile,
+  readConfiguredAgentName,
+  renderAgentsTemplate,
+} from "../../updateagents/scripts/agents-template";
+import { scaffoldGitHubAssets } from "../../updateagents/scripts/github-scaffold";
 
-// Template source of truth located in ai-ready/templates/
+// Template source of truth located in updateagents/templates/
 const SCRIPT_DIR = resolve(import.meta.dir, "..");
-const REPO_ROOT = resolve(SCRIPT_DIR, "..");
-const TEMPLATES_DIR = join(REPO_ROOT, "ai-ready/templates");
+const REPO_ROOT = resolve(SCRIPT_DIR, "../../..");
+function resolveTemplatesDir(): string {
+  const sibling = join(SCRIPT_DIR, "../updateagents/templates");
+  if (existsSync(sibling)) return sibling;
+  const fromRepo = join(REPO_ROOT, "skills/core-engine/updateagents/templates");
+  if (existsSync(fromRepo)) return fromRepo;
+  const legacy = join(REPO_ROOT, "updateagents/templates");
+  if (existsSync(legacy)) return legacy;
+  return sibling;
+}
+const TEMPLATES_DIR = resolveTemplatesDir();
 
 // CLI Flags Parsing
 const { values, positionals } = parseArgs({
@@ -54,33 +69,36 @@ const { values, positionals } = parseArgs({
     "agent-role": { type: "string" },
     constraint: { type: "string" },
     intent: { type: "string", short: "i" }, // static | brochure | content | ecommerce | webapp | app | mobile | custom | governance
-    preset: { type: "string" },             // powerhouse | publisher | edge | visual | instatic | mobile | astro-mobile
-    type: { type: "string", short: "t" },   // nextjs | astro | instatic | wordpress | expo | custom | none
-    framework: { type: "string" },          // nextjs | astro | instatic | wordpress | expo | custom | none
+    preset: { type: "string" }, // powerhouse | publisher | edge | visual | instatic | mobile | astro-mobile
+    type: { type: "string", short: "t" }, // nextjs | astro | instatic | wordpress | expo | custom | none
+    framework: { type: "string" }, // nextjs | astro | instatic | wordpress | expo | custom | none
     "custom-type": { type: "string" },
-    styling: { type: "string", short: "s" },// hybrid | unocss | bem | tailwind | custom | none
+    styling: { type: "string", short: "s" }, // hybrid | unocss | bem | tailwind | custom | none
     "custom-styling": { type: "string" },
     animation: { type: "string", short: "a" }, // css | motion | gsap | webgl | custom | none
     "custom-animation": { type: "string" },
-    state: { type: "string" },              // nanostores | custom | none
+    state: { type: "string" }, // nanostores | custom | none
     "custom-state": { type: "string" },
     mobile: { type: "string", short: "m" }, // capacitor | expo | custom | none
     "custom-mobile": { type: "string" },
-    cms: { type: "string", short: "c" },    // ariabuilder | studiocms | tina | keystatic | emdash | payload | wollycms | decap | keystone | sanity | strapi | custom | none
+    cms: { type: "string", short: "c" }, // ariabuilder | atomic-payload | studiocms | tina | keystatic | emdash | payload | wollycms | decap | keystone | sanity | strapi | custom | none
     "custom-cms": { type: "string" },
     puck: { type: "boolean", default: false },
     ecommerce: { type: "string", short: "e" }, // payload | medusa | vendure | fastrr | razorpay | stripe | custom | none
     "custom-ecommerce": { type: "string" },
-    db: { type: "string" },                 // supabase | neon | postgres | sqlite | custom | none
+    db: { type: "string" }, // supabase | neon | postgres | sqlite | custom | none
     "custom-db": { type: "string" },
-    orm: { type: "string" },                // drizzle | prisma | custom | none
-    auth: { type: "string" },               // better-auth | supabase | authjs | custom | none
+    orm: { type: "string" }, // drizzle | prisma | custom | none
+    auth: { type: "string" }, // better-auth | supabase | authjs | custom | none
     "custom-auth": { type: "string" },
-    deploy: { type: "string" },             // cloudflare | docker | vercel | custom | none
+    deploy: { type: "string" }, // cloudflare | docker | vercel | custom | none
+    "cms-contract": { type: "boolean", default: false },
     "skip-install": { type: "boolean", default: false },
     "no-cache": { type: "boolean", default: false },
     latest: { type: "boolean", default: false },
     "non-interactive": { type: "boolean", default: false },
+    github: { type: "boolean" },
+    "no-github": { type: "boolean" },
     "dry-run": { type: "boolean", default: false },
     force: { type: "boolean", short: "f", default: false },
     help: { type: "boolean", short: "h", default: false },
@@ -118,26 +136,29 @@ Options:
       --palette <palette>       Color theme: slate | indigo | emerald | amber | violet | custom
       --first-milestone <item>  Immediate first milestone to build
       --planned-milestones <m>  Planned upcoming milestones (comma-separated)
-      --agent-name <name>       Primary AI agent identity (default: Orchestrator)
-      --agent-role <role>       Primary AI agent role (default: Lead Workspace Orchestrator)
+      --agent-name <name>       Primary AI agent identity (defaults to configured global identity)
+      --agent-role <role>       Role configured for the primary workspace agent
       --constraint <rule>       Primary governance quality rule
   -i, --intent <intent>         brochure | content | ecommerce | app | mobile | governance
-      --preset <preset>         1-click recipe: powerhouse | publisher | edge | visual | instatic | mobile | astro-mobile
+      --preset <preset>         1-click recipe: powerhouse | astro-commerce | publisher | edge | visual | astro-visual | plain-astro | git-cms | instatic | pure-html | mobile | astro-mobile | atomic-payload
   -t, --type <type>             Framework: nextjs | astro | instatic | wordpress | expo | custom | none
   -s, --styling <style>         Styling: hybrid | unocss | bem | tailwind | custom | none
   -a, --animation <engine>      Animations: css | motion | gsap | webgl | custom | none
       --state <engine>          State: nanostores | custom | none
   -m, --mobile <target>         Mobile: capacitor | expo | custom | none
-  -c, --cms <cms>               CMS: ariabuilder | studiocms | tina | keystatic | emdash | payload | wollycms | decap | keystone | sanity | strapi | custom | none
+  -c, --cms <cms>               CMS: ariabuilder | atomic-payload | studiocms | tina | keystatic | emdash | payload | wollycms | decap | keystone | sanity | strapi | custom | none
       --puck                    Enable Puck Visual Builder for Payload CMS
   -e, --ecommerce <engine>      Commerce: payload | medusa | vendure | fastrr | razorpay | stripe | custom | none
       --db <database>           Database: supabase | neon | postgres | sqlite | custom | none
       --auth <auth>             Authentication: better-auth | supabase | authjs | custom | none
       --deploy <target>         Deployment: cloudflare | docker | vercel | custom | none
+      --cms-contract            Generate .agents/brand/CONTENT_MAP.md zero-hardcoded-strings client copy contract
       --skip-install            Skip bun install during execution
       --no-cache                Always fetch latest upstream templates & bypass cache
       --latest                  Pin dependencies to latest upstream releases
       --non-interactive         Run without interactive prompts
+      --github                  Scaffold GitHub community files and stack-matched workflows
+      --no-github               Skip GitHub-specific files for a non-GitHub project
       --dry-run                 Simulate without writing files
   -f, --force                   Force replace existing destination files
   -h, --help                    Show this help message
@@ -151,6 +172,33 @@ const isNonInteractive = values["non-interactive"] || false;
 const skipInstall = values["skip-install"] || false;
 const noCache = values["no-cache"] || false;
 const useLatest = values.latest || false;
+let githubProjectEnabled: boolean | undefined = values.github ? true : values["no-github"] ? false : undefined;
+
+if (values["cms-contract"] && !values.intent && !values.framework && !values.preset && !values.name) {
+  const targetDir = positionals[0]
+    ? resolve(process.cwd(), positionals[0])
+    : values.path
+      ? resolve(process.cwd(), values.path)
+      : process.cwd();
+  const brandDir = join(targetDir, ".agents", "brand");
+  if (!existsSync(brandDir) && !isDryRun) {
+    mkdirSync(brandDir, { recursive: true });
+  }
+  const contentMapPath = join(brandDir, "CONTENT_MAP.md");
+  const pName = basename(targetDir);
+  const contentMapSrc = join(TEMPLATES_DIR, ".agents/brand/CONTENT_MAP.md");
+  let content = "";
+  if (existsSync(contentMapSrc)) {
+    content = readFileSync(contentMapSrc, "utf8").replaceAll("{{PROJECT_NAME}}", pName);
+  } else {
+    content = `# 🗺️ Client Content Map: ${pName}\n\n> **Zero-Hardcoded-Strings Invariant**: Hardcoding marketing copy into UI templates is strictly prohibited.\n`;
+  }
+  if (!isDryRun) {
+    writeFileSync(contentMapPath, content, "utf8");
+  }
+  console.log(`✅ Provisioned: ${contentMapPath} (Zero-Hardcoded-Strings CMS Contract)`);
+  process.exit(0);
+}
 
 async function ask(rl: ReturnType<typeof createInterface>, question: string, defaultVal: string = ""): Promise<string> {
   const suffix = defaultVal ? ` [${defaultVal}]: ` : ": ";
@@ -174,7 +222,7 @@ interface PaletteColors {
 }
 
 const PALETTES: Record<string, PaletteColors> = {
-  "gray": {
+  gray: {
     primaryDefault: "oklch(0.649 0 0)",
     primaryLight: "oklch(0.606 0 0)",
     primaryDark: "oklch(0.503 0 0)",
@@ -186,9 +234,22 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.933 0 0)",
     textMuted: "oklch(0.649 0 0)",
     textHeading: "#ffffff",
-    scale: ["oklch(0.993 0 0)","oklch(0.982 0 0)","oklch(0.961 0 0)","oklch(0.94 0 0)","oklch(0.918 0 0)","oklch(0.894 0 0)","oklch(0.865 0 0)","oklch(0.818 0 0)","oklch(0.649 0 0)","oklch(0.606 0 0)","oklch(0.503 0 0)","oklch(0.375 0 0)"],
+    scale: [
+      "oklch(0.993 0 0)",
+      "oklch(0.982 0 0)",
+      "oklch(0.961 0 0)",
+      "oklch(0.94 0 0)",
+      "oklch(0.918 0 0)",
+      "oklch(0.894 0 0)",
+      "oklch(0.865 0 0)",
+      "oklch(0.818 0 0)",
+      "oklch(0.649 0 0)",
+      "oklch(0.606 0 0)",
+      "oklch(0.503 0 0)",
+      "oklch(0.375 0 0)",
+    ],
   },
-  "slate": {
+  slate: {
     primaryDefault: "oklch(0.645 0.018 256)",
     primaryLight: "oklch(0.601 0.02 256)",
     primaryDark: "oklch(0.501 0.018 256)",
@@ -200,9 +261,22 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.932 0.004 256)",
     textMuted: "oklch(0.645 0.018 256)",
     textHeading: "#ffffff",
-    scale: ["oklch(0.993 0.002 256)","oklch(0.982 0.002 256)","oklch(0.959 0.004 256)","oklch(0.936 0.006 256)","oklch(0.914 0.008 256)","oklch(0.889 0.01 256)","oklch(0.859 0.012 256)","oklch(0.811 0.016 256)","oklch(0.645 0.018 256)","oklch(0.601 0.02 256)","oklch(0.501 0.018 256)","oklch(0.378 0.016 256)"],
+    scale: [
+      "oklch(0.993 0.002 256)",
+      "oklch(0.982 0.002 256)",
+      "oklch(0.959 0.004 256)",
+      "oklch(0.936 0.006 256)",
+      "oklch(0.914 0.008 256)",
+      "oklch(0.889 0.01 256)",
+      "oklch(0.859 0.012 256)",
+      "oklch(0.811 0.016 256)",
+      "oklch(0.645 0.018 256)",
+      "oklch(0.601 0.02 256)",
+      "oklch(0.501 0.018 256)",
+      "oklch(0.378 0.016 256)",
+    ],
   },
-  "red": {
+  red: {
     primaryDefault: "oklch(0.647 0.176 17)",
     primaryLight: "oklch(0.61 0.186 17)",
     primaryDark: "oklch(0.49 0.155 17)",
@@ -214,9 +288,22 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.927 0.062 17)",
     textMuted: "oklch(0.647 0.176 17)",
     textHeading: "#ffffff",
-    scale: ["oklch(0.99 0.007 17)","oklch(0.982 0.013 17)","oklch(0.965 0.036 17)","oklch(0.946 0.051 17)","oklch(0.924 0.067 17)","oklch(0.895 0.083 17)","oklch(0.856 0.101 17)","oklch(0.802 0.124 17)","oklch(0.647 0.176 17)","oklch(0.61 0.186 17)","oklch(0.49 0.155 17)","oklch(0.367 0.102 17)"],
+    scale: [
+      "oklch(0.99 0.007 17)",
+      "oklch(0.982 0.013 17)",
+      "oklch(0.965 0.036 17)",
+      "oklch(0.946 0.051 17)",
+      "oklch(0.924 0.067 17)",
+      "oklch(0.895 0.083 17)",
+      "oklch(0.856 0.101 17)",
+      "oklch(0.802 0.124 17)",
+      "oklch(0.647 0.176 17)",
+      "oklch(0.61 0.186 17)",
+      "oklch(0.49 0.155 17)",
+      "oklch(0.367 0.102 17)",
+    ],
   },
-  "blue": {
+  blue: {
     primaryDefault: "oklch(0.629 0.187 252)",
     primaryLight: "oklch(0.587 0.193 252)",
     primaryDark: "oklch(0.471 0.155 252)",
@@ -228,9 +315,22 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.921 0.063 252)",
     textMuted: "oklch(0.629 0.187 252)",
     textHeading: "#ffffff",
-    scale: ["oklch(0.989 0.008 252)","oklch(0.978 0.014 252)","oklch(0.958 0.035 252)","oklch(0.936 0.053 252)","oklch(0.912 0.071 252)","oklch(0.88 0.09 252)","oklch(0.836 0.112 252)","oklch(0.772 0.142 252)","oklch(0.629 0.187 252)","oklch(0.587 0.193 252)","oklch(0.471 0.155 252)","oklch(0.353 0.103 252)"],
+    scale: [
+      "oklch(0.989 0.008 252)",
+      "oklch(0.978 0.014 252)",
+      "oklch(0.958 0.035 252)",
+      "oklch(0.936 0.053 252)",
+      "oklch(0.912 0.071 252)",
+      "oklch(0.88 0.09 252)",
+      "oklch(0.836 0.112 252)",
+      "oklch(0.772 0.142 252)",
+      "oklch(0.629 0.187 252)",
+      "oklch(0.587 0.193 252)",
+      "oklch(0.471 0.155 252)",
+      "oklch(0.353 0.103 252)",
+    ],
   },
-  "green": {
+  green: {
     primaryDefault: "oklch(0.623 0.178 145)",
     primaryLight: "oklch(0.579 0.179 145)",
     primaryDark: "oklch(0.464 0.143 145)",
@@ -242,9 +342,22 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.919 0.063 145)",
     textMuted: "oklch(0.623 0.178 145)",
     textHeading: "#ffffff",
-    scale: ["oklch(0.989 0.01 145)","oklch(0.978 0.018 145)","oklch(0.956 0.042 145)","oklch(0.931 0.062 145)","oklch(0.902 0.082 145)","oklch(0.868 0.102 145)","oklch(0.823 0.125 145)","oklch(0.762 0.153 145)","oklch(0.623 0.178 145)","oklch(0.579 0.179 145)","oklch(0.464 0.143 145)","oklch(0.348 0.095 145)"],
+    scale: [
+      "oklch(0.989 0.01 145)",
+      "oklch(0.978 0.018 145)",
+      "oklch(0.956 0.042 145)",
+      "oklch(0.931 0.062 145)",
+      "oklch(0.902 0.082 145)",
+      "oklch(0.868 0.102 145)",
+      "oklch(0.823 0.125 145)",
+      "oklch(0.762 0.153 145)",
+      "oklch(0.623 0.178 145)",
+      "oklch(0.579 0.179 145)",
+      "oklch(0.464 0.143 145)",
+      "oklch(0.348 0.095 145)",
+    ],
   },
-  "yellow": {
+  yellow: {
     primaryDefault: "oklch(0.725 0.187 91)",
     primaryLight: "oklch(0.667 0.177 91)",
     primaryDark: "oklch(0.527 0.136 91)",
@@ -256,9 +369,22 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.943 0.063 91)",
     textMuted: "oklch(0.725 0.187 91)",
     textHeading: "#ffffff",
-    scale: ["oklch(0.991 0.01 91)","oklch(0.985 0.021 91)","oklch(0.972 0.049 91)","oklch(0.96 0.074 91)","oklch(0.943 0.098 91)","oklch(0.92 0.122 91)","oklch(0.886 0.147 91)","oklch(0.835 0.176 91)","oklch(0.725 0.187 91)","oklch(0.667 0.177 91)","oklch(0.527 0.136 91)","oklch(0.385 0.088 91)"],
+    scale: [
+      "oklch(0.991 0.01 91)",
+      "oklch(0.985 0.021 91)",
+      "oklch(0.972 0.049 91)",
+      "oklch(0.96 0.074 91)",
+      "oklch(0.943 0.098 91)",
+      "oklch(0.92 0.122 91)",
+      "oklch(0.886 0.147 91)",
+      "oklch(0.835 0.176 91)",
+      "oklch(0.725 0.187 91)",
+      "oklch(0.667 0.177 91)",
+      "oklch(0.527 0.136 91)",
+      "oklch(0.385 0.088 91)",
+    ],
   },
-  "orange": {
+  orange: {
     primaryDefault: "oklch(0.67 0.185 55)",
     primaryLight: "oklch(0.626 0.187 55)",
     primaryDark: "oklch(0.505 0.15 55)",
@@ -270,9 +396,22 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.935 0.063 55)",
     textMuted: "oklch(0.67 0.185 55)",
     textHeading: "#ffffff",
-    scale: ["oklch(0.991 0.009 55)","oklch(0.983 0.017 55)","oklch(0.967 0.042 55)","oklch(0.95 0.063 55)","oklch(0.928 0.084 55)","oklch(0.9 0.105 55)","oklch(0.861 0.128 55)","oklch(0.804 0.156 55)","oklch(0.67 0.185 55)","oklch(0.626 0.187 55)","oklch(0.505 0.15 55)","oklch(0.377 0.099 55)"],
+    scale: [
+      "oklch(0.991 0.009 55)",
+      "oklch(0.983 0.017 55)",
+      "oklch(0.967 0.042 55)",
+      "oklch(0.95 0.063 55)",
+      "oklch(0.928 0.084 55)",
+      "oklch(0.9 0.105 55)",
+      "oklch(0.861 0.128 55)",
+      "oklch(0.804 0.156 55)",
+      "oklch(0.67 0.185 55)",
+      "oklch(0.626 0.187 55)",
+      "oklch(0.505 0.15 55)",
+      "oklch(0.377 0.099 55)",
+    ],
   },
-  "purple": {
+  purple: {
     primaryDefault: "oklch(0.637 0.185 295)",
     primaryLight: "oklch(0.594 0.191 295)",
     primaryDark: "oklch(0.478 0.154 295)",
@@ -284,9 +423,22 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.924 0.063 295)",
     textMuted: "oklch(0.637 0.185 295)",
     textHeading: "#ffffff",
-    scale: ["oklch(0.991 0.009 295)","oklch(0.982 0.015 295)","oklch(0.963 0.036 295)","oklch(0.942 0.054 295)","oklch(0.917 0.072 295)","oklch(0.886 0.091 295)","oklch(0.843 0.113 295)","oklch(0.78 0.141 295)","oklch(0.637 0.185 295)","oklch(0.594 0.191 295)","oklch(0.478 0.154 295)","oklch(0.358 0.102 295)"],
+    scale: [
+      "oklch(0.991 0.009 295)",
+      "oklch(0.982 0.015 295)",
+      "oklch(0.963 0.036 295)",
+      "oklch(0.942 0.054 295)",
+      "oklch(0.917 0.072 295)",
+      "oklch(0.886 0.091 295)",
+      "oklch(0.843 0.113 295)",
+      "oklch(0.78 0.141 295)",
+      "oklch(0.637 0.185 295)",
+      "oklch(0.594 0.191 295)",
+      "oklch(0.478 0.154 295)",
+      "oklch(0.358 0.102 295)",
+    ],
   },
-  "pink": {
+  pink: {
     primaryDefault: "oklch(0.641 0.185 343)",
     primaryLight: "oklch(0.599 0.191 343)",
     primaryDark: "oklch(0.483 0.154 343)",
@@ -298,9 +450,22 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.927 0.063 343)",
     textMuted: "oklch(0.641 0.185 343)",
     textHeading: "#ffffff",
-    scale: ["oklch(0.99 0.009 343)","oklch(0.981 0.016 343)","oklch(0.963 0.038 343)","oklch(0.943 0.057 343)","oklch(0.919 0.076 343)","oklch(0.889 0.095 343)","oklch(0.847 0.117 343)","oklch(0.785 0.144 343)","oklch(0.641 0.185 343)","oklch(0.599 0.191 343)","oklch(0.483 0.154 343)","oklch(0.361 0.102 343)"],
+    scale: [
+      "oklch(0.99 0.009 343)",
+      "oklch(0.981 0.016 343)",
+      "oklch(0.963 0.038 343)",
+      "oklch(0.943 0.057 343)",
+      "oklch(0.919 0.076 343)",
+      "oklch(0.889 0.095 343)",
+      "oklch(0.847 0.117 343)",
+      "oklch(0.785 0.144 343)",
+      "oklch(0.641 0.185 343)",
+      "oklch(0.599 0.191 343)",
+      "oklch(0.483 0.154 343)",
+      "oklch(0.361 0.102 343)",
+    ],
   },
-  "cyan": {
+  cyan: {
     primaryDefault: "oklch(0.623 0.178 210)",
     primaryLight: "oklch(0.579 0.179 210)",
     primaryDark: "oklch(0.464 0.143 210)",
@@ -312,9 +477,22 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.919 0.063 210)",
     textMuted: "oklch(0.623 0.178 210)",
     textHeading: "#ffffff",
-    scale: ["oklch(0.989 0.01 210)","oklch(0.978 0.018 210)","oklch(0.956 0.042 210)","oklch(0.931 0.062 210)","oklch(0.902 0.082 210)","oklch(0.868 0.102 210)","oklch(0.823 0.125 210)","oklch(0.762 0.153 210)","oklch(0.623 0.178 210)","oklch(0.579 0.179 210)","oklch(0.464 0.143 210)","oklch(0.348 0.095 210)"],
+    scale: [
+      "oklch(0.989 0.01 210)",
+      "oklch(0.978 0.018 210)",
+      "oklch(0.956 0.042 210)",
+      "oklch(0.931 0.062 210)",
+      "oklch(0.902 0.082 210)",
+      "oklch(0.868 0.102 210)",
+      "oklch(0.823 0.125 210)",
+      "oklch(0.762 0.153 210)",
+      "oklch(0.623 0.178 210)",
+      "oklch(0.579 0.179 210)",
+      "oklch(0.464 0.143 210)",
+      "oklch(0.348 0.095 210)",
+    ],
   },
-  "teal": {
+  teal: {
     primaryDefault: "oklch(0.618 0.182 180)",
     primaryLight: "oklch(0.574 0.182 180)",
     primaryDark: "oklch(0.461 0.146 180)",
@@ -326,9 +504,22 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.916 0.064 180)",
     textMuted: "oklch(0.618 0.182 180)",
     textHeading: "#ffffff",
-    scale: ["oklch(0.989 0.011 180)","oklch(0.977 0.019 180)","oklch(0.954 0.044 180)","oklch(0.928 0.065 180)","oklch(0.898 0.086 180)","oklch(0.863 0.107 180)","oklch(0.817 0.131 180)","oklch(0.755 0.16 180)","oklch(0.618 0.182 180)","oklch(0.574 0.182 180)","oklch(0.461 0.146 180)","oklch(0.346 0.097 180)"],
+    scale: [
+      "oklch(0.989 0.011 180)",
+      "oklch(0.977 0.019 180)",
+      "oklch(0.954 0.044 180)",
+      "oklch(0.928 0.065 180)",
+      "oklch(0.898 0.086 180)",
+      "oklch(0.863 0.107 180)",
+      "oklch(0.817 0.131 180)",
+      "oklch(0.755 0.16 180)",
+      "oklch(0.618 0.182 180)",
+      "oklch(0.574 0.182 180)",
+      "oklch(0.461 0.146 180)",
+      "oklch(0.346 0.097 180)",
+    ],
   },
-  "indigo": {
+  indigo: {
     primaryDefault: "oklch(0.632 0.185 275)",
     primaryLight: "oklch(0.59 0.191 275)",
     primaryDark: "oklch(0.474 0.154 275)",
@@ -340,9 +531,22 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.922 0.063 275)",
     textMuted: "oklch(0.632 0.185 275)",
     textHeading: "#ffffff",
-    scale: ["oklch(0.99 0.008 275)","oklch(0.979 0.014 275)","oklch(0.96 0.034 275)","oklch(0.939 0.051 275)","oklch(0.914 0.069 275)","oklch(0.883 0.088 275)","oklch(0.84 0.11 275)","oklch(0.776 0.139 275)","oklch(0.632 0.185 275)","oklch(0.59 0.191 275)","oklch(0.474 0.154 275)","oklch(0.355 0.102 275)"],
+    scale: [
+      "oklch(0.99 0.008 275)",
+      "oklch(0.979 0.014 275)",
+      "oklch(0.96 0.034 275)",
+      "oklch(0.939 0.051 275)",
+      "oklch(0.914 0.069 275)",
+      "oklch(0.883 0.088 275)",
+      "oklch(0.84 0.11 275)",
+      "oklch(0.776 0.139 275)",
+      "oklch(0.632 0.185 275)",
+      "oklch(0.59 0.191 275)",
+      "oklch(0.474 0.154 275)",
+      "oklch(0.355 0.102 275)",
+    ],
   },
-  "amber": {
+  amber: {
     primaryDefault: "oklch(0.733 0.194 75)",
     primaryLight: "oklch(0.676 0.184 75)",
     primaryDark: "oklch(0.534 0.141 75)",
@@ -354,9 +558,22 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.945 0.064 75)",
     textMuted: "oklch(0.733 0.194 75)",
     textHeading: "#ffffff",
-    scale: ["oklch(0.991 0.011 75)","oklch(0.985 0.022 75)","oklch(0.973 0.052 75)","oklch(0.961 0.078 75)","oklch(0.944 0.103 75)","oklch(0.921 0.128 75)","oklch(0.887 0.154 75)","oklch(0.837 0.184 75)","oklch(0.733 0.194 75)","oklch(0.676 0.184 75)","oklch(0.534 0.141 75)","oklch(0.389 0.091 75)"],
+    scale: [
+      "oklch(0.991 0.011 75)",
+      "oklch(0.985 0.022 75)",
+      "oklch(0.973 0.052 75)",
+      "oklch(0.961 0.078 75)",
+      "oklch(0.944 0.103 75)",
+      "oklch(0.921 0.128 75)",
+      "oklch(0.887 0.154 75)",
+      "oklch(0.837 0.184 75)",
+      "oklch(0.733 0.194 75)",
+      "oklch(0.676 0.184 75)",
+      "oklch(0.534 0.141 75)",
+      "oklch(0.389 0.091 75)",
+    ],
   },
-  "lime": {
+  lime: {
     primaryDefault: "oklch(0.703 0.205 120)",
     primaryLight: "oklch(0.651 0.195 120)",
     primaryDark: "oklch(0.512 0.149 120)",
@@ -368,9 +585,22 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.933 0.068 120)",
     textMuted: "oklch(0.703 0.205 120)",
     textHeading: "#ffffff",
-    scale: ["oklch(0.99 0.012 120)","oklch(0.981 0.024 120)","oklch(0.965 0.055 120)","oklch(0.947 0.082 120)","oklch(0.925 0.108 120)","oklch(0.897 0.134 120)","oklch(0.859 0.162 120)","oklch(0.805 0.193 120)","oklch(0.703 0.205 120)","oklch(0.651 0.195 120)","oklch(0.512 0.149 120)","oklch(0.373 0.096 120)"],
+    scale: [
+      "oklch(0.99 0.012 120)",
+      "oklch(0.981 0.024 120)",
+      "oklch(0.965 0.055 120)",
+      "oklch(0.947 0.082 120)",
+      "oklch(0.925 0.108 120)",
+      "oklch(0.897 0.134 120)",
+      "oklch(0.859 0.162 120)",
+      "oklch(0.805 0.193 120)",
+      "oklch(0.703 0.205 120)",
+      "oklch(0.651 0.195 120)",
+      "oklch(0.512 0.149 120)",
+      "oklch(0.373 0.096 120)",
+    ],
   },
-  "mint": {
+  mint: {
     primaryDefault: "oklch(0.609 0.192 165)",
     primaryLight: "oklch(0.565 0.192 165)",
     primaryDark: "oklch(0.454 0.154 165)",
@@ -382,9 +612,22 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.912 0.068 165)",
     textMuted: "oklch(0.609 0.192 165)",
     textHeading: "#ffffff",
-    scale: ["oklch(0.989 0.012 165)","oklch(0.977 0.021 165)","oklch(0.953 0.048 165)","oklch(0.926 0.071 165)","oklch(0.895 0.094 165)","oklch(0.859 0.117 165)","oklch(0.811 0.143 165)","oklch(0.747 0.175 165)","oklch(0.609 0.192 165)","oklch(0.565 0.192 165)","oklch(0.454 0.154 165)","oklch(0.341 0.102 165)"],
+    scale: [
+      "oklch(0.989 0.012 165)",
+      "oklch(0.977 0.021 165)",
+      "oklch(0.953 0.048 165)",
+      "oklch(0.926 0.071 165)",
+      "oklch(0.895 0.094 165)",
+      "oklch(0.859 0.117 165)",
+      "oklch(0.811 0.143 165)",
+      "oklch(0.747 0.175 165)",
+      "oklch(0.609 0.192 165)",
+      "oklch(0.565 0.192 165)",
+      "oklch(0.454 0.154 165)",
+      "oklch(0.341 0.102 165)",
+    ],
   },
-  "tomato": {
+  tomato: {
     primaryDefault: "oklch(0.657 0.183 25)",
     primaryLight: "oklch(0.615 0.189 25)",
     primaryDark: "oklch(0.497 0.152 25)",
@@ -396,7 +639,20 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.933 0.063 25)",
     textMuted: "oklch(0.657 0.183 25)",
     textHeading: "#ffffff",
-    scale: ["oklch(0.99 0.008 25)","oklch(0.982 0.015 25)","oklch(0.966 0.038 25)","oklch(0.948 0.057 25)","oklch(0.926 0.076 25)","oklch(0.898 0.096 25)","oklch(0.859 0.118 25)","oklch(0.803 0.145 25)","oklch(0.657 0.183 25)","oklch(0.615 0.189 25)","oklch(0.497 0.152 25)","oklch(0.372 0.1 25)"],
+    scale: [
+      "oklch(0.99 0.008 25)",
+      "oklch(0.982 0.015 25)",
+      "oklch(0.966 0.038 25)",
+      "oklch(0.948 0.057 25)",
+      "oklch(0.926 0.076 25)",
+      "oklch(0.898 0.096 25)",
+      "oklch(0.859 0.118 25)",
+      "oklch(0.803 0.145 25)",
+      "oklch(0.657 0.183 25)",
+      "oklch(0.615 0.189 25)",
+      "oklch(0.497 0.152 25)",
+      "oklch(0.372 0.1 25)",
+    ],
   },
   "olive-garden": {
     primaryDefault: "oklch(0.24 0.03 115)",
@@ -410,9 +666,16 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.24 0.03 115)","oklch(0.45 0.06 110)","oklch(0.68 0.07 105)","oklch(0.97 0.03 95)","oklch(0.72 0.11 65)","oklch(0.57 0.13 50)"],
+    scale: [
+      "oklch(0.24 0.03 115)",
+      "oklch(0.45 0.06 110)",
+      "oklch(0.68 0.07 105)",
+      "oklch(0.97 0.03 95)",
+      "oklch(0.72 0.11 65)",
+      "oklch(0.57 0.13 50)",
+    ],
   },
-  "forest": {
+  forest: {
     primaryDefault: "oklch(0.87 0.01 95)",
     primaryLight: "oklch(0.73 0.05 125)",
     primaryDark: "oklch(0.35 0.05 150)",
@@ -424,9 +687,15 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.87 0.01 95)","oklch(0.73 0.05 125)","oklch(0.56 0.08 135)","oklch(0.41 0.06 145)","oklch(0.35 0.05 150)"],
+    scale: [
+      "oklch(0.87 0.01 95)",
+      "oklch(0.73 0.05 125)",
+      "oklch(0.56 0.08 135)",
+      "oklch(0.41 0.06 145)",
+      "oklch(0.35 0.05 150)",
+    ],
   },
-  "steel": {
+  steel: {
     primaryDefault: "oklch(0.98 0.001 240)",
     primaryLight: "oklch(0.94 0.002 240)",
     primaryDark: "oklch(0.2 0.003 240)",
@@ -438,7 +707,17 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.98 0.001 240)","oklch(0.94 0.002 240)","oklch(0.9 0.003 240)","oklch(0.85 0.004 240)","oklch(0.75 0.005 240)","oklch(0.54 0.006 240)","oklch(0.4 0.005 240)","oklch(0.3 0.004 240)","oklch(0.2 0.003 240)"],
+    scale: [
+      "oklch(0.98 0.001 240)",
+      "oklch(0.94 0.002 240)",
+      "oklch(0.9 0.003 240)",
+      "oklch(0.85 0.004 240)",
+      "oklch(0.75 0.005 240)",
+      "oklch(0.54 0.006 240)",
+      "oklch(0.4 0.005 240)",
+      "oklch(0.3 0.004 240)",
+      "oklch(0.2 0.003 240)",
+    ],
   },
   "deep-sea": {
     primaryDefault: "oklch(0.48 0.14 255)",
@@ -452,9 +731,20 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.48 0.14 255)","oklch(0.42 0.13 255)","oklch(0.34 0.11 255)","oklch(0.24 0.08 255)","oklch(0.18 0.06 255)","oklch(0.14 0.05 255)","oklch(0.32 0.04 250)","oklch(0.47 0.03 250)","oklch(0.57 0.02 250)","oklch(0.65 0.02 250)"],
+    scale: [
+      "oklch(0.48 0.14 255)",
+      "oklch(0.42 0.13 255)",
+      "oklch(0.34 0.11 255)",
+      "oklch(0.24 0.08 255)",
+      "oklch(0.18 0.06 255)",
+      "oklch(0.14 0.05 255)",
+      "oklch(0.32 0.04 250)",
+      "oklch(0.47 0.03 250)",
+      "oklch(0.57 0.02 250)",
+      "oklch(0.65 0.02 250)",
+    ],
   },
-  "sand": {
+  sand: {
     primaryDefault: "oklch(0.94 0.005 85)",
     primaryLight: "oklch(0.84 0.02 65)",
     primaryDark: "oklch(0.79 0.04 45)",
@@ -466,7 +756,13 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.94 0.005 85)","oklch(0.84 0.02 65)","oklch(0.94 0.02 70)","oklch(0.87 0.03 55)","oklch(0.79 0.04 45)"],
+    scale: [
+      "oklch(0.94 0.005 85)",
+      "oklch(0.84 0.02 65)",
+      "oklch(0.94 0.02 70)",
+      "oklch(0.87 0.03 55)",
+      "oklch(0.79 0.04 45)",
+    ],
   },
   "ocean-breeze": {
     primaryDefault: "oklch(0.4 0.15 220)",
@@ -480,7 +776,16 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.4 0.15 220)","oklch(0.45 0.15 230)","oklch(0.55 0.18 235)","oklch(0.6 0.16 238)","oklch(0.65 0.15 240)","oklch(0.7 0.13 243)","oklch(0.75 0.12 245)","oklch(0.85 0.08 250)"],
+    scale: [
+      "oklch(0.4 0.15 220)",
+      "oklch(0.45 0.15 230)",
+      "oklch(0.55 0.18 235)",
+      "oklch(0.6 0.16 238)",
+      "oklch(0.65 0.15 240)",
+      "oklch(0.7 0.13 243)",
+      "oklch(0.75 0.12 245)",
+      "oklch(0.85 0.08 250)",
+    ],
   },
   "sunset-vibes": {
     primaryDefault: "oklch(0.3 0.15 25)",
@@ -494,7 +799,16 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.3 0.15 25)","oklch(0.4 0.18 30)","oklch(0.5 0.2 35)","oklch(0.6 0.22 40)","oklch(0.65 0.22 45)","oklch(0.7 0.2 48)","oklch(0.75 0.18 50)","oklch(0.85 0.12 55)"],
+    scale: [
+      "oklch(0.3 0.15 25)",
+      "oklch(0.4 0.18 30)",
+      "oklch(0.5 0.2 35)",
+      "oklch(0.6 0.22 40)",
+      "oklch(0.65 0.22 45)",
+      "oklch(0.7 0.2 48)",
+      "oklch(0.75 0.18 50)",
+      "oklch(0.85 0.12 55)",
+    ],
   },
   "forest-fresh": {
     primaryDefault: "oklch(0.3 0.1 145)",
@@ -508,7 +822,16 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.3 0.1 145)","oklch(0.35 0.12 150)","oklch(0.45 0.15 155)","oklch(0.5 0.16 158)","oklch(0.55 0.18 160)","oklch(0.6 0.16 163)","oklch(0.65 0.15 165)","oklch(0.75 0.12 170)"],
+    scale: [
+      "oklch(0.3 0.1 145)",
+      "oklch(0.35 0.12 150)",
+      "oklch(0.45 0.15 155)",
+      "oklch(0.5 0.16 158)",
+      "oklch(0.55 0.18 160)",
+      "oklch(0.6 0.16 163)",
+      "oklch(0.65 0.15 165)",
+      "oklch(0.75 0.12 170)",
+    ],
   },
   "neon-nights": {
     primaryDefault: "oklch(0.5 0.22 295)",
@@ -522,7 +845,16 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.5 0.22 295)","oklch(0.55 0.25 300)","oklch(0.58 0.27 305)","oklch(0.6 0.28 310)","oklch(0.63 0.29 315)","oklch(0.65 0.3 320)","oklch(0.7 0.25 330)","oklch(0.75 0.2 340)"],
+    scale: [
+      "oklch(0.5 0.22 295)",
+      "oklch(0.55 0.25 300)",
+      "oklch(0.58 0.27 305)",
+      "oklch(0.6 0.28 310)",
+      "oklch(0.63 0.29 315)",
+      "oklch(0.65 0.3 320)",
+      "oklch(0.7 0.25 330)",
+      "oklch(0.75 0.2 340)",
+    ],
   },
   "earthy-tones": {
     primaryDefault: "oklch(0.35 0.06 55)",
@@ -536,7 +868,16 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.35 0.06 55)","oklch(0.4 0.08 60)","oklch(0.45 0.09 58)","oklch(0.5 0.1 55)","oklch(0.55 0.11 53)","oklch(0.6 0.12 50)","oklch(0.7 0.1 45)","oklch(0.8 0.08 40)"],
+    scale: [
+      "oklch(0.35 0.06 55)",
+      "oklch(0.4 0.08 60)",
+      "oklch(0.45 0.09 58)",
+      "oklch(0.5 0.1 55)",
+      "oklch(0.55 0.11 53)",
+      "oklch(0.6 0.12 50)",
+      "oklch(0.7 0.1 45)",
+      "oklch(0.8 0.08 40)",
+    ],
   },
   "cherry-blossom": {
     primaryDefault: "oklch(0.75 0.1 350)",
@@ -550,7 +891,16 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.75 0.1 350)","oklch(0.78 0.11 355)","oklch(0.82 0.12 0)","oklch(0.85 0.13 5)","oklch(0.87 0.11 10)","oklch(0.88 0.09 15)","oklch(0.9 0.07 20)","oklch(0.92 0.05 25)"],
+    scale: [
+      "oklch(0.75 0.1 350)",
+      "oklch(0.78 0.11 355)",
+      "oklch(0.82 0.12 0)",
+      "oklch(0.85 0.13 5)",
+      "oklch(0.87 0.11 10)",
+      "oklch(0.88 0.09 15)",
+      "oklch(0.9 0.07 20)",
+      "oklch(0.92 0.05 25)",
+    ],
   },
   "midnight-blue": {
     primaryDefault: "oklch(0.25 0.08 250)",
@@ -564,7 +914,16 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.25 0.08 250)","oklch(0.3 0.1 255)","oklch(0.35 0.12 260)","oklch(0.4 0.14 265)","oklch(0.45 0.15 270)","oklch(0.5 0.16 273)","oklch(0.55 0.15 275)","oklch(0.65 0.12 280)"],
+    scale: [
+      "oklch(0.25 0.08 250)",
+      "oklch(0.3 0.1 255)",
+      "oklch(0.35 0.12 260)",
+      "oklch(0.4 0.14 265)",
+      "oklch(0.45 0.15 270)",
+      "oklch(0.5 0.16 273)",
+      "oklch(0.55 0.15 275)",
+      "oklch(0.65 0.12 280)",
+    ],
   },
   "lavender-fields": {
     primaryDefault: "oklch(0.6 0.12 290)",
@@ -578,7 +937,16 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.6 0.12 290)","oklch(0.65 0.13 292)","oklch(0.7 0.14 295)","oklch(0.75 0.15 298)","oklch(0.78 0.14 300)","oklch(0.82 0.12 302)","oklch(0.85 0.1 305)","oklch(0.88 0.08 308)"],
+    scale: [
+      "oklch(0.6 0.12 290)",
+      "oklch(0.65 0.13 292)",
+      "oklch(0.7 0.14 295)",
+      "oklch(0.75 0.15 298)",
+      "oklch(0.78 0.14 300)",
+      "oklch(0.82 0.12 302)",
+      "oklch(0.85 0.1 305)",
+      "oklch(0.88 0.08 308)",
+    ],
   },
   "coral-reef": {
     primaryDefault: "oklch(0.55 0.18 15)",
@@ -592,7 +960,16 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.55 0.18 15)","oklch(0.6 0.19 18)","oklch(0.65 0.2 20)","oklch(0.68 0.21 22)","oklch(0.72 0.2 25)","oklch(0.75 0.18 28)","oklch(0.8 0.15 30)","oklch(0.85 0.12 32)"],
+    scale: [
+      "oklch(0.55 0.18 15)",
+      "oklch(0.6 0.19 18)",
+      "oklch(0.65 0.2 20)",
+      "oklch(0.68 0.21 22)",
+      "oklch(0.72 0.2 25)",
+      "oklch(0.75 0.18 28)",
+      "oklch(0.8 0.15 30)",
+      "oklch(0.85 0.12 32)",
+    ],
   },
   "autumn-leaves": {
     primaryDefault: "oklch(0.4 0.15 35)",
@@ -606,7 +983,16 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.4 0.15 35)","oklch(0.45 0.17 38)","oklch(0.5 0.18 40)","oklch(0.55 0.2 42)","oklch(0.6 0.2 45)","oklch(0.65 0.18 48)","oklch(0.7 0.16 50)","oklch(0.75 0.14 52)"],
+    scale: [
+      "oklch(0.4 0.15 35)",
+      "oklch(0.45 0.17 38)",
+      "oklch(0.5 0.18 40)",
+      "oklch(0.55 0.2 42)",
+      "oklch(0.6 0.2 45)",
+      "oklch(0.65 0.18 48)",
+      "oklch(0.7 0.16 50)",
+      "oklch(0.75 0.14 52)",
+    ],
   },
   "arctic-frost": {
     primaryDefault: "oklch(0.7 0.08 200)",
@@ -620,7 +1006,16 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.7 0.08 200)","oklch(0.75 0.09 205)","oklch(0.8 0.1 210)","oklch(0.82 0.11 215)","oklch(0.85 0.1 220)","oklch(0.87 0.09 225)","oklch(0.9 0.07 230)","oklch(0.93 0.05 235)"],
+    scale: [
+      "oklch(0.7 0.08 200)",
+      "oklch(0.75 0.09 205)",
+      "oklch(0.8 0.1 210)",
+      "oklch(0.82 0.11 215)",
+      "oklch(0.85 0.1 220)",
+      "oklch(0.87 0.09 225)",
+      "oklch(0.9 0.07 230)",
+      "oklch(0.93 0.05 235)",
+    ],
   },
   "vintage-rose": {
     primaryDefault: "oklch(0.5 0.1 340)",
@@ -634,7 +1029,16 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.5 0.1 340)","oklch(0.55 0.11 345)","oklch(0.6 0.12 350)","oklch(0.65 0.13 355)","oklch(0.7 0.14 0)","oklch(0.75 0.12 5)","oklch(0.8 0.1 10)","oklch(0.85 0.08 15)"],
+    scale: [
+      "oklch(0.5 0.1 340)",
+      "oklch(0.55 0.11 345)",
+      "oklch(0.6 0.12 350)",
+      "oklch(0.65 0.13 355)",
+      "oklch(0.7 0.14 0)",
+      "oklch(0.75 0.12 5)",
+      "oklch(0.8 0.1 10)",
+      "oklch(0.85 0.08 15)",
+    ],
   },
   "tropical-paradise": {
     primaryDefault: "oklch(0.5 0.2 140)",
@@ -648,7 +1052,16 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.5 0.2 140)","oklch(0.55 0.21 145)","oklch(0.6 0.22 150)","oklch(0.65 0.22 155)","oklch(0.68 0.2 160)","oklch(0.72 0.18 165)","oklch(0.75 0.16 170)","oklch(0.8 0.14 175)"],
+    scale: [
+      "oklch(0.5 0.2 140)",
+      "oklch(0.55 0.21 145)",
+      "oklch(0.6 0.22 150)",
+      "oklch(0.65 0.22 155)",
+      "oklch(0.68 0.2 160)",
+      "oklch(0.72 0.18 165)",
+      "oklch(0.75 0.16 170)",
+      "oklch(0.8 0.14 175)",
+    ],
   },
   "desert-sand": {
     primaryDefault: "oklch(0.5 0.1 70)",
@@ -662,7 +1075,16 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.5 0.1 70)","oklch(0.55 0.11 68)","oklch(0.6 0.12 65)","oklch(0.65 0.13 62)","oklch(0.7 0.14 60)","oklch(0.75 0.12 58)","oklch(0.8 0.1 55)","oklch(0.85 0.08 52)"],
+    scale: [
+      "oklch(0.5 0.1 70)",
+      "oklch(0.55 0.11 68)",
+      "oklch(0.6 0.12 65)",
+      "oklch(0.65 0.13 62)",
+      "oklch(0.7 0.14 60)",
+      "oklch(0.75 0.12 58)",
+      "oklch(0.8 0.1 55)",
+      "oklch(0.85 0.08 52)",
+    ],
   },
   "berry-burst": {
     primaryDefault: "oklch(0.4 0.18 330)",
@@ -676,7 +1098,16 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.4 0.18 330)","oklch(0.45 0.2 335)","oklch(0.5 0.22 340)","oklch(0.55 0.23 345)","oklch(0.6 0.22 350)","oklch(0.65 0.2 355)","oklch(0.7 0.18 0)","oklch(0.75 0.15 5)"],
+    scale: [
+      "oklch(0.4 0.18 330)",
+      "oklch(0.45 0.2 335)",
+      "oklch(0.5 0.22 340)",
+      "oklch(0.55 0.23 345)",
+      "oklch(0.6 0.22 350)",
+      "oklch(0.65 0.2 355)",
+      "oklch(0.7 0.18 0)",
+      "oklch(0.75 0.15 5)",
+    ],
   },
   "pastel-dreamland-adventure": {
     primaryDefault: "oklch(0.82 0.08 285)",
@@ -690,16 +1121,25 @@ const PALETTES: Record<string, PaletteColors> = {
     text: "oklch(0.96 0.01 260)",
     textMuted: "oklch(0.72 0.04 260)",
     textHeading: "oklch(0.99 0.01 260)",
-    scale: ["oklch(0.82 0.08 285)","oklch(0.85 0.08 300)","oklch(0.88 0.06 320)","oklch(0.86 0.09 340)","oklch(0.85 0.1 350)","oklch(0.87 0.07 10)","oklch(0.88 0.05 220)","oklch(0.85 0.07 240)"],
+    scale: [
+      "oklch(0.82 0.08 285)",
+      "oklch(0.85 0.08 300)",
+      "oklch(0.88 0.06 320)",
+      "oklch(0.86 0.09 340)",
+      "oklch(0.85 0.1 350)",
+      "oklch(0.87 0.07 10)",
+      "oklch(0.88 0.05 220)",
+      "oklch(0.85 0.07 240)",
+    ],
   },
-  "emerald": {
+  emerald: {
     primaryDefault: "oklch(0.55 0.18 150)",
     primaryLight: "oklch(0.65 0.14 150)",
     primaryDark: "oklch(0.45 0.20 150)",
     secondary: "oklch(0.65 0.12 180)",
     accent: "oklch(0.75 0.15 85)",
   },
-  "violet": {
+  violet: {
     primaryDefault: "oklch(0.55 0.25 300)",
     primaryLight: "oklch(0.65 0.20 300)",
     primaryDark: "oklch(0.45 0.27 300)",
@@ -836,6 +1276,76 @@ function getPresetConfig(preset: string): StackConfig {
         auth: "none",
         deploy: "cloudflare",
       };
+    case "graphics":
+    case "creative":
+    case "brand-studio":
+      return {
+        intent: "graphics",
+        framework: "html",
+        styling: "bem",
+        animation: "css",
+        state: "none",
+        mobile: "none",
+        cms: "none",
+        puck: false,
+        ecommerce: "none",
+        db: "none",
+        orm: "none",
+        auth: "none",
+        deploy: "none",
+      };
+    case "ecom":
+    case "storefront":
+      return {
+        intent: "ecommerce",
+        framework: "astro",
+        styling: "hybrid",
+        animation: "css",
+        state: "nanostores",
+        mobile: "none",
+        cms: "none",
+        puck: false,
+        ecommerce: "stripe",
+        db: "none",
+        orm: "none",
+        auth: "none",
+        deploy: "cloudflare",
+      };
+    case "growth":
+    case "retainer":
+    case "marketing":
+      return {
+        intent: "growth",
+        framework: "none",
+        styling: "none",
+        animation: "none",
+        state: "none",
+        mobile: "none",
+        cms: "none",
+        puck: false,
+        ecommerce: "none",
+        db: "none",
+        orm: "none",
+        auth: "none",
+        deploy: "none",
+      };
+    case "oss":
+    case "oss-library":
+      return {
+        intent: "oss",
+        framework: "none",
+        styling: "none",
+        animation: "none",
+        state: "none",
+        mobile: "none",
+        cms: "none",
+        puck: false,
+        ecommerce: "none",
+        db: "none",
+        orm: "none",
+        auth: "none",
+        deploy: "github-pages",
+      };
     case "plain-astro":
     case "astro-plain":
       return {
@@ -935,6 +1445,26 @@ function getPresetConfig(preset: string): StackConfig {
         auth: "none",
         deploy: "cloudflare",
       };
+    case "atomic-payload":
+      // Official isolated website-builder scaffold: upstream ships its own
+      // Tailwind, zustand, MongoDB and Vercel deploy path, so every engine
+      // layer is none; framework=nextjs is honest labeling (upstream IS
+      // Next.js) and the isolation gate skips the engine's own bootstrap.
+      return {
+        intent: "content",
+        framework: "nextjs",
+        styling: "none",
+        animation: "none",
+        state: "none",
+        mobile: "none",
+        cms: "atomic-payload",
+        puck: false,
+        ecommerce: "none",
+        db: "none",
+        orm: "none",
+        auth: "none",
+        deploy: "none",
+      };
     default:
       return {
         intent: "brochure",
@@ -959,7 +1489,7 @@ async function main() {
   let projectName = values.name;
   let projectDesc = values.desc;
   let authorName = values.author;
-  let tagline = values.tagline;
+  const tagline = values.tagline;
   let targetAudience = values.audience;
   let coreProblem = values.problem;
   let coreFeatures = values.features;
@@ -1044,21 +1574,31 @@ async function main() {
       // =====================================================================
       console.log("\n⚡ STAGE 2: Progressive Technical Architecture Pipeline");
 
-      // Step 1: Project Type / Intent
-      console.log("\n🎯 Step 1: Project Type");
-      console.log("  [1] Static & Content Site    (Portfolio, blog, publication, documentation, landing page) [Default]");
-      console.log("  [2] Web Application & SaaS   (Dashboard, authenticated portal, database application)");
-      console.log("  [3] E-Commerce Storefront     (Product catalog, shopping cart, checkout, payments)");
-      console.log("  [4] Mobile Application       (Cross-platform iOS/Android app via Expo or Capacitor)");
-      console.log("  [5] Custom / DOX Baseline    (Agent governance container on existing workspace)");
+      // Step 1: Project Type / Archetype
+      console.log("\n🎯 Step 1: Project Archetype");
+      console.log(
+        "  [1] Static & Edge Site          (Cloudflare Pages, GitHub Pages, Astro, portfolio, docs) [Default]",
+      );
+      console.log("  [2] Full-Stack SaaS & Web App   (Next.js, Astro SSR, database, auth, Docker/Cloud)");
+      console.log("  [3] E-Commerce Storefront (Ecom)(Medusa v2, Stripe checkout, product catalog, cart)");
+      console.log(
+        "  [4] Creative & Graphic Studio   (Brand tokens, visual identity, Figma handoff, decks, social assets)",
+      );
+      console.log("  [5] Open-Source (OSS) Library   (Public package/CLI, GitHub Actions CI, MIT/Apache license)");
+      console.log("  [6] Growth & Marketing Retainer (SMM, SEO, Paid Ads campaigns, zero heavy backend)");
+      console.log("  [7] Mobile Application          (Expo React Native, Ionic Capacitor)");
+      console.log("  [8] Custom / DOX Baseline       (Agent governance container on existing workspace)");
 
-      const purposeChoice = await ask(rl, "Select project type [1-5]", "1");
+      const purposeChoice = await ask(rl, "Select project archetype [1-8]", "1");
       const purposeMap: Record<string, string> = {
         "1": "content",
         "2": "app",
         "3": "ecommerce",
-        "4": "mobile",
-        "5": "governance",
+        "4": "graphics",
+        "5": "oss",
+        "6": "growth",
+        "7": "mobile",
+        "8": "governance",
       };
       config.intent = purposeMap[purposeChoice] || "content";
 
@@ -1094,6 +1634,42 @@ async function main() {
         console.log("  [3] Custom");
         const fwChoice = await ask(rl, "Choose framework [1-3]", "1");
         config.framework = fwChoice === "2" ? "nextjs" : fwChoice === "3" ? "custom" : "astro";
+      } else if (config.intent === "graphics") {
+        console.log("  [1] Pure Design System & Tokens (HTML showcase, W3C tokens, OKLCH fluid clamp) [Recommended]");
+        console.log("  [2] Astro Visual Styleguide     (Component token viewer & brand documentation)");
+        console.log("  [3] None / Headless Asset Vault (Only .agents/brand/ & creative/ assets)");
+        const fwChoice = await ask(rl, "Choose graphics delivery mode [1-3]", "1");
+        if (fwChoice === "1") {
+          config.framework = "html";
+          config.styling = "bem";
+        } else if (fwChoice === "2") {
+          config.framework = "astro";
+          config.styling = "hybrid";
+        } else {
+          config.framework = "none";
+          config.styling = "none";
+        }
+        config.cms = "none";
+        config.db = "none";
+        config.auth = "none";
+        config.ecommerce = "none";
+      } else if (config.intent === "oss") {
+        console.log("  [1] TypeScript Library / CLI Harness [Recommended]");
+        console.log("  [2] Plain Astro Documentation Suite");
+        console.log("  [3] Pure Markdown & Script Container");
+        const fwChoice = await ask(rl, "Choose OSS architecture [1-3]", "1");
+        config.framework = fwChoice === "2" ? "astro" : "none";
+        config.cms = "none";
+        config.db = "none";
+        config.auth = "none";
+        config.ecommerce = "none";
+      } else if (config.intent === "growth") {
+        config.framework = "none";
+        config.styling = "none";
+        config.cms = "none";
+        config.db = "none";
+        config.auth = "none";
+        config.ecommerce = "none";
       } else if (config.intent === "mobile") {
         console.log("  [1] React Native with Expo   (Native iOS/Android with Expo Router) [Recommended]");
         console.log("  [2] Astro + Ionic Capacitor  (Convert Astro web app to native APK/iOS)");
@@ -1142,7 +1718,9 @@ async function main() {
         };
         config.cms = cmsMap[cmsChoice] || "none";
       } else if (config.framework === "html") {
-        console.log("  [1] Plain HTML               (Semantic HTML5, OKLCH fluid design tokens, zero build) [Recommended]");
+        console.log(
+          "  [1] Plain HTML               (Semantic HTML5, OKLCH fluid design tokens, zero build) [Recommended]",
+        );
         console.log("  [2] Instatic Builder         (Full Instatic SSG layout and compiler, zero runtime)");
         const htmlChoice = await ask(rl, "Choose HTML variant [1-2]", "1");
         if (htmlChoice === "2") {
@@ -1150,15 +1728,22 @@ async function main() {
         }
       } else if (config.framework === "nextjs") {
         console.log("  [1] Plain Next.js            (Clean App Router baseline, Server Actions) [Recommended]");
-        console.log("  [2] Next.js + Payload CMS 3.0 (Native App Router, TS collections + optional Puck visual canvas)");
-        console.log("  [3] Next.js + Git-based      (Markdown/MDX collections)");
-        console.log("  [4] None");
-        const nextChoice = await ask(rl, "Choose Next.js variant / CMS [1-4]", "1");
+        console.log(
+          "  [2] Next.js + Payload CMS 3.0 (Native App Router, TS collections + optional Puck visual canvas)",
+        );
+        console.log(
+          "  [3] Atomic Payload Website Builder  (Official isolated template: Payload + Next.js + Tailwind, every @pro-laico plugin, /admin on :42100)",
+        );
+        console.log("  [4] Next.js + Git-based      (Markdown/MDX collections)");
+        console.log("  [5] None");
+        const nextChoice = await ask(rl, "Choose Next.js variant / CMS [1-5]", "1");
         if (nextChoice === "2") {
           config.cms = "payload";
           const puckChoice = await ask(rl, "🎨 Enable Puck Visual Builder (@puckeditor/core)? [y/n]", "y");
           config.puck = puckChoice.toLowerCase().startsWith("y");
         } else if (nextChoice === "3") {
+          config.cms = "atomic-payload";
+        } else if (nextChoice === "4") {
           config.cms = "git";
         } else {
           config.cms = "none";
@@ -1207,9 +1792,16 @@ async function main() {
       }
 
       // 4d. Database & Persistence (if app or user wants DB)
-      if (config.intent === "app" || config.intent === "ecommerce" || config.cms === "studiocms" || config.cms === "payload") {
+      if (
+        config.intent === "app" ||
+        config.intent === "ecommerce" ||
+        config.cms === "studiocms" ||
+        config.cms === "payload"
+      ) {
         console.log("\n🗄️  Database & Persistence Architecture:");
-        console.log("  [1] SQLite / Cloudflare D1 + Drizzle ORM [Lightweight edge: zero container, fast] [Recommended]");
+        console.log(
+          "  [1] SQLite / Cloudflare D1 + Drizzle ORM [Lightweight edge: zero container, fast] [Recommended]",
+        );
         console.log("  [2] Supabase (PostgreSQL + Realtime + Auth)");
         console.log("  [3] Neon Serverless Postgres + Drizzle ORM");
         console.log("  [4] Turso (libSQL edge database)");
@@ -1267,7 +1859,9 @@ async function main() {
       // Step 5: OKLCH Color Palette (37 official presets from oklch.fyi)
       if (!colorPalette) {
         console.log("\n🌈 Step 5: OKLCH Color Palette (37 official presets from oklch.fyi):");
-        console.log("  [1] Curated Themes (sunset-vibes, deep-sea, forest, neon-nights, cherry-blossom...) [Recommended]");
+        console.log(
+          "  [1] Curated Themes (sunset-vibes, deep-sea, forest, neon-nights, cherry-blossom...) [Recommended]",
+        );
         console.log("  [2] Radix Neutrals (slate, gray, sand, steel)");
         console.log("  [3] Radix Chromatic (indigo, blue, red, green, amber, violet, teal, cyan...)");
         console.log("  [4] Type palette slug directly");
@@ -1282,16 +1876,31 @@ async function main() {
           console.log("  [17] vintage-rose    [18] tropical-paradise [19] desert-sand   [20] berry-burst");
           console.log("  [21] pastel-dreamland-adventure");
           const curatedThemes = [
-            "sunset-vibes", "deep-sea", "forest", "forest-fresh",
-            "sand", "steel", "olive-garden", "ocean-breeze",
-            "neon-nights", "earthy-tones", "cherry-blossom", "midnight-blue",
-            "lavender-fields", "coral-reef", "autumn-leaves", "arctic-frost",
-            "vintage-rose", "tropical-paradise", "desert-sand", "berry-burst",
-            "pastel-dreamland-adventure"
+            "sunset-vibes",
+            "deep-sea",
+            "forest",
+            "forest-fresh",
+            "sand",
+            "steel",
+            "olive-garden",
+            "ocean-breeze",
+            "neon-nights",
+            "earthy-tones",
+            "cherry-blossom",
+            "midnight-blue",
+            "lavender-fields",
+            "coral-reef",
+            "autumn-leaves",
+            "arctic-frost",
+            "vintage-rose",
+            "tropical-paradise",
+            "desert-sand",
+            "berry-burst",
+            "pastel-dreamland-adventure",
           ];
           const cIndex = await ask(rl, "Select theme [1-21]", "1");
           const idx = parseInt(cIndex, 10) - 1;
-          colorPalette = (idx >= 0 && idx < curatedThemes.length) ? curatedThemes[idx] : "sunset-vibes";
+          colorPalette = idx >= 0 && idx < curatedThemes.length ? curatedThemes[idx] : "sunset-vibes";
         } else if (catChoice === "2") {
           console.log("\n🎨 Radix Neutrals:");
           console.log("  [1] slate (Minimalist & Modern SaaS) [Default]");
@@ -1301,26 +1910,61 @@ async function main() {
           const neutrals = ["slate", "gray", "sand", "steel"];
           const nIndex = await ask(rl, "Select neutral [1-4]", "1");
           const idx = parseInt(nIndex, 10) - 1;
-          colorPalette = (idx >= 0 && idx < neutrals.length) ? neutrals[idx] : "slate";
+          colorPalette = idx >= 0 && idx < neutrals.length ? neutrals[idx] : "slate";
         } else if (catChoice === "3") {
           console.log("\n🎨 Radix Chromatic Scales:");
           console.log("   [1] indigo  [2] blue    [3] red     [4] green   [5] amber");
           console.log("   [6] violet  [7] teal    [8] cyan    [9] lime   [10] mint");
           console.log("  [11] tomato [12] orange [13] purple [14] pink  [15] yellow");
           const chromatic = [
-            "indigo", "blue", "red", "green", "amber",
-            "violet", "teal", "cyan", "lime", "mint",
-            "tomato", "orange", "purple", "pink", "yellow"
+            "indigo",
+            "blue",
+            "red",
+            "green",
+            "amber",
+            "violet",
+            "teal",
+            "cyan",
+            "lime",
+            "mint",
+            "tomato",
+            "orange",
+            "purple",
+            "pink",
+            "yellow",
           ];
           const chIndex = await ask(rl, "Select chromatic scale [1-15]", "1");
           const idx = parseInt(chIndex, 10) - 1;
-          colorPalette = (idx >= 0 && idx < chromatic.length) ? chromatic[idx] : "indigo";
+          colorPalette = idx >= 0 && idx < chromatic.length ? chromatic[idx] : "indigo";
         } else if (catChoice === "4") {
           const directSlug = await ask(rl, "Enter palette slug (e.g. sunset-vibes, deep-sea, slate)", "slate");
           colorPalette = PALETTES[directSlug.toLowerCase()] ? directSlug.toLowerCase() : "slate";
         } else {
           colorPalette = "slate";
         }
+      }
+
+      // Step 5b: Deployment & DevOps Target
+      if (!values.deploy && config.intent !== "graphics" && config.intent !== "growth") {
+        console.log("\n🚀 Step 5b: Deployment & Hosting Target:");
+        console.log("  [1] Cloudflare Edge (Pages / Workers) (Sub-50ms worldwide edge delivery) [Recommended]");
+        console.log("  [2] GitHub Pages                       (Zero-cost static hosting for OSS/docs)");
+        console.log("  [3] Docker / Self-Hosted VPS           (Container isolation, Coolify/Fly.io/VPS)");
+        console.log("  [4] Vercel Serverless                  (Serverless compute with edge routing)");
+        console.log("  [5] Static Export / Nginx              (Zero server runtime, static HTML/assets)");
+        console.log("  [6] None / Local Workspace Only");
+        const deployChoice = await ask(rl, "Choose deployment target [1-6]", "1");
+        const deployMap: Record<string, string> = {
+          "1": "cloudflare",
+          "2": "github-pages",
+          "3": "docker",
+          "4": "vercel",
+          "5": "static",
+          "6": "none",
+        };
+        config.deploy = deployMap[deployChoice] || "cloudflare";
+      } else if (config.intent === "graphics" || config.intent === "growth") {
+        config.deploy = "none";
       }
 
       // =====================================================================
@@ -1332,7 +1976,7 @@ async function main() {
         projectDesc = await ask(
           rl,
           "📝 One-Line Tagline / Vision",
-          `${projectName} - Modern application governed by DOX Engine.`
+          `${projectName} - Modern application governed by DOX Engine.`,
         );
       }
       if (!authorName) {
@@ -1345,20 +1989,24 @@ async function main() {
         targetAudience = await ask(rl, "👥 Target Audience / Users", "Developers, creators, and modern teams");
       }
       if (!coreProblem) {
-        coreProblem = await ask(rl, "🎯 Core Problem Solved", "Delivering fast, accessible, and structured user experiences");
+        coreProblem = await ask(
+          rl,
+          "🎯 Core Problem Solved",
+          "Delivering fast, accessible, and structured user experiences",
+        );
       }
       if (!coreFeatures) {
         coreFeatures = await ask(
           rl,
           "✨ Key Features (comma-separated)",
-          "Core application shell, Responsive modern UI, Fast API integration"
+          "Core application shell, Responsive modern UI, Fast API integration",
         );
       }
       if (!offerings) {
         offerings = await ask(
           rl,
           "📦 Core Offerings / Catalog Items",
-          "Starter tier, Professional suite, Enterprise solution"
+          "Starter tier, Professional suite, Enterprise solution",
         );
       }
 
@@ -1384,29 +2032,31 @@ async function main() {
         firstMilestone = await ask(
           rl,
           "⚡ Immediate First Milestone",
-          "Scaffold core application shell and initial landing page"
+          "Scaffold core application shell and initial landing page",
         );
       }
       if (!plannedMilestones) {
         plannedMilestones = await ask(
           rl,
           "📋 Planned Future Milestones (comma-separated)",
-          "Backend API integration, Automated testing suite, Production deployment"
+          "Backend API integration, Automated testing suite, Production deployment",
         );
       }
 
-      if (!agentName) {
-        agentName = await ask(rl, "🤖 Primary AI Agent Name", "Orchestrator");
-      }
+      if (!agentName) agentName = await ask(rl, "🤖 Primary AI Agent Name", "");
       if (!agentRole) {
-        agentRole = await ask(rl, "Primary Agent Role", "Lead Workspace Orchestrator");
+        agentRole = await ask(rl, "Primary Agent Role", "Configured workspace agent");
       }
       if (!primaryConstraint) {
         primaryConstraint = await ask(
           rl,
           "Primary Quality Invariant",
-          "Zero regression, 100% test pass rate, and zero secret exposure"
+          "Zero regression, 100% test pass rate, and zero secret exposure",
         );
+      }
+      if (githubProjectEnabled === undefined) {
+        const githubChoice = (await ask(rl, "Will this project be hosted on GitHub? (yes/no)", "no")).toLowerCase();
+        githubProjectEnabled = ["y", "yes"].includes(githubChoice);
       }
     } finally {
       rl.close();
@@ -1414,7 +2064,28 @@ async function main() {
   }
 
   // Fallbacks & Defaults
-  const resolvedTarget = isAbsolute(targetPath || ".") ? (targetPath || ".") : resolve(process.cwd(), targetPath || ".");
+  const resolvedTarget = isAbsolute(targetPath || ".") ? targetPath || "." : resolve(process.cwd(), targetPath || ".");
+
+  // Auto-detect existing project metadata if target directory already exists
+  if (existsSync(join(resolvedTarget, "package.json"))) {
+    try {
+      const pkg = JSON.parse(readFileSync(join(resolvedTarget, "package.json"), "utf8"));
+      if (!values.name && pkg.name) projectName = pkg.name;
+      if (!values.desc && pkg.description) projectDesc = pkg.description;
+      if (!values.author && pkg.author)
+        authorName = typeof pkg.author === "string" ? pkg.author : pkg.author.name || authorName;
+    } catch {}
+  }
+  if (existsSync(join(resolvedTarget, "README.md"))) {
+    try {
+      const readme = readFileSync(join(resolvedTarget, "README.md"), "utf8");
+      const firstHeading = readme.match(/^#\s+([^\n]+)$/m);
+      if (!values.name && !projectName && firstHeading) projectName = firstHeading[1].trim();
+      const firstParagraph = readme.match(/^([^#\n\r][^\n\r]+)/m);
+      if (!values.desc && !projectDesc && firstParagraph) projectDesc = firstParagraph[1].trim();
+    } catch {}
+  }
+
   projectName = projectName || basename(resolvedTarget);
   projectDesc = projectDesc || tagline || `${projectName} - Modern application governed by DOX Engine.`;
   authorName = authorName || projectName;
@@ -1427,8 +2098,11 @@ async function main() {
   colorPalette = (colorPalette || "slate").toLowerCase();
   firstMilestone = firstMilestone || "Scaffold core application shell and initial landing page";
   plannedMilestones = plannedMilestones || "Backend API integration, Automated testing suite, Production deployment";
-  agentName = agentName || "Orchestrator";
-  agentRole = agentRole || "Lead Workspace Orchestrator";
+  agentName = agentName || readConfiguredAgentName() || "";
+  if (!agentName) {
+    throw new Error("Set --agent-name or configure ~/.agents/identity/assistant.md before scaffolding.");
+  }
+  agentRole = agentRole || "Configured workspace agent";
   primaryConstraint = primaryConstraint || "Zero regression, 100% test pass rate, and zero secret exposure";
 
   config.framework = (config.framework || "astro").toLowerCase();
@@ -1446,28 +2120,48 @@ async function main() {
   console.log(`🏷️  Project Name:      \`${projectName}\``);
   console.log(`👤 Author:            \`${authorName}\``);
   console.log(`🎯 Project Intent:     \`${config.intent.toUpperCase() || "CUSTOM"}\``);
-  console.log(`⚡ Framework:         \`${config.framework.toUpperCase()}${config.customFramework ? ` (${config.customFramework})` : ""}\``);
+  console.log(
+    `⚡ Framework:         \`${config.framework.toUpperCase()}${config.customFramework ? ` (${config.customFramework})` : ""}\``,
+  );
   console.log(`⚡ Archetype:          ${config.framework.toUpperCase()}`);
-  console.log(`🎨 Styling:           \`${config.styling.toUpperCase()}${config.customStyling ? ` (${config.customStyling})` : ""}\``);
-  console.log(`🎭 Animations:        \`${config.animation.toUpperCase()}${config.customAnimation ? ` (${config.customAnimation})` : ""}\``);
-  console.log(`🧠 State Store:       \`${config.state.toUpperCase()}${config.customState ? ` (${config.customState})` : ""}\``);
-  console.log(`📱 Mobile Packaging:  \`${config.mobile.toUpperCase()}${config.customMobile ? ` (${config.customMobile})` : ""}\``);
-  console.log(`📦 CMS:               \`${config.cms.toUpperCase()}${config.puck ? " + PUCK VISUAL BUILDER" : ""}${config.customCms ? ` (${config.customCms})` : ""}\``);
-  console.log(`🛍️  E-Commerce:        \`${config.ecommerce.toUpperCase()}${config.customEcommerce ? ` (${config.customEcommerce})` : ""}\``);
+  console.log(
+    `🎨 Styling:           \`${config.styling.toUpperCase()}${config.customStyling ? ` (${config.customStyling})` : ""}\``,
+  );
+  console.log(
+    `🎭 Animations:        \`${config.animation.toUpperCase()}${config.customAnimation ? ` (${config.customAnimation})` : ""}\``,
+  );
+  console.log(
+    `🧠 State Store:       \`${config.state.toUpperCase()}${config.customState ? ` (${config.customState})` : ""}\``,
+  );
+  console.log(
+    `📱 Mobile Packaging:  \`${config.mobile.toUpperCase()}${config.customMobile ? ` (${config.customMobile})` : ""}\``,
+  );
+  console.log(
+    `📦 CMS:               \`${config.cms.toUpperCase()}${config.puck ? " + PUCK VISUAL BUILDER" : ""}${config.customCms ? ` (${config.customCms})` : ""}\``,
+  );
+  console.log(
+    `🛍️  E-Commerce:        \`${config.ecommerce.toUpperCase()}${config.customEcommerce ? ` (${config.customEcommerce})` : ""}\``,
+  );
   console.log(`🗄️  Database:          \`${config.db.toUpperCase()}${config.customDb ? ` (${config.customDb})` : ""}\``);
-  console.log(`🔑 Auth:              \`${config.auth.toUpperCase()}${config.customAuth ? ` (${config.customAuth})` : ""}\``);
+  console.log(
+    `🔑 Auth:              \`${config.auth.toUpperCase()}${config.customAuth ? ` (${config.customAuth})` : ""}\``,
+  );
   console.log(`🎨 Brand Theme:       \`${colorPalette.toUpperCase()}\``);
   console.log(`🤖 Lead Agent:        \`${agentName} (${agentRole})\``);
   console.log(`⚡ First Milestone:   \`${firstMilestone}\``);
   if (isDryRun) console.log(`🔍 [DRY RUN MODE — Zero filesystem modifications]`);
   console.log("-------------------------------------------------------\n");
 
-  // Aria Builder isolation: the official repo ships its own Astro + UnoCSS +
-  // CMS + SQLite, so companion selections stay documented intent only — the
-  // Aria block clones upstream and every block below skips its extras.
+  // Isolated official scaffolds (Aria Builder, Atomic Payload): each upstream
+  // repo ships a complete stack, so companion selections stay documented intent
+  // only — the isolated provisioning block extracts upstream and every block
+  // below skips its extras.
   // (Placed after the summary print so dry-run output still shows intent.)
   const isAriaIsolated = config.cms === "ariabuilder";
-  if (isAriaIsolated && !isDryRun) {
+  const isAtomicIsolated = config.cms === "atomic-payload";
+  const isIsolatedOfficial = isAriaIsolated || isAtomicIsolated;
+  const isolatedName = isAtomicIsolated ? "Atomic Payload" : "Aria Builder";
+  if (isIsolatedOfficial && !isDryRun) {
     const skipped = [
       ["styling", config.styling],
       ["state", config.state],
@@ -1486,14 +2180,18 @@ async function main() {
     config.deploy = "none";
     config.puck = false;
     if (skipped.length > 0) {
-      console.log(`ℹ️  Aria Builder is fully isolated: skipping engine extras (${skipped.map(([k, v]) => `${k}=${v}`).join(", ")}). Request them after scaffolding if needed.`);
+      console.log(
+        `ℹ️  ${isolatedName} is fully isolated: skipping engine extras (${skipped.map(([k, v]) => `${k}=${v}`).join(", ")}). Request them after scaffolding if needed.`,
+      );
     }
   }
 
   // =========================================================================
   // STAGE 1: Agents First (Mandatory Governance Baseline)
   // =========================================================================
-  console.log("🛡️  STAGE 1: Initializing Agent Governance & Progressive Disclosure DOX (from ai-ready/templates)...");
+  console.log(
+    "🛡️  STAGE 1: Initializing Agent Governance & Progressive Disclosure DOX (from updateagents/templates)...",
+  );
 
   if (!isDryRun && !existsSync(resolvedTarget)) {
     mkdirSync(resolvedTarget, { recursive: true });
@@ -1503,16 +2201,38 @@ async function main() {
   const agentsSrc = join(TEMPLATES_DIR, "AGENTS.md");
   const agentsDest = join(resolvedTarget, "AGENTS.md");
   if (existsSync(agentsSrc)) {
-    let content = readFileSync(agentsSrc, "utf8");
-    content = content.replace(/\{\{PROJECT_NAME\}\}/g, projectName);
-    content = content.replace(/\{\{PROJECT_DESC\}\}/g, projectDesc);
-    content = content.replace(/\{\{AGENT_NAME\}\}/g, agentName);
-    content = content.replace(/\{\{AGENT_ROLE\}\}/g, agentRole);
+    const template = readFileSync(agentsSrc, "utf8");
+    const packageManager = config.cms === "atomic-payload" ? "pnpm" : config.cms === "aria" ? "npm" : "Bun";
+    const profile = detectAgentTemplateProfile(resolvedTarget, {
+      projectName,
+      projectDesc,
+      agentName,
+      agentRole,
+      intent: config.intent,
+      framework: config.framework,
+      styling: config.styling,
+      animation: config.animation,
+      toolchain: `${packageManager}; ${config.framework} runtime selected by new-project`,
+      governanceModel: "Secretary intake → selected project workflow → verified task closeout",
+    });
+    const content = renderAgentsTemplate(template, profile);
     if (!existsSync(agentsDest) || isForce) {
       if (!isDryRun) writeFileSync(agentsDest, content, "utf8");
       console.log("  ✅ Created: `./AGENTS.md`");
     } else {
       console.log("  ⏩ Skipped: `./AGENTS.md` (already exists)");
+    }
+  }
+
+  // Claude-specific entry point imports the shared workspace instructions.
+  const claudeSrc = join(TEMPLATES_DIR, "CLAUDE.md");
+  const claudeDest = join(resolvedTarget, "CLAUDE.md");
+  if (existsSync(claudeSrc)) {
+    if (!existsSync(claudeDest) || isForce) {
+      if (!isDryRun) cpSync(claudeSrc, claudeDest);
+      console.log("  ✅ Created: `./CLAUDE.md` (imports `AGENTS.md`)");
+    } else {
+      console.log("  ⏩ Skipped: `./CLAUDE.md` (already exists)");
     }
   }
 
@@ -1533,6 +2253,7 @@ async function main() {
   const subdirs = [
     "archive",
     "artifacts",
+    "dump",
     "brand",
     "brand/tokens",
     "brand/screenshots",
@@ -1572,19 +2293,112 @@ async function main() {
         if (!isDryRun) cpSync(src, dest);
       }
     }
-    console.log(`  ✅ Synced: ./.agents/standards/ (${readdirSync(standardsSrc).length} standards, including WordPress)`);
+    console.log(
+      `  ✅ Synced: ./.agents/standards/ (${readdirSync(standardsSrc).length} standards, including WordPress)`,
+    );
   }
+
+  // Compute tokenMap for both Brand and Context templates
+  const featureBullets = coreFeatures
+    .split(",")
+    .map((f) => `- **${f.trim()}**: Core capability and automated verification.`)
+    .join("\n");
+  const plannedBullets = plannedMilestones
+    .split(",")
+    .map((m) => `- **${m.trim()}**: Scheduled for upcoming development sprint.`)
+    .join("\n");
+  const requestedBullets = `- Community feedback and user-requested capabilities pending triage.\n- Telemetry, observability, and automated health checks.`;
+
+  let industryVertical = "b2b_saas";
+  if (config.intent === "ecommerce" || config.intent === "ecom" || config.ecommerce !== "none") {
+    industryVertical = "ecommerce_retail";
+  } else if (config.intent === "graphics") {
+    industryVertical = "creative_design_studio";
+  } else if (config.intent === "growth") {
+    industryVertical = "growth_marketing_agency";
+  } else if (
+    config.intent === "cli" ||
+    config.intent === "oss" ||
+    /developer|engineer|devops|architect|sdk|api|agent/i.test(targetAudience) ||
+    /developer|engineer|api|cli/i.test(projectDesc)
+  ) {
+    industryVertical = "developer_tools";
+  }
+
+  const tokenMap: Record<string, string> = {
+    "{{PROJECT_NAME}}": projectName,
+    "{{PROJECT_DESC}}": projectDesc,
+    "{{AUTHOR_NAME}}": authorName,
+    "{{INDUSTRY_VERTICAL}}": industryVertical,
+    "{{INDUSTRY}}": industry || industryVertical || "(unanswered)",
+    "{{OFFERINGS}}": offerings || "(unanswered)",
+    "{{COLOR_PALETTE}}": colorPalette,
+    "{{TARGET_AUDIENCE}}": targetAudience,
+    "{{PROBLEM_SOLVED}}": coreProblem,
+    "{{VALUE_PROPOSITION}}": `Provides a structured, high-performance, and verifiable solution addressing ${coreProblem.toLowerCase()}.`,
+    "{{CORE_FEATURES}}": featureBullets,
+    "{{KEY_DELIVERABLES}}": `- \`src/\` — Application source code and component architecture\n- \`public/\` — Static assets, icons, and brand graphics\n- \`Client-Intake/\` — Brand identity, business strategy, offerings catalog, and technical intake artifacts\n- \`docs/\` — Architecture documentation, API specifications, and guides\n- \`.agents/\` — 9-folder progressive disclosure governance container`,
+    "{{BRAND_VOICE}}": brandVoice,
+    "{{COLOR_THEME}}": `${colorPalette.toUpperCase()} theme configured in DTCG tokens (\`./.agents/brand/tokens/\`)`,
+    "{{FIRST_MILESTONE}}": firstMilestone,
+    "{{PLANNED_MILESTONES}}": plannedBullets,
+    "{{REQUESTED_BACKLOG}}": requestedBullets,
+    "{{PROJECT_INTENT}}": config.intent.toUpperCase() || "WEB",
+    "{{FRAMEWORK_DETAILS}}": `${config.framework.toUpperCase()}${config.customFramework ? ` (${config.customFramework})` : ""} (@latest)`,
+    "{{STYLING_DETAILS}}": `${config.styling.toUpperCase()}${config.customStyling ? ` (${config.customStyling})` : ""} (Design tokens in .agents/brand/tokens/)`,
+    "{{ANIMATION_DETAILS}}": `${config.animation.toUpperCase()}${config.customAnimation ? ` (${config.customAnimation})` : ""}`,
+    "{{STATE_DETAILS}}": `${config.state.toUpperCase()}${config.customState ? ` (${config.customState})` : ""}`,
+    "{{MOBILE_DETAILS}}": `${config.mobile.toUpperCase()}${config.customMobile ? ` (${config.customMobile})` : ""}`,
+    "{{CMS_COMMERCE_DETAILS}}": `CMS: ${config.cms.toUpperCase()}${config.puck ? " (+ Puck Visual Builder)" : ""} | E-Commerce: ${config.ecommerce.toUpperCase()}`,
+    "{{DATABASE_AUTH_DETAILS}}": `Database: ${config.db.toUpperCase()} | Auth: ${config.auth.toUpperCase()}`,
+    "{{DEPLOYMENT_DETAILS}}": `${config.deploy.toUpperCase()}`,
+    "{{AGENT_NAME}}": agentName,
+    "{{AGENT_ROLE}}": agentRole,
+    "{{STATUS_QUO}}": "Manual ad-hoc processes, custom spreadsheets, or legacy tooling",
+    "{{TRACTION_METRICS}}": "Active development / initial workspace initialization",
+    "{{PRIMARY_ASSET}}": "Autonomous DOX Engine architecture with verified automated test suite",
+    "{{STRATEGIC_DIAGNOSIS}}": `Establish core ${config.intent.toLowerCase()} user journey, verify execution in staging, and validate initial user flow.`,
+    "{{NOW_SKILL}}":
+      config.intent === "ecommerce" || config.intent === "ecom"
+        ? "webdev:ecommerce"
+        : config.intent === "graphics"
+          ? "design"
+          : config.intent === "growth"
+            ? "smm"
+            : "webdev:frontend",
+    "{{SCAFFOLD_DATE}}": new Date().toISOString().split("T")[0],
+    "{{DOMAIN_ROOT}}": `${projectName.toLowerCase().replace(/[^a-z0-9-]/g, "")}.com`,
+    "{{FRAMEWORK_PRIMARY}}": config.framework !== "none" ? config.framework.toUpperCase() : "Astro",
+    "{{FRAMEWORK_SECONDARY}}": "Next.js / Service API",
+  };
 
   // 1.5 Copy Brand Guidelines & Tokens
   const brandSrc = join(TEMPLATES_DIR, ".agents/brand");
   const brandDest = join(agentsDir, "brand");
   if (existsSync(brandSrc)) {
-    const brandFiles = ["design.md", "bem-conventions.md", "a11y.md"];
+    const brandFiles = [
+      "design.md",
+      "bem-conventions.md",
+      "a11y.md",
+      "voice.md",
+      "personas.md",
+      "positioning.md",
+      "messaging.md",
+      "visual-identity.md",
+      "social-hooks.md",
+      "CONTENT_MAP.md",
+    ];
     for (const bf of brandFiles) {
       const src = join(brandSrc, bf);
       const dest = join(brandDest, bf);
-      if (!existsSync(dest) || isForce) {
-        if (!isDryRun) cpSync(src, dest);
+      if (existsSync(src) && (!existsSync(dest) || isForce)) {
+        if (!isDryRun) {
+          let c = readFileSync(src, "utf8");
+          for (const [k, v] of Object.entries(tokenMap)) {
+            c = c.replaceAll(k, v);
+          }
+          writeFileSync(dest, c, "utf8");
+        }
       }
     }
     const tokensSrc = join(brandSrc, "tokens");
@@ -1648,43 +2462,6 @@ async function main() {
   const contextSrc = join(TEMPLATES_DIR, ".agents/context");
   const contextDest = join(agentsDir, "context");
   if (existsSync(contextSrc)) {
-    const featureBullets = coreFeatures
-      .split(",")
-      .map((f) => `- **${f.trim()}**: Core capability and automated verification.`)
-      .join("\n");
-    const plannedBullets = plannedMilestones
-      .split(",")
-      .map((m) => `- **${m.trim()}**: Scheduled for upcoming development sprint.`)
-      .join("\n");
-    const requestedBullets = `- Community feedback and user-requested capabilities pending triage.\n- Telemetry, observability, and automated health checks.`;
-
-    const tokenMap: Record<string, string> = {
-      "{{PROJECT_NAME}}": projectName,
-      "{{PROJECT_DESC}}": projectDesc,
-      "{{AUTHOR_NAME}}": authorName,
-      "{{TARGET_AUDIENCE}}": targetAudience,
-      "{{PROBLEM_SOLVED}}": coreProblem,
-      "{{VALUE_PROPOSITION}}": `Provides a structured, high-performance, and verifiable solution addressing ${coreProblem.toLowerCase()}.`,
-      "{{CORE_FEATURES}}": featureBullets,
-      "{{KEY_DELIVERABLES}}": `- \`src/\` — Application source code and component architecture\n- \`public/\` — Static assets, icons, and brand graphics\n- \`Client-Intake/\` — Brand identity, business strategy, offerings catalog, and technical intake artifacts\n- \`docs/\` — Architecture documentation, API specifications, and guides\n- \`.agents/\` — 9-folder progressive disclosure governance container`,
-      "{{BRAND_VOICE}}": brandVoice,
-      "{{COLOR_THEME}}": `${colorPalette.toUpperCase()} theme configured in DTCG tokens (\`./.agents/brand/tokens/\`)`,
-      "{{FIRST_MILESTONE}}": firstMilestone,
-      "{{PLANNED_MILESTONES}}": plannedBullets,
-      "{{REQUESTED_BACKLOG}}": requestedBullets,
-      "{{PROJECT_INTENT}}": config.intent.toUpperCase() || "WEB",
-      "{{FRAMEWORK_DETAILS}}": `${config.framework.toUpperCase()}${config.customFramework ? ` (${config.customFramework})` : ""} (@latest)`,
-      "{{STYLING_DETAILS}}": `${config.styling.toUpperCase()}${config.customStyling ? ` (${config.customStyling})` : ""} (Design tokens in .agents/brand/tokens/)`,
-      "{{ANIMATION_DETAILS}}": `${config.animation.toUpperCase()}${config.customAnimation ? ` (${config.customAnimation})` : ""}`,
-      "{{STATE_DETAILS}}": `${config.state.toUpperCase()}${config.customState ? ` (${config.customState})` : ""}`,
-      "{{MOBILE_DETAILS}}": `${config.mobile.toUpperCase()}${config.customMobile ? ` (${config.customMobile})` : ""}`,
-      "{{CMS_COMMERCE_DETAILS}}": `CMS: ${config.cms.toUpperCase()}${config.puck ? " (+ Puck Visual Builder)" : ""} | E-Commerce: ${config.ecommerce.toUpperCase()}`,
-      "{{DATABASE_AUTH_DETAILS}}": `Database: ${config.db.toUpperCase()} | Auth: ${config.auth.toUpperCase()}`,
-      "{{DEPLOYMENT_DETAILS}}": `${config.deploy.toUpperCase()}`,
-      "{{AGENT_NAME}}": agentName,
-      "{{AGENT_ROLE}}": agentRole,
-    };
-
     const ctxFiles = readdirSync(contextSrc);
     for (const f of ctxFiles) {
       const src = join(contextSrc, f);
@@ -1699,7 +2476,7 @@ async function main() {
         }
       }
     }
-    console.log("  ✅ Initialized: `./.agents/context/` (product, architecture, decisions, roadmap)");
+    console.log("  ✅ Initialized: `./.agents/context/` (product, architecture, brand, accounts, decisions, roadmap)");
   }
 
   // 1.7 Initialize Cognitive Memory (.memory/ + CURRENT.md)
@@ -1738,6 +2515,45 @@ async function main() {
     console.log("  ✅ Initialized: `./.memory/CURRENT.md`");
   }
 
+  // 1.8 Archetype-Specific Scaffolding (creative/ for graphics, marketing/ for growth)
+  if (config.intent === "graphics") {
+    const creativeDir = join(resolvedTarget, "creative");
+    if (!existsSync(creativeDir) && !isDryRun) {
+      mkdirSync(join(creativeDir, "tokens"), { recursive: true });
+      mkdirSync(join(creativeDir, "decks"), { recursive: true });
+      mkdirSync(join(creativeDir, "assets"), { recursive: true });
+      const creativeReadme = `# 🎨 Creative & Visual Asset Studio — ${projectName}
+
+> **Operating Directive**: Centralized storage for client brand vectors, pitch decks, Figma handoffs, and compiled design tokens.
+
+## Directory Structure
+- \`tokens/\`: Compiled DTCG design tokens and fluid geometry clamps.
+- \`decks/\`: Client pitch decks, presentation slides, and sales collateral.
+- \`assets/\`: SVG emblems, illustrations, favicons, and social sharing banners.
+`;
+      writeFileSync(join(creativeDir, "README.md"), creativeReadme, "utf8");
+      console.log("  ✅ Provisioned: `./creative/` (tokens, decks, assets)");
+    }
+  } else if (config.intent === "growth") {
+    const marketingDir = join(resolvedTarget, "marketing");
+    if (!existsSync(marketingDir) && !isDryRun) {
+      mkdirSync(join(marketingDir, "smm"), { recursive: true });
+      mkdirSync(join(marketingDir, "seo"), { recursive: true });
+      mkdirSync(join(marketingDir, "paidads"), { recursive: true });
+      const marketingReadme = `# 📈 Growth & Marketing Retainer — ${projectName}
+
+> **Operating Directive**: Centralized storage for social media management, SEO keyword clusters, and paid ad creative briefs.
+
+## Directory Structure
+- \`smm/\`: Social media calendars, post copy drafts, thread outlines, and viral hooks.
+- \`seo/\`: Keyword research clusters, programmatic page briefs, and search audit logs.
+- \`paidads/\`: Ad creative variations, campaign angle briefs, and ROAS tracking targets.
+`;
+      writeFileSync(join(marketingDir, "README.md"), marketingReadme, "utf8");
+      console.log("  ✅ Provisioned: `./marketing/` (smm, seo, paidads)");
+    }
+  }
+
   console.log("  🛡️ Stage 1 Complete: Governance container active.\n");
 
   // =========================================================================
@@ -1745,14 +2561,27 @@ async function main() {
   // =========================================================================
   const skipInstall = values["skip-install"] || false;
 
-  if (config.framework !== "none" && !isDryRun && !isAriaIsolated) {
+  if (config.framework !== "none" && !isDryRun && !isIsolatedOfficial) {
     console.log(`🚀 Bootstrapping ${config.framework.toUpperCase()} Framework (@latest)...`);
     try {
       if (config.framework === "astro") {
         const stagingDir = join(os.tmpdir(), `astro-scaffold-${Date.now()}`);
-        spawnSync("bun", ["create", "astro@latest", stagingDir, "--template", "minimal", "--yes", "--no-git", skipInstall ? "--no-install" : "--install"], {
-          stdio: "inherit",
-        });
+        spawnSync(
+          "bun",
+          [
+            "create",
+            "astro@latest",
+            stagingDir,
+            "--template",
+            "minimal",
+            "--yes",
+            "--no-git",
+            skipInstall ? "--no-install" : "--install",
+          ],
+          {
+            stdio: "inherit",
+          },
+        );
         const claudeMd = join(stagingDir, "CLAUDE.md");
         if (existsSync(claudeMd)) rmSync(claudeMd, { force: true });
         const astroAgentsMd = join(stagingDir, "AGENTS.md");
@@ -1767,7 +2596,6 @@ async function main() {
         }
         cpSync(stagingDir, resolvedTarget, { recursive: true });
         rmSync(stagingDir, { recursive: true, force: true });
-
       } else if (config.framework === "nextjs") {
         const stagingDir = join(os.tmpdir(), `next-scaffold-${Date.now()}`);
         const nextArgs = [
@@ -1802,15 +2630,18 @@ async function main() {
         }
         cpSync(stagingDir, resolvedTarget, { recursive: true });
         rmSync(stagingDir, { recursive: true, force: true });
-
       } else if (config.framework === "instatic") {
         const stagingDir = join(os.tmpdir(), `instatic-scaffold-${Date.now()}`);
         let cloned = false;
         try {
-          const res = spawnSync("git", ["clone", "--depth", "1", "https://github.com/corebunch/instatic.git", stagingDir], {
-            stdio: "ignore",
-            timeout: 5000,
-          });
+          const res = spawnSync(
+            "git",
+            ["clone", "--depth", "1", "https://github.com/corebunch/instatic.git", stagingDir],
+            {
+              stdio: "ignore",
+              timeout: 5000,
+            },
+          );
           if (res.status === 0 && existsSync(stagingDir)) {
             const gitDir = join(stagingDir, ".git");
             if (existsSync(gitDir)) rmSync(gitDir, { recursive: true, force: true });
@@ -1834,7 +2665,7 @@ async function main() {
             dist: "dist",
             components: "src/components",
             layouts: "src/layouts",
-            pages: "src/pages"
+            pages: "src/pages",
           };
           writeFileSync(join(resolvedTarget, "instatic.json"), JSON.stringify(instaticJson, null, 2) + "\n", "utf8");
 
@@ -1875,15 +2706,14 @@ title: ${projectName} - Instatic Builder
             scripts: {
               dev: "instatic dev",
               build: "instatic build",
-              preview: "instatic serve"
+              preview: "instatic serve",
             },
             devDependencies: {
-              instatic: "^1.0.0"
-            }
+              instatic: "^1.0.0",
+            },
           };
           writeFileSync(join(resolvedTarget, "package.json"), JSON.stringify(pkgJson, null, 2) + "\n", "utf8");
         }
-
       } else if (config.framework === "wordpress") {
         const hasComposer = spawnSync("which", ["composer"], { stdio: "ignore" }).status === 0;
         if (hasComposer) {
@@ -1897,11 +2727,14 @@ title: ${projectName} - Instatic Builder
           writeFileSync(
             join(resolvedTarget, "wp-content/themes", projectName, "style.css"),
             `/*\nTheme Name: ${projectName}\nAuthor: ${authorName || projectName}\nVersion: 1.0.0\n*/\n`,
-            "utf8"
+            "utf8",
           );
-          writeFileSync(join(resolvedTarget, "wp-content/themes", projectName, "index.php"), `<?php\n// Silence is golden.\n`, "utf8");
+          writeFileSync(
+            join(resolvedTarget, "wp-content/themes", projectName, "index.php"),
+            `<?php\n// Silence is golden.\n`,
+            "utf8",
+          );
         }
-
       } else if (config.framework === "expo") {
         spawnSync("bun", ["create", "expo-app@latest", ".", "--template", "blank-typescript", "--no-install"], {
           cwd: resolvedTarget,
@@ -1975,7 +2808,13 @@ export default defineConfig({
         console.log("  ✅ Auto-wired: `./postcss.config.mjs` with @unocss/postcss");
       }
 
-      if ((config.framework === "astro" || config.cms === "studiocms" || config.cms === "emdash" || config.cms === "wollycms") && config.cms !== "ariabuilder") {
+      if (
+        (config.framework === "astro" ||
+          config.cms === "studiocms" ||
+          config.cms === "emdash" ||
+          config.cms === "wollycms") &&
+        config.cms !== "ariabuilder"
+      ) {
         const astroConfigPath = join(resolvedTarget, "astro.config.mjs");
         const integrations: string[] = [];
         const imports: string[] = ["import { defineConfig } from 'astro/config';"];
@@ -2053,9 +2892,10 @@ export default defineConfig({
           }
         }
 
-        const adapterExpr = config.cms === "emdash" && config.deploy === "cloudflare"
-          ? "adapter: cloudflare()"
-          : "adapter: node({ mode: 'standalone' })";
+        const adapterExpr =
+          config.cms === "emdash" && config.deploy === "cloudflare"
+            ? "adapter: cloudflare()"
+            : "adapter: node({ mode: 'standalone' })";
 
         const astroConfigContent = `// @ts-check
 ${imports.join("\n")}
@@ -2076,7 +2916,7 @@ export default defineConfig({
       depsToAdd["payload"] = "^3.24.0";
       depsToAdd["@payloadcms/next"] = "^3.24.0";
       depsToAdd["@payloadcms/richtext-lexical"] = "^3.24.0";
-      const isPg = (config.db === "postgres" || config.db === "neon" || config.db === "supabase");
+      const isPg = config.db === "postgres" || config.db === "neon" || config.db === "supabase";
       if (isPg) {
         depsToAdd["@payloadcms/db-postgres"] = "^3.24.0";
       } else {
@@ -2087,7 +2927,9 @@ export default defineConfig({
       const collectionsDir = join(resolvedTarget, "src", "collections");
       mkdirSync(collectionsDir, { recursive: true });
 
-      writeFileSync(join(collectionsDir, "Users.ts"), `import type { CollectionConfig } from 'payload';
+      writeFileSync(
+        join(collectionsDir, "Users.ts"),
+        `import type { CollectionConfig } from 'payload';
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -2102,9 +2944,13 @@ export const Users: CollectionConfig = {
     },
   ],
 };
-`, "utf8");
+`,
+        "utf8",
+      );
 
-      writeFileSync(join(collectionsDir, "Media.ts"), `import type { CollectionConfig } from 'payload';
+      writeFileSync(
+        join(collectionsDir, "Media.ts"),
+        `import type { CollectionConfig } from 'payload';
 
 export const Media: CollectionConfig = {
   slug: 'media',
@@ -2117,9 +2963,13 @@ export const Media: CollectionConfig = {
     },
   ],
 };
-`, "utf8");
+`,
+        "utf8",
+      );
 
-      writeFileSync(join(collectionsDir, "Pages.ts"), `import type { CollectionConfig } from 'payload';
+      writeFileSync(
+        join(collectionsDir, "Pages.ts"),
+        `import type { CollectionConfig } from 'payload';
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
@@ -2144,13 +2994,17 @@ export const Pages: CollectionConfig = {
     },
   ],
 };
-`, "utf8");
+`,
+        "utf8",
+      );
 
       if (config.ecommerce === "payload") {
         depsToAdd["stripe"] = "^17.7.0";
 
         // Products.ts
-        writeFileSync(join(collectionsDir, "Products.ts"), `import type { CollectionConfig } from 'payload';
+        writeFileSync(
+          join(collectionsDir, "Products.ts"),
+          `import type { CollectionConfig } from 'payload';
 
 export const Products: CollectionConfig = {
   slug: 'products',
@@ -2167,10 +3021,14 @@ export const Products: CollectionConfig = {
     { name: 'stripeProductId', type: 'text' },
   ],
 };
-`, "utf8");
+`,
+          "utf8",
+        );
 
         // Orders.ts
-        writeFileSync(join(collectionsDir, "Orders.ts"), `import type { CollectionConfig } from 'payload';
+        writeFileSync(
+          join(collectionsDir, "Orders.ts"),
+          `import type { CollectionConfig } from 'payload';
 
 export const Orders: CollectionConfig = {
   slug: 'orders',
@@ -2205,10 +3063,14 @@ export const Orders: CollectionConfig = {
     { name: 'stripePaymentIntentId', type: 'text' },
   ],
 };
-`, "utf8");
+`,
+          "utf8",
+        );
 
         // Customers.ts
-        writeFileSync(join(collectionsDir, "Customers.ts"), `import type { CollectionConfig } from 'payload';
+        writeFileSync(
+          join(collectionsDir, "Customers.ts"),
+          `import type { CollectionConfig } from 'payload';
 
 export const Customers: CollectionConfig = {
   slug: 'customers',
@@ -2222,7 +3084,9 @@ export const Customers: CollectionConfig = {
     { name: 'orders', type: 'relationship', relationTo: 'orders', hasMany: true },
   ],
 };
-`, "utf8");
+`,
+          "utf8",
+        );
       }
 
       const payloadConfig = `import { buildConfig } from 'payload';
@@ -2234,9 +3098,13 @@ import { fileURLToPath } from 'url';
 import { Users } from './collections/Users';
 import { Media } from './collections/Media';
 import { Pages } from './collections/Pages';
-${config.ecommerce === "payload" ? `import { Products } from './collections/Products';
+${
+  config.ecommerce === "payload"
+    ? `import { Products } from './collections/Products';
 import { Orders } from './collections/Orders';
-import { Customers } from './collections/Customers';` : ""}
+import { Customers } from './collections/Customers';`
+    : ""
+}
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -2254,15 +3122,19 @@ export default buildConfig({
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
-  db: ${isPg ? `postgresAdapter({
+  db: ${
+    isPg
+      ? `postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/${projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-")}-db',
     },
-  })` : `sqliteAdapter({
+  })`
+      : `sqliteAdapter({
     client: {
       url: process.env.DATABASE_URL || 'file:./payload.db',
     },
-  })`},
+  })`
+  },
 });
 `;
       writeFileSync(join(resolvedTarget, "src", "payload.config.ts"), payloadConfig, "utf8");
@@ -2341,7 +3213,9 @@ export default Page;
         writeFileSync(join(payloadAdminDir, "page.tsx"), payloadAdminPageContent, "utf8");
 
         // (payload)/api/[...slug]/route.ts
-        writeFileSync(join(payloadApiDir, "route.ts"), `import config from '@/payload.config';
+        writeFileSync(
+          join(payloadApiDir, "route.ts"),
+          `import config from '@/payload.config';
 import { REST_DELETE, REST_GET, REST_OPTIONS, REST_PATCH, REST_POST } from '@payloadcms/next/routes';
 
 export const GET = REST_GET(config);
@@ -2349,7 +3223,9 @@ export const POST = REST_POST(config);
 export const DELETE = REST_DELETE(config);
 export const PATCH = REST_PATCH(config);
 export const OPTIONS = REST_OPTIONS(config);
-`, "utf8");
+`,
+          "utf8",
+        );
 
         // Update tsconfig.json paths for @payload-config
         const tsconfigPath = join(resolvedTarget, "tsconfig.json");
@@ -2407,7 +3283,9 @@ export async function POST(req: Request) {
           writeFileSync(join(payloadCheckoutDir, "route.ts"), payloadCheckoutRoute, "utf8");
         }
       }
-      console.log("  ✅ Auto-wired: Payload CMS 3.0 (`./src/payload.config.ts`, collections, and App Router endpoints)");
+      console.log(
+        "  ✅ Auto-wired: Payload CMS 3.0 (`./src/payload.config.ts`, collections, and App Router endpoints)",
+      );
     }
 
     // 3.2.2 Keystatic Git-Based CMS
@@ -2438,7 +3316,11 @@ export default config({
 
       const postsContentDir = join(resolvedTarget, "src", "content", "posts");
       mkdirSync(postsContentDir, { recursive: true });
-      writeFileSync(join(postsContentDir, "welcome.mdoc"), `---\ntitle: Welcome to ${projectName}\npublishedDate: 2026-09-06\n---\n\nWelcome to your new project governed by DOX Engine and Keystatic!\n`, "utf8");
+      writeFileSync(
+        join(postsContentDir, "welcome.mdoc"),
+        `---\ntitle: Welcome to ${projectName}\npublishedDate: 2026-09-06\n---\n\nWelcome to your new project governed by DOX Engine and Keystatic!\n`,
+        "utf8",
+      );
 
       if (config.framework === "nextjs") {
         depsToAdd["@keystatic/next"] = "^0.5.0";
@@ -2447,22 +3329,32 @@ export default config({
         mkdirSync(keystaticAppDir, { recursive: true });
         mkdirSync(keystaticApiDir, { recursive: true });
 
-        writeFileSync(join(keystaticAppDir, "page.tsx"), `import { makePage } from '@keystatic/next/ui/app';
+        writeFileSync(
+          join(keystaticAppDir, "page.tsx"),
+          `import { makePage } from '@keystatic/next/ui/app';
 import config from '../../../keystatic.config';
 
 export default makePage(config);
-`, "utf8");
+`,
+          "utf8",
+        );
 
-        writeFileSync(join(keystaticApiDir, "route.ts"), `import { makeRouteHandler } from '@keystatic/next/api/app';
+        writeFileSync(
+          join(keystaticApiDir, "route.ts"),
+          `import { makeRouteHandler } from '@keystatic/next/api/app';
 import config from '../../../../keystatic.config';
 
 export const { GET, POST } = makeRouteHandler({ config });
-`, "utf8");
+`,
+          "utf8",
+        );
       } else if (config.framework === "astro") {
         depsToAdd["@keystatic/astro"] = "^0.5.0";
         const keystaticPagesDir = join(resolvedTarget, "src", "pages", "keystatic");
         mkdirSync(keystaticPagesDir, { recursive: true });
-        writeFileSync(join(keystaticPagesDir, "[...params].astro"), `---
+        writeFileSync(
+          join(keystaticPagesDir, "[...params].astro"),
+          `---
 import { makePage } from '@keystatic/astro/ui';
 import config from '../../../keystatic.config';
 
@@ -2470,7 +3362,9 @@ export const prerender = false;
 const PrerenderedPage = makePage(config);
 ---
 <PrerenderedPage />
-`, "utf8");
+`,
+          "utf8",
+        );
       }
       console.log("  ✅ Auto-wired: Keystatic Git-Based CMS (`./keystatic.config.ts` and admin endpoints)");
     }
@@ -2494,10 +3388,36 @@ const PrerenderedPage = makePage(config);
         } else {
           // ponytail: offline fallback keeps isolated unit tests green; real runs use the clone above.
           mkdirSync(join(resolvedTarget, "aria", "pages"), { recursive: true });
-          writeFileSync(join(resolvedTarget, "aria", "pages", "admin.astro"), `---\n---\n<h1>Aria Builder Studio</h1>\n`, "utf8");
-          writeFileSync(join(resolvedTarget, "astro.config.ts"), `import { defineConfig } from "astro/config";\nexport default defineConfig({ output: "server" });\n`, "utf8");
-          writeFileSync(join(resolvedTarget, "package.json"), JSON.stringify({ name: projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-"), version: "0.1.0", private: true, type: "module", scripts: { dev: "astro dev" } }, null, 2) + "\n", "utf8");
-          writeFileSync(join(resolvedTarget, "uno.user.config.ts"), `import { presetWind4 } from "@unocss/preset-wind4";\nexport default { presets: [presetWind4()] };\n`, "utf8");
+          writeFileSync(
+            join(resolvedTarget, "aria", "pages", "admin.astro"),
+            `---\n---\n<h1>Aria Builder Studio</h1>\n`,
+            "utf8",
+          );
+          writeFileSync(
+            join(resolvedTarget, "astro.config.ts"),
+            `import { defineConfig } from "astro/config";\nexport default defineConfig({ output: "server" });\n`,
+            "utf8",
+          );
+          writeFileSync(
+            join(resolvedTarget, "package.json"),
+            JSON.stringify(
+              {
+                name: projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+                version: "0.1.0",
+                private: true,
+                type: "module",
+                scripts: { dev: "astro dev" },
+              },
+              null,
+              2,
+            ) + "\n",
+            "utf8",
+          );
+          writeFileSync(
+            join(resolvedTarget, "uno.user.config.ts"),
+            `import { presetWind4 } from "@unocss/preset-wind4";\nexport default { presets: [presetWind4()] };\n`,
+            "utf8",
+          );
         }
 
         // Wind 4 preset: upstream ships Wind3 — swap to Wind4 in the user config.
@@ -2505,13 +3425,16 @@ const PrerenderedPage = makePage(config);
         if (existsSync(unoUserPath)) {
           let unoSrc = readFileSync(unoUserPath, "utf8");
           if (unoSrc.includes("@unocss/preset-wind3") || unoSrc.includes("presetWind3")) {
-            unoSrc = unoSrc.replaceAll("@unocss/preset-wind3", "@unocss/preset-wind4").replaceAll("presetWind3", "presetWind4");
+            unoSrc = unoSrc
+              .replaceAll("@unocss/preset-wind3", "@unocss/preset-wind4")
+              .replaceAll("presetWind3", "presetWind4");
             writeFileSync(unoUserPath, unoSrc, "utf8");
             try {
               const ariaPkgPath = join(resolvedTarget, "package.json");
               const ariaPkg = JSON.parse(readFileSync(ariaPkgPath, "utf8"));
               ariaPkg.dependencies = ariaPkg.dependencies || {};
-              if (!ariaPkg.dependencies["@unocss/preset-wind4"]) ariaPkg.dependencies["@unocss/preset-wind4"] = useLatest ? "latest" : "^66.0.0";
+              if (!ariaPkg.dependencies["@unocss/preset-wind4"])
+                ariaPkg.dependencies["@unocss/preset-wind4"] = useLatest ? "latest" : "^66.0.0";
               writeFileSync(ariaPkgPath, JSON.stringify(ariaPkg, null, 2) + "\n", "utf8");
             } catch {}
             console.log("  ✅ UnoCSS: Wind 4 preset enabled in `./uno.user.config.ts`");
@@ -2527,7 +3450,130 @@ const PrerenderedPage = makePage(config);
           } catch {}
         }
         console.log("  ✅ Scaffolded: official Aria Builder (Astro + UnoCSS Wind 4 + CMS + SQLite)");
-        console.log("  👉 Run: `npm run dev`, open http://localhost:4321/admin — first visit completes setup at http://localhost:4321/admin/setup");
+        console.log(
+          "  👉 Run: `npm run dev`, open http://localhost:4321/admin — first visit completes setup at http://localhost:4321/admin/setup",
+        );
+      }
+    }
+
+    // 3.2.0b Atomic Payload (isolated official scaffold — pro-laico)
+    if (isAtomicIsolated) {
+      // Upstream ships a complete Payload 3 + Next.js 16 + Tailwind stack with
+      // every @pro-laico/* plugin. The official create-atomic-payload CLI cannot
+      // run in-place (the engine already wrote AGENTS.md/.agents/ into the
+      // target, and the CLI exits 1 on an existing dir), so mirror the Aria
+      // staging pattern: npm-pack the OFFICIAL published tarball, extract the
+      // bundled scaffold, and merge it in untouched — skip-if-exists so engine
+      // governance files are never overwritten.
+      if (!isDryRun) {
+        const stagingParent = join(os.tmpdir(), `atomic-payload-pack-${Date.now()}`);
+        mkdirSync(stagingParent, { recursive: true });
+        console.log("  📦 Fetching official Atomic Payload template (npm pack @pro-laico/create-atomic-payload)...");
+        let scaffoldSrc: string | null = null;
+        const pack = spawnSync(
+          "npm",
+          ["pack", "@pro-laico/create-atomic-payload", "--pack-destination", stagingParent],
+          { stdio: "ignore" },
+        );
+        if (pack.status === 0) {
+          const tgz = readdirSync(stagingParent).find((f) => f.endsWith(".tgz"));
+          if (tgz) {
+            spawnSync("tar", ["-xzf", join(stagingParent, tgz), "-C", stagingParent], { stdio: "ignore" });
+            const candidate = join(stagingParent, "package", "scaffolds", "atomic-payload");
+            if (existsSync(join(candidate, "package.json"))) scaffoldSrc = candidate;
+          }
+        }
+
+        if (scaffoldSrc) {
+          for (const entry of readdirSync(scaffoldSrc)) {
+            if (entry === "node_modules" || entry === ".git") continue;
+            const src = join(scaffoldSrc, entry);
+            const dest = join(resolvedTarget, entry);
+            if (entry === "gitignore.template") {
+              // Official CLI renames gitignore.template → .gitignore; the engine
+              // already wrote its own, so append upstream entries under a header
+              // (same shape as the framework .gitignore merge).
+              const gitignorePath = join(resolvedTarget, ".gitignore");
+              const upstreamIgnores = readFileSync(src, "utf8");
+              const engineIgnores = existsSync(gitignorePath) ? readFileSync(gitignorePath, "utf8") : "";
+              writeFileSync(
+                gitignorePath,
+                `${engineIgnores}\n\n# Atomic Payload Upstream Defaults\n${upstreamIgnores}`,
+                "utf8",
+              );
+            } else if (entry === ".env.example") {
+              if (!existsSync(dest)) cpSync(src, dest);
+              // Official CLI copies .env.example → .env; only copy if absent.
+              const envLocalPath = join(resolvedTarget, ".env");
+              if (!existsSync(envLocalPath)) cpSync(src, envLocalPath);
+            } else {
+              if (!existsSync(dest)) cpSync(src, dest, { recursive: true });
+            }
+          }
+          rmSync(stagingParent, { recursive: true, force: true });
+          console.log(
+            "  ✅ Scaffolded: official Atomic Payload template (Payload 3 + Next.js 16 + Tailwind, every @pro-laico/* plugin)",
+          );
+        } else {
+          // ponytail: offline fallback keeps isolated unit tests green; real runs use the official published template above.
+          rmSync(stagingParent, { recursive: true, force: true });
+          const fallbackPkg = {
+            name: "atomic-payload",
+            version: "0.5.0",
+            description: "The Payload CMS Starter Where All You Need To Know Is Tailwind.",
+            license: "MIT",
+            private: true,
+            type: "module",
+            scripts: {
+              dev: "next dev -p 42100",
+              build: "next build",
+              start: "next start -p 42100",
+              payload: "payload",
+              "generate:types": 'cross-env NODE_OPTIONS="--conditions=react-server" payload generate:types',
+              "generate:importmap": 'cross-env NODE_OPTIONS="--conditions=react-server" payload generate:importmap',
+            },
+            dependencies: {
+              "@payloadcms/db-mongodb": "^3.85.1",
+              "@payloadcms/next": "^3.85.1",
+              "@pro-laico/core": "^0.5.0",
+              next: "^16.2.9",
+              payload: "^3.85.1",
+              react: "^19.2.7",
+              "react-dom": "^19.2.7",
+              sharp: "^0.35.2",
+            },
+          };
+          writeFileSync(join(resolvedTarget, "package.json"), JSON.stringify(fallbackPkg, null, 2) + "\n", "utf8");
+          writeFileSync(
+            join(resolvedTarget, "next.config.ts"),
+            `import { withPayload } from '@payloadcms/next/withPayload'\n\nconst nextConfig = {}\n\nexport default withPayload(nextConfig, { devBundleServerPackages: false })\n`,
+            "utf8",
+          );
+          mkdirSync(join(resolvedTarget, "src"), { recursive: true });
+          writeFileSync(
+            join(resolvedTarget, "src", "payload.config.ts"),
+            `import sharp from 'sharp'\nimport { buildConfig } from 'payload'\nimport type { SharpDependency } from 'payload'\nimport { mongooseAdapter } from '@payloadcms/db-mongodb'\n\nexport default buildConfig({\n  sharp: sharp as unknown as SharpDependency,\n  graphQL: { disable: true },\n  secret: process.env.PAYLOAD_SECRET || '',\n  typescript: { outputFile: 'payload-types.ts' },\n  db: mongooseAdapter({\n    url: process.env.MONGODB_URI || '',\n    transactionOptions: false,\n  }),\n})\n`,
+            "utf8",
+          );
+          console.log(
+            "  ✅ Scaffolded: Atomic Payload offline fallback markers (offline run — rerun with network for the full official template)",
+          );
+        }
+
+        // Official package manager for this template is pnpm; never substitute bun.
+        if (!skipInstall) {
+          try {
+            spawnSync("pnpm", ["install"], { cwd: resolvedTarget, stdio: "ignore" });
+          } catch {
+            console.log("  👉 Run: `pnpm install`");
+          }
+        } else {
+          console.log("  👉 Run: `pnpm install`");
+        }
+        console.log(
+          "  👉 Run: `pnpm install`, `pnpm generate:types && pnpm generate:importmap`, `pnpm dev`, open http://localhost:42100/admin (create the first admin user; seed via the dashboard banner)",
+        );
+        console.log("  ℹ️  Official scaffolder: npx @pro-laico/create-atomic-payload <name> --template atomic-payload");
       }
     }
 
@@ -2625,105 +3671,111 @@ declare module "emdash" {
       const seedDir = join(resolvedTarget, "seed");
       mkdirSync(seedDir, { recursive: true });
       const seedData = {
-        "$schema": "https://emdashcms.com/seed.schema.json",
-        "version": "1",
-        "meta": {
-          "name": `${projectName} Starter`,
-          "description": "Publication powered by Astro and Emdash CMS.",
-          "author": authorName || "Principal"
+        $schema: "https://emdashcms.com/seed.schema.json",
+        version: "1",
+        meta: {
+          name: `${projectName} Starter`,
+          description: "Publication powered by Astro and Emdash CMS.",
+          author: authorName || "Principal",
         },
-        "settings": {
-          "title": projectName,
-          "tagline": "Dynamic edge publication powered by Astro v7 & Emdash"
+        settings: {
+          title: projectName,
+          tagline: "Dynamic edge publication powered by Astro v7 & Emdash",
         },
-        "collections": [
+        collections: [
           {
-            "slug": "posts",
-            "label": "Posts",
-            "labelSingular": "Post",
-            "supports": ["drafts", "revisions", "search", "seo"],
-            "commentsEnabled": true,
-            "fields": [
-              { "slug": "title", "label": "Title", "type": "string", "required": true, "searchable": true },
-              { "slug": "featured_image", "label": "Featured Image", "type": "image" },
-              { "slug": "content", "label": "Content", "type": "portableText", "searchable": true },
-              { "slug": "excerpt", "label": "Excerpt", "type": "text" }
-            ]
+            slug: "posts",
+            label: "Posts",
+            labelSingular: "Post",
+            supports: ["drafts", "revisions", "search", "seo"],
+            commentsEnabled: true,
+            fields: [
+              { slug: "title", label: "Title", type: "string", required: true, searchable: true },
+              { slug: "featured_image", label: "Featured Image", type: "image" },
+              { slug: "content", label: "Content", type: "portableText", searchable: true },
+              { slug: "excerpt", label: "Excerpt", type: "text" },
+            ],
           },
           {
-            "slug": "pages",
-            "label": "Pages",
-            "labelSingular": "Page",
-            "supports": ["drafts", "revisions", "search"],
-            "fields": [
-              { "slug": "title", "label": "Title", "type": "string", "required": true, "searchable": true },
-              { "slug": "content", "label": "Content", "type": "portableText", "searchable": true }
-            ]
-          }
+            slug: "pages",
+            label: "Pages",
+            labelSingular: "Page",
+            supports: ["drafts", "revisions", "search"],
+            fields: [
+              { slug: "title", label: "Title", type: "string", required: true, searchable: true },
+              { slug: "content", label: "Content", type: "portableText", searchable: true },
+            ],
+          },
         ],
-        "taxonomies": [
+        taxonomies: [
           {
-            "name": "category",
-            "label": "Categories",
-            "labelSingular": "Category",
-            "hierarchical": true,
-            "collections": ["posts"],
-            "terms": [
-              { "slug": "editorial", "label": "Editorial" },
-              { "slug": "engineering", "label": "Engineering" }
-            ]
+            name: "category",
+            label: "Categories",
+            labelSingular: "Category",
+            hierarchical: true,
+            collections: ["posts"],
+            terms: [
+              { slug: "editorial", label: "Editorial" },
+              { slug: "engineering", label: "Engineering" },
+            ],
           },
           {
-            "name": "tag",
-            "label": "Tags",
-            "labelSingular": "Tag",
-            "hierarchical": false,
-            "collections": ["posts"],
-            "terms": [
-              { "slug": "astro", "label": "Astro" },
-              { "slug": "emdash", "label": "Emdash" },
-              { "slug": "edge", "label": "Edge" }
-            ]
-          }
+            name: "tag",
+            label: "Tags",
+            labelSingular: "Tag",
+            hierarchical: false,
+            collections: ["posts"],
+            terms: [
+              { slug: "astro", label: "Astro" },
+              { slug: "emdash", label: "Emdash" },
+              { slug: "edge", label: "Edge" },
+            ],
+          },
         ],
-        "content": [
+        content: [
           {
-            "collection": "posts",
-            "slug": "welcome-to-" + slug,
-            "status": "published",
-            "data": {
-              "title": `Welcome to ${projectName}`,
-              "excerpt": "Edge-rendered publication powered by Astro v7 and Emdash CMS.",
-              "content": [
+            collection: "posts",
+            slug: "welcome-to-" + slug,
+            status: "published",
+            data: {
+              title: `Welcome to ${projectName}`,
+              excerpt: "Edge-rendered publication powered by Astro v7 and Emdash CMS.",
+              content: [
                 {
-                  "_type": "block",
-                  "style": "normal",
-                  "children": [
+                  _type: "block",
+                  style: "normal",
+                  children: [
                     {
-                      "_type": "span",
-                      "text": `Welcome to ${projectName}! This publication is powered by Astro v7 and Emdash CMS.`
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        ]
+                      _type: "span",
+                      text: `Welcome to ${projectName}! This publication is powered by Astro v7 and Emdash CMS.`,
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
       };
       writeFileSync(join(seedDir, "seed.json"), JSON.stringify(seedData, null, 2) + "\n", "utf8");
 
       // Live content collections
-      writeFileSync(join(resolvedTarget, "src", "live.config.ts"), `import { defineLiveCollection } from "astro:content";
+      writeFileSync(
+        join(resolvedTarget, "src", "live.config.ts"),
+        `import { defineLiveCollection } from "astro:content";
 import { emdashLoader } from "emdash/runtime";
 
 export const collections = {
   _emdash: defineLiveCollection({ loader: emdashLoader() }),
 };
-`, "utf8");
+`,
+        "utf8",
+      );
 
       // Cloudflare worker handler & wrangler.jsonc (if cloudflare)
       if (config.deploy === "cloudflare") {
-        writeFileSync(join(resolvedTarget, "src", "worker.ts"), `import handler, { createScheduledHandler, PluginBridge } from "@emdash-cms/cloudflare/worker";
+        writeFileSync(
+          join(resolvedTarget, "src", "worker.ts"),
+          `import handler, { createScheduledHandler, PluginBridge } from "@emdash-cms/cloudflare/worker";
 
 export { PluginBridge };
 
@@ -2731,34 +3783,36 @@ export default {
   ...handler,
   scheduled: createScheduledHandler(),
 } satisfies ExportedHandler;
-`, "utf8");
+`,
+          "utf8",
+        );
 
         const wranglerConfig = {
-          "$schema": "node_modules/wrangler/config-schema.json",
-          "name": slug,
-          "main": "./src/worker.ts",
-          "compatibility_date": "2026-02-24",
-          "compatibility_flags": ["nodejs_compat"],
-          "d1_databases": [
+          $schema: "node_modules/wrangler/config-schema.json",
+          name: slug,
+          main: "./src/worker.ts",
+          compatibility_date: "2026-02-24",
+          compatibility_flags: ["nodejs_compat"],
+          d1_databases: [
             {
-              "binding": "DB",
-              "database_name": slug
-            }
+              binding: "DB",
+              database_name: slug,
+            },
           ],
-          "r2_buckets": [
+          r2_buckets: [
             {
-              "binding": "MEDIA",
-              "bucket_name": `${slug}-media`
-            }
+              binding: "MEDIA",
+              bucket_name: `${slug}-media`,
+            },
           ],
-          "worker_loaders": [
+          worker_loaders: [
             {
-              "binding": "LOADER"
-            }
+              binding: "LOADER",
+            },
           ],
-          "triggers": {
-            "crons": ["* * * * *"]
-          }
+          triggers: {
+            crons: ["* * * * *"],
+          },
         };
         writeFileSync(join(resolvedTarget, "wrangler.jsonc"), JSON.stringify(wranglerConfig, null, 2) + "\n", "utf8");
       }
@@ -2772,7 +3826,11 @@ export default {
       // Theme overrides
       const stylesDir = join(resolvedTarget, "src", "styles");
       mkdirSync(stylesDir, { recursive: true });
-      writeFileSync(join(stylesDir, "theme.css"), `:root {}\n\n.nav-admin {\n  margin-inline-start: var(--spacing-5);\n}\n`, "utf8");
+      writeFileSync(
+        join(stylesDir, "theme.css"),
+        `:root {}\n\n.nav-admin {\n  margin-inline-start: var(--spacing-5);\n}\n`,
+        "utf8",
+      );
 
       // Markdown fallback in src/content/blog/
       const blogDir = join(resolvedTarget, "src", "content", "blog");
@@ -2899,7 +3957,9 @@ describe("📰 Emdash CMS & Astro Integration Verification", () => {
 });
 `;
       writeFileSync(join(testsDir, "emdash.test.ts"), emdashTestContent, "utf8");
-      console.log("  ✅ Auto-wired: Emdash CMS (`./seed/seed.json`, `./emdash-env.d.ts`, `./src/live.config.ts`, `./src/pages/admin.astro`, and `./tests/emdash.test.ts`)");
+      console.log(
+        "  ✅ Auto-wired: Emdash CMS (`./seed/seed.json`, `./emdash-env.d.ts`, `./src/live.config.ts`, `./src/pages/admin.astro`, and `./tests/emdash.test.ts`)",
+      );
     }
 
     // 3.2.3c Git-Based CMS for Astro
@@ -2931,7 +3991,7 @@ export const collections = { blog };
 title: "Welcome to Our New Publication"
 description: "A fast, edge-native publication powered by Astro and Git-backed content."
 pubDate: 2026-09-07
-author: "${authorName || 'Lead Editor'}"
+author: "${authorName || "Lead Editor"}"
 tags: ["announcement", "architecture", "publishing"]
 ---
 
@@ -2963,7 +4023,9 @@ export async function GET(context: any) {
 }
 `;
       writeFileSync(join(pagesDir, "rss.xml.ts"), rssContent, "utf8");
-      console.log("  ✅ Auto-wired: Git-backed CMS (`./src/content/config.ts`, `./src/content/blog/first-post.md`, and `./src/pages/rss.xml.ts`)");
+      console.log(
+        "  ✅ Auto-wired: Git-backed CMS (`./src/content/config.ts`, `./src/content/blog/first-post.md`, and `./src/pages/rss.xml.ts`)",
+      );
     }
 
     // 3.2.3d CMS integrations wired via official setup procedures (post-scaffold)
@@ -3056,7 +4118,9 @@ export const puckConfig: Config<UserConfig> = {
         const puckAppDir = join(resolvedTarget, "src", "app", "puck", "[...puckPath]");
         mkdirSync(puckAppDir, { recursive: true });
 
-        writeFileSync(join(puckAppDir, "client.tsx"), `'use client';
+        writeFileSync(
+          join(puckAppDir, "client.tsx"),
+          `'use client';
 
 import { Puck, type Data } from '@puckeditor/core';
 import '@puckeditor/core/puck.css';
@@ -3097,16 +4161,22 @@ export function PuckEditor({ path }: { path: string }) {
     />
   );
 }
-`, "utf8");
+`,
+          "utf8",
+        );
 
-        writeFileSync(join(puckAppDir, "page.tsx"), `import { PuckEditor } from './client';
+        writeFileSync(
+          join(puckAppDir, "page.tsx"),
+          `import { PuckEditor } from './client';
 
 export default async function Page({ params }: { params: Promise<{ puckPath?: string[] }> }) {
   const resolved = await params;
   const path = '/' + (resolved.puckPath || []).join('/');
   return <PuckEditor path={path} />;
 }
-`, "utf8");
+`,
+          "utf8",
+        );
       }
       console.log("  ✅ Auto-wired: Puck Visual Builder (`./src/lib/puck.config.tsx` and `./src/app/puck/`)");
     }
@@ -3120,8 +4190,9 @@ export default async function Page({ params }: { params: Promise<{ puckPath?: st
 
       // 3.3.1 Typed Starter Schema (src/lib/schema.ts)
       if (config.db === "sqlite") {
-        const schemaContent = config.auth === "better-auth"
-          ? `import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+        const schemaContent =
+          config.auth === "better-auth"
+            ? `import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
@@ -3180,7 +4251,7 @@ export const posts = sqliteTable('posts', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 `
-          : `import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+            : `import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
@@ -3200,8 +4271,9 @@ export const posts = sqliteTable('posts', {
 `;
         writeFileSync(join(libDir, "schema.ts"), schemaContent, "utf8");
       } else {
-        const schemaContent = config.auth === "better-auth"
-          ? `import { pgTable, text, timestamp, uuid, boolean } from 'drizzle-orm/pg-core';
+        const schemaContent =
+          config.auth === "better-auth"
+            ? `import { pgTable, text, timestamp, uuid, boolean } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
@@ -3262,7 +4334,7 @@ export const posts = pgTable('posts', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 `
-          : `import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+            : `import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -3373,7 +4445,9 @@ volumes:
   postgres_data:
 `;
           writeFileSync(join(resolvedTarget, "docker-compose.yml"), pgDockerCompose, "utf8");
-          console.log("  ✅ Auto-wired: `./docker-compose.yml` (Local PostgreSQL 16 container with persistent volumes)");
+          console.log(
+            "  ✅ Auto-wired: `./docker-compose.yml` (Local PostgreSQL 16 container with persistent volumes)",
+          );
         }
       }
 
@@ -3441,18 +4515,18 @@ export const medusa = new Medusa({
             build: "medusa build",
             dev: "medusa dev",
             start: "medusa start",
-            test: "medusa test"
+            test: "medusa test",
           },
           dependencies: {
             "@medusajs/framework": "^2.5.0",
             "@medusajs/medusa": "^2.5.0",
-            "@medusajs/js-sdk": "^2.5.0"
+            "@medusajs/js-sdk": "^2.5.0",
           },
           devDependencies: {
             "@medusajs/cli": "^2.5.0",
             "@types/node": "^22.0.0",
-            typescript: "^5.6.0"
-          }
+            typescript: "^5.6.0",
+          },
         };
         writeFileSync(join(backendDir, "package.json"), JSON.stringify(backendPkg, null, 2) + "\n", "utf8");
 
@@ -3569,7 +4643,9 @@ export const GET = (req: MedusaRequest, res: MedusaResponse) => {
 `;
         writeFileSync(join(backendSrcApi, "index.ts"), apiRoute, "utf8");
 
-        console.log("  ✅ Auto-wired: `./backend/` (Full Medusa 2.0 Sovereign Backend Engine with Docker, PostgreSQL, Redis, and medusa-config.ts)");
+        console.log(
+          "  ✅ Auto-wired: `./backend/` (Full Medusa 2.0 Sovereign Backend Engine with Docker, PostgreSQL, Redis, and medusa-config.ts)",
+        );
       } else if (config.ecommerce === "stripe") {
         depsToAdd["stripe"] = "^17.0.0";
         depsToAdd["@stripe/stripe-js"] = "^5.0.0";
@@ -3588,7 +4664,9 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_place
           mkdirSync(checkoutApiDir, { recursive: true });
           mkdirSync(webhookApiDir, { recursive: true });
 
-          writeFileSync(join(checkoutApiDir, "route.ts"), `import { NextResponse } from 'next/server';
+          writeFileSync(
+            join(checkoutApiDir, "route.ts"),
+            `import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 
 export async function POST(req: Request) {
@@ -3615,9 +4693,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
-`, "utf8");
+`,
+            "utf8",
+          );
 
-          writeFileSync(join(webhookApiDir, "route.ts"), `import { NextResponse } from 'next/server';
+          writeFileSync(
+            join(webhookApiDir, "route.ts"),
+            `import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 
 export async function POST(req: Request) {
@@ -3639,14 +4721,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: \`Webhook error: \${err.message}\` }, { status: 400 });
   }
 }
-`, "utf8");
+`,
+            "utf8",
+          );
         } else if (config.framework === "astro") {
           const apiDir = join(resolvedTarget, "src", "pages", "api");
           const webhookDir = join(resolvedTarget, "src", "pages", "api", "webhooks");
           mkdirSync(apiDir, { recursive: true });
           mkdirSync(webhookDir, { recursive: true });
 
-          writeFileSync(join(apiDir, "checkout.ts"), `import type { APIRoute } from 'astro';
+          writeFileSync(
+            join(apiDir, "checkout.ts"),
+            `import type { APIRoute } from 'astro';
 import { stripe } from '@/lib/stripe';
 
 export const POST: APIRoute = async ({ request }) => {
@@ -3676,9 +4762,13 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
 };
-`, "utf8");
+`,
+            "utf8",
+          );
 
-          writeFileSync(join(webhookDir, "stripe.ts"), `import type { APIRoute } from 'astro';
+          writeFileSync(
+            join(webhookDir, "stripe.ts"),
+            `import type { APIRoute } from 'astro';
 import { stripe } from '@/lib/stripe';
 
 export const POST: APIRoute = async ({ request }) => {
@@ -3700,7 +4790,9 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: err.message }), { status: 400 });
   }
 };
-`, "utf8");
+`,
+            "utf8",
+          );
         }
         console.log("  ✅ Auto-wired: `./src/lib/stripe.ts`, checkout endpoint, and webhook handler (Stripe SDK)");
       } else if (config.ecommerce === "vendure") {
@@ -3733,55 +4825,18 @@ export function initFastrrCheckout(options: { cartId: string; amount: number; us
         console.log("  ✅ Auto-wired: `./src/lib/fastrr.ts` (Fastrr 1-click checkout)");
       } else if (config.ecommerce === "razorpay") {
         const razorpayClient = `/**
- * 💳 Razorpay Payment Checkout Integration Helper
+ * 💳 Razorpay Official SDK Client Instance
+ * Documentation: https://razorpay.com/docs/api
  */
-export function openRazorpayModal(options: { orderId: string; amount: number; name: string }) {
-  if (typeof window === 'undefined') return;
-  console.log('[Razorpay] Opening payment modal for order:', options.orderId);
-}
+import Razorpay from 'razorpay';
+
+export const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || '',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || '',
+});
 `;
         writeFileSync(join(libDir, "razorpay.ts"), razorpayClient, "utf8");
-
-        if (config.framework === "nextjs") {
-          const razorpayApiDir = join(resolvedTarget, "src", "app", "api", "payment", "razorpay");
-          mkdirSync(razorpayApiDir, { recursive: true });
-          writeFileSync(join(razorpayApiDir, "route.ts"), `import { NextResponse } from 'next/server';
-
-export async function POST(req: Request) {
-  try {
-    const { amount, currency = 'INR' } = await req.json();
-    return NextResponse.json({
-      id: 'order_' + Math.random().toString(36).substring(2, 9),
-      amount: amount || 50000,
-      currency,
-      status: 'created',
-    });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
-  }
-}
-`, "utf8");
-        } else if (config.framework === "astro") {
-          const apiDir = join(resolvedTarget, "src", "pages", "api", "payment");
-          mkdirSync(apiDir, { recursive: true });
-          writeFileSync(join(apiDir, "razorpay.ts"), `import type { APIRoute } from 'astro';
-
-export const POST: APIRoute = async ({ request }) => {
-  try {
-    const { amount, currency = 'INR' } = await request.json();
-    return new Response(JSON.stringify({
-      id: 'order_' + Math.random().toString(36).substring(2, 9),
-      amount: amount || 50000,
-      currency,
-      status: 'created',
-    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
-  }
-};
-`, "utf8");
-        }
-        console.log("  ✅ Auto-wired: `./src/lib/razorpay.ts` and payment order endpoint (Razorpay)");
+        console.log("  ✅ Auto-wired: `./src/lib/razorpay.ts` (Razorpay SDK client)");
       }
     }
 
@@ -3793,19 +4848,27 @@ export const POST: APIRoute = async ({ request }) => {
 
       // 3.5.1 Server-Side Auth Config (src/lib/auth.ts)
       const authContent = `import { betterAuth } from 'better-auth';
-${config.db !== "none" ? `import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+${
+  config.db !== "none"
+    ? `import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from './db';
-import * as schema from './schema';` : ""}
+import * as schema from './schema';`
+    : ""
+}
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || '${randomBytes(32).toString("base64url")}',
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
-  ${config.db !== "none" ? `database: drizzleAdapter(db, {
+  ${
+    config.db !== "none"
+      ? `database: drizzleAdapter(db, {
     provider: '${config.db === "sqlite" ? "sqlite" : "pg"}',
     schema: {
       ...schema,
     },
-  }),` : ""}
+  }),`
+      : ""
+  }
   emailAndPassword: {
     enabled: true,
   },
@@ -3814,8 +4877,9 @@ export const auth = betterAuth({
       writeFileSync(join(libDir, "auth.ts"), authContent, "utf8");
 
       // 3.5.2 Client-Side Auth Client (src/lib/auth-client.ts)
-      const authClientContent = config.framework === "nextjs"
-        ? `import { createAuthClient } from 'better-auth/react';
+      const authClientContent =
+        config.framework === "nextjs"
+          ? `import { createAuthClient } from 'better-auth/react';
 
 export const authClient = createAuthClient({
   baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL || 'http://localhost:3000',
@@ -3823,7 +4887,7 @@ export const authClient = createAuthClient({
 
 export const { signIn, signUp, signOut, useSession } = authClient;
 `
-        : `import { createAuthClient } from 'better-auth/client';
+          : `import { createAuthClient } from 'better-auth/client';
 
 export const authClient = createAuthClient({
   baseURL: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:4321',
@@ -3837,23 +4901,33 @@ export const { signIn, signUp, signOut, getSession } = authClient;
       if (config.framework === "nextjs") {
         const authApiDir = join(resolvedTarget, "src", "app", "api", "auth", "[...all]");
         mkdirSync(authApiDir, { recursive: true });
-        writeFileSync(join(authApiDir, "route.ts"), `import { auth } from '@/lib/auth';
+        writeFileSync(
+          join(authApiDir, "route.ts"),
+          `import { auth } from '@/lib/auth';
 import { toNextJsHandler } from 'better-auth/next-js';
 
 export const { GET, POST } = toNextJsHandler(auth);
-`, "utf8");
+`,
+          "utf8",
+        );
       } else if (config.framework === "astro") {
         const authApiDir = join(resolvedTarget, "src", "pages", "api", "auth");
         mkdirSync(authApiDir, { recursive: true });
-        writeFileSync(join(authApiDir, "[...all].ts"), `import type { APIRoute } from 'astro';
+        writeFileSync(
+          join(authApiDir, "[...all].ts"),
+          `import type { APIRoute } from 'astro';
 import { auth } from '@/lib/auth';
 
 export const ALL: APIRoute = async (ctx) => {
   return auth.handler(ctx.request);
 };
-`, "utf8");
+`,
+          "utf8",
+        );
       }
-      console.log("  ✅ Auto-wired: `./src/lib/auth.ts`, `./src/lib/auth-client.ts`, and `/api/auth/[...all]` (better-auth)");
+      console.log(
+        "  ✅ Auto-wired: `./src/lib/auth.ts`, `./src/lib/auth-client.ts`, and `/api/auth/[...all]` (better-auth)",
+      );
     }
 
     // 3.6 NanoStores State
@@ -3947,74 +5021,78 @@ export default config;
       console.log("  ✅ Auto-wired: `./capacitor.config.ts` (Ionic Capacitor bridge)");
     }
 
-    // 3.8-3.13 Skipped for isolated Aria Builder (upstream ships its own env,
-    // dashboard, CI, tests, hooks, and package.json — added only on request).
-    if (!isAriaIsolated) {
-    const envVars: string[] = ["# Application Environment Configuration"];
-    if (config.db === "neon") {
-      envVars.push("DATABASE_URL=postgresql://[user]:[password]@[neon-hostname]/neondb?sslmode=require");
-    } else if (config.db === "postgres") {
-      envVars.push(`DATABASE_URL=postgres://postgres:postgres@localhost:5432/${projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-")}-db`);
-    } else if (config.db === "sqlite") {
-      envVars.push("DATABASE_URL=database.sqlite");
-    } else if (config.db === "supabase") {
-      envVars.push("NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co");
-      envVars.push("NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key");
-      envVars.push("SUPABASE_SERVICE_ROLE_KEY=your-service-role-key");
-      envVars.push("DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres");
-    }
-    if (config.cms === "payload") {
-      envVars.push(`PAYLOAD_SECRET=${randomBytes(32).toString("base64url")}`);
-      const isPg = (config.db === "postgres" || config.db === "neon" || config.db === "supabase");
-      if (!envVars.some(v => v.startsWith("DATABASE_URL="))) {
-        envVars.push(`DATABASE_URL=${isPg ? `postgres://postgres:postgres@localhost:5432/${projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-")}-db` : "file:./payload.db"}`);
+    // 3.8-3.13 Skipped for isolated official scaffolds (upstream ships its own
+    // env, dashboard, CI, tests, hooks, and package.json — added only on request).
+    if (!isIsolatedOfficial) {
+      const envVars: string[] = ["# Application Environment Configuration"];
+      if (config.db === "neon") {
+        envVars.push("DATABASE_URL=postgresql://[user]:[password]@[neon-hostname]/neondb?sslmode=require");
+      } else if (config.db === "postgres") {
+        envVars.push(
+          `DATABASE_URL=postgres://postgres:postgres@localhost:5432/${projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-")}-db`,
+        );
+      } else if (config.db === "sqlite") {
+        envVars.push("DATABASE_URL=database.sqlite");
+      } else if (config.db === "supabase") {
+        envVars.push("NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co");
+        envVars.push("NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key");
+        envVars.push("SUPABASE_SERVICE_ROLE_KEY=your-service-role-key");
+        envVars.push("DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres");
       }
-    } else if (config.cms === "studiocms") {
-      envVars.push(`CMS_ENCRYPTION_KEY=${randomBytes(32).toString("base64url")}`);
-      envVars.push("CMS_LIBSQL_URL=file:./studiocms.db");
-    } else if (config.cms === "emdash") {
-      const emdashKey = "emdash_enc_v1_" + randomBytes(32).toString("base64url");
-      envVars.push(`EMDASH_ENCRYPTION_KEY=${emdashKey}`);
-    }
-    if (config.auth === "better-auth") {
-      envVars.push(`BETTER_AUTH_SECRET=${randomBytes(32).toString("base64url")}`);
-      envVars.push("BETTER_AUTH_URL=http://localhost:3000");
-    }
-    if (config.ecommerce === "medusa") {
-      envVars.push("MEDUSA_BACKEND_URL=http://localhost:9000");
-      envVars.push("NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_your_medusa_publishable_key");
-    } else if (config.ecommerce === "stripe") {
-      envVars.push("STRIPE_SECRET_KEY=sk_test_placeholder");
-      envVars.push("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_placeholder");
-      // Webhook secrets cannot be generated client-side (must match the Stripe
-      // dashboard); placeholder stays in .env only, never signed at boot.
-      envVars.push("STRIPE_WEBHOOK_SECRET=whsec_replace_with_dashboard_value");
-    } else if (config.ecommerce === "razorpay") {
-      envVars.push("RAZORPAY_KEY_ID=rzp_test_placeholder");
-      envVars.push("RAZORPAY_KEY_SECRET=your_razorpay_secret");
-    } else if (config.ecommerce === "vendure") {
-      envVars.push("VENDURE_API_URL=http://localhost:3000/shop-api");
-    }
-    const envVarsExample = envVars.map(v => {
-      if (v.startsWith("EMDASH_ENCRYPTION_KEY=")) {
-        return "EMDASH_ENCRYPTION_KEY=emdash_enc_v1_placeholder";
+      if (config.cms === "payload") {
+        envVars.push(`PAYLOAD_SECRET=${randomBytes(32).toString("base64url")}`);
+        const isPg = config.db === "postgres" || config.db === "neon" || config.db === "supabase";
+        if (!envVars.some((v) => v.startsWith("DATABASE_URL="))) {
+          envVars.push(
+            `DATABASE_URL=${isPg ? `postgres://postgres:postgres@localhost:5432/${projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-")}-db` : "file:./payload.db"}`,
+          );
+        }
+      } else if (config.cms === "studiocms") {
+        envVars.push(`CMS_ENCRYPTION_KEY=${randomBytes(32).toString("base64url")}`);
+        envVars.push("CMS_LIBSQL_URL=file:./studiocms.db");
+      } else if (config.cms === "emdash") {
+        const emdashKey = "emdash_enc_v1_" + randomBytes(32).toString("base64url");
+        envVars.push(`EMDASH_ENCRYPTION_KEY=${emdashKey}`);
       }
-      return v;
-    });
-    const envExamplePath = join(resolvedTarget, ".env.example");
-    writeFileSync(envExamplePath, envVarsExample.join("\n") + "\n", "utf8");
-    const envLocalPath = join(resolvedTarget, ".env");
-    if (!existsSync(envLocalPath)) {
-      writeFileSync(envLocalPath, envVars.join("\n") + "\n", "utf8");
-    }
-    // 3.9 Day-1 Proof-of-Life Starter Dashboard UI
-    if (config.framework === "nextjs" || existsSync(join(resolvedTarget, "src/app"))) {
-      const appDir = join(resolvedTarget, "src", "app");
-      mkdirSync(appDir, { recursive: true });
+      if (config.auth === "better-auth") {
+        envVars.push(`BETTER_AUTH_SECRET=${randomBytes(32).toString("base64url")}`);
+        envVars.push("BETTER_AUTH_URL=http://localhost:3000");
+      }
+      if (config.ecommerce === "medusa") {
+        envVars.push("MEDUSA_BACKEND_URL=http://localhost:9000");
+        envVars.push("NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_your_medusa_publishable_key");
+      } else if (config.ecommerce === "stripe") {
+        envVars.push("STRIPE_SECRET_KEY=sk_test_placeholder");
+        envVars.push("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_placeholder");
+        // Webhook secrets cannot be generated client-side (must match the Stripe
+        // dashboard); placeholder stays in .env only, never signed at boot.
+        envVars.push("STRIPE_WEBHOOK_SECRET=whsec_replace_with_dashboard_value");
+      } else if (config.ecommerce === "razorpay") {
+        envVars.push("RAZORPAY_KEY_ID=rzp_test_placeholder");
+        envVars.push("RAZORPAY_KEY_SECRET=your_razorpay_secret");
+      } else if (config.ecommerce === "vendure") {
+        envVars.push("VENDURE_API_URL=http://localhost:3000/shop-api");
+      }
+      const envVarsExample = envVars.map((v) => {
+        if (v.startsWith("EMDASH_ENCRYPTION_KEY=")) {
+          return "EMDASH_ENCRYPTION_KEY=emdash_enc_v1_placeholder";
+        }
+        return v;
+      });
+      const envExamplePath = join(resolvedTarget, ".env.example");
+      writeFileSync(envExamplePath, envVarsExample.join("\n") + "\n", "utf8");
+      const envLocalPath = join(resolvedTarget, ".env");
+      if (!existsSync(envLocalPath)) {
+        writeFileSync(envLocalPath, envVars.join("\n") + "\n", "utf8");
+      }
+      // 3.9 Day-1 Proof-of-Life Starter Dashboard UI
+      if (config.framework === "nextjs" || existsSync(join(resolvedTarget, "src/app"))) {
+        const appDir = join(resolvedTarget, "src", "app");
+        mkdirSync(appDir, { recursive: true });
 
-      const layoutPath = join(appDir, "layout.tsx");
-      if (!existsSync(layoutPath)) {
-        const rootLayoutContent = `import type { Metadata } from 'next';
+        const layoutPath = join(appDir, "layout.tsx");
+        if (!existsSync(layoutPath)) {
+          const rootLayoutContent = `import type { Metadata } from 'next';
 import '../styles/tokens.css';
 import '../styles/semantic.css';
 
@@ -4037,10 +5115,10 @@ export default function RootLayout({
   );
 }
 `;
-        writeFileSync(layoutPath, rootLayoutContent, "utf8");
-      }
+          writeFileSync(layoutPath, rootLayoutContent, "utf8");
+        }
 
-      const nextDashboardContent = `'use client';
+        const nextDashboardContent = `'use client';
 
 import React, { useState } from 'react';
 
@@ -4111,18 +5189,24 @@ export default function HomePage() {
             <p style={{ margin: '0 0 0.75rem 0', color: 'var(--color-text-muted, #94a3b8)', fontSize: 'var(--font-size-sm, 0.875rem)' }}>
               ${config.ecommerce !== "none" ? `🟢 <strong>${config.ecommerce.toUpperCase()}</strong> active.` : "⚪ No e-commerce configured."}
             </p>
-            ${config.ecommerce === "stripe" ? `
+            ${
+              config.ecommerce === "stripe"
+                ? `
             <button
               onClick={handleTestCheckout}
               disabled={checkoutLoading}
               style={{ paddingInline: 'var(--space-md, 1rem)', paddingBlock: 'var(--space-xs, 0.5rem)', borderRadius: 'var(--radius-sm, 0.375rem)', background: 'var(--color-primary, #6366f1)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}
             >
               {checkoutLoading ? 'Testing...' : 'Test Checkout Session'}
-            </button>` : ""}
+            </button>`
+                : ""
+            }
             ${config.ecommerce === "medusa" ? `<div style={{ fontSize: '0.75rem', color: '#10b981' }}>Sovereign backend in ./backend (Port 9000)</div>` : ""}
           </div>
 
-          ${config.cms !== "none" || config.puck ? `
+          ${
+            config.cms !== "none" || config.puck
+              ? `
           <div className="c-card" style={{ padding: 'var(--spacing-lg, 1.5rem)', borderRadius: 'var(--radius-lg, 0.75rem)', background: 'var(--color-surface-elevated, #1e293b)', border: 'var(--border-width-thin, 0.0625rem) solid var(--color-border, #334155)' }}>
             <h3 style={{ margin: '0 0 0.5rem 0', fontSize: 'var(--font-size-base, 1rem)' }}>📝 Content Management</h3>
             <p style={{ margin: '0 0 0.75rem 0', color: 'var(--color-text-muted, #94a3b8)', fontSize: 'var(--font-size-sm, 0.875rem)' }}>
@@ -4133,7 +5217,9 @@ export default function HomePage() {
               ${config.cms === "keystatic" ? `<a href="/keystatic" style={{ paddingInline: 'var(--space-sm, 0.8rem)', paddingBlock: 'var(--space-xs, 0.4rem)', borderRadius: 'var(--radius-sm, 0.375rem)', background: '#334155', color: '#fff', textDecoration: 'none', fontSize: '0.8rem' }}>Open /keystatic</a>` : ""}
               ${config.puck ? `<a href="/puck" style={{ paddingInline: 'var(--space-md, 1rem)', paddingBlock: 'var(--space-xs, 0.5rem)', borderRadius: 'var(--radius-sm, 0.375rem)', background: '#059669', color: '#fff', textDecoration: 'none', fontWeight: 600, fontSize: '0.85rem' }}>🎨 Open Puck Visual Editor (/puck)</a>` : ""}
             </div>
-          </div>` : ""}
+          </div>`
+              : ""
+          }
         </section>
 
         <footer style={{ textAlign: 'center', borderBlockStart: 'var(--border-width-thin, 0.0625rem) solid var(--color-border, #334155)', paddingBlockStart: 'var(--spacing-lg, 1.5rem)' }}>
@@ -4150,18 +5236,22 @@ export default function HomePage() {
   );
 }
 `;
-      writeFileSync(join(appDir, "page.tsx"), nextDashboardContent, "utf8");
-      console.log("  ✅ Auto-wired: `src/app/page.tsx` (Day-1 Proof-of-Life Live Dashboard)");
-    } else if (config.framework === "astro" || existsSync(join(resolvedTarget, "src/pages"))) {
-      const pagesDir = join(resolvedTarget, "src", "pages");
-      mkdirSync(pagesDir, { recursive: true });
+        writeFileSync(join(appDir, "page.tsx"), nextDashboardContent, "utf8");
+        console.log("  ✅ Auto-wired: `src/app/page.tsx` (Day-1 Proof-of-Life Live Dashboard)");
+      } else if (config.framework === "astro" || existsSync(join(resolvedTarget, "src/pages"))) {
+        const pagesDir = join(resolvedTarget, "src", "pages");
+        mkdirSync(pagesDir, { recursive: true });
 
-      const astroDashboardContent = `---
+        const astroDashboardContent = `---
 import '../styles/tokens.css';
 import '../styles/semantic.css';
 ${config.cms === "ariabuilder" ? `import AriaHero from '../components/AriaHero.astro';` : ""}
-${config.cms === "ariabuilder" && config.ecommerce === "medusa" ? `import AriaMedusaProductGrid from '../components/AriaMedusaProductGrid.astro';
-import AriaCartDrawer from '../components/AriaCartDrawer.astro';` : ""}
+${
+  config.cms === "ariabuilder" && config.ecommerce === "medusa"
+    ? `import AriaMedusaProductGrid from '../components/AriaMedusaProductGrid.astro';
+import AriaCartDrawer from '../components/AriaCartDrawer.astro';`
+    : ""
+}
 
 const projectName = "${projectName.replace(/"/g, '\\"')}";
 const projectDesc = "${projectDesc.replace(/"/g, '\\"')}";
@@ -4176,8 +5266,12 @@ const projectDesc = "${projectDesc.replace(/"/g, '\\"')}";
   </head>
   <body style="margin: 0; padding: 0; background: var(--color-surface, #0b0f19); color: var(--color-text, #f8fafc); font-family: system-ui, -apple-system, sans-serif;">
 ${config.cms === "ariabuilder" ? `    <AriaHero />` : ""}
-${config.cms === "ariabuilder" && config.ecommerce === "medusa" ? `    <AriaMedusaProductGrid />
-    <AriaCartDrawer />` : ""}
+${
+  config.cms === "ariabuilder" && config.ecommerce === "medusa"
+    ? `    <AriaMedusaProductGrid />
+    <AriaCartDrawer />`
+    : ""
+}
     <main style="min-block-size: 50dvh; padding-inline: var(--padding-inline-section, 1.5rem); padding-block: var(--space-xl, 2rem); display: flex; flex-direction: column; align-items: center;">
       <div style="max-inline-size: var(--container-xl, 60rem); inline-size: 100%;">
         <header style="text-align: center; margin-block-end: var(--spacing-2xl, 3rem);">
@@ -4210,7 +5304,9 @@ ${config.cms === "ariabuilder" && config.ecommerce === "medusa" ? `    <AriaMedu
             </p>
           </div>
 
-          ${config.cms !== "none" ? `
+          ${
+            config.cms !== "none"
+              ? `
           <div class="c-card" style="padding: var(--spacing-lg, 1.5rem); border-radius: var(--radius-lg, 0.75rem); background: var(--color-surface-elevated, #1e293b); border: var(--border-width-thin, 0.0625rem) solid var(--color-border, #334155);">
             <h3 style="margin-block: 0 var(--space-xs, 0.5rem); font-size: var(--font-size-base, 1rem);">📝 Content & CMS</h3>
             <p style="margin-block: 0 var(--space-sm, 0.75rem); color: var(--color-text-muted, #94a3b8); font-size: var(--font-size-sm, 0.875rem);">
@@ -4219,7 +5315,9 @@ ${config.cms === "ariabuilder" && config.ecommerce === "medusa" ? `    <AriaMedu
             ${config.cms === "emdash" ? `<div style="display: flex; gap: 0.5rem;"><a href="/blog" style="padding-inline: var(--space-sm, 0.8rem); padding-block: var(--space-xs, 0.4rem); border-radius: var(--radius-sm, 0.375rem); background: #334155; color: #fff; text-decoration: none; font-size: 0.8rem;">📰 View Blog</a><a href="/emdash" style="padding-inline: var(--space-sm, 0.8rem); padding-block: var(--space-xs, 0.4rem); border-radius: var(--radius-sm, 0.375rem); background: #4f46e5; color: #fff; text-decoration: none; font-size: 0.8rem;">✍️ Emdash Studio (/emdash)</a></div>` : ""}
             ${config.cms === "studiocms" ? `<a href="/dashboard" style="display: inline-block; padding-inline: var(--space-md, 1rem); padding-block: var(--space-xs, 0.5rem); border-radius: var(--radius-sm, 0.375rem); background: #4f46e5; color: #fff; text-decoration: none; font-weight: 600; font-size: 0.85rem;">📊 Open StudioCMS Dashboard (/dashboard)</a>` : ""}
             ${config.cms === "ariabuilder" ? `<div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start;"><a href="/admin" style="display: inline-block; padding-inline: var(--space-md, 1rem); padding-block: var(--space-xs, 0.5rem); border-radius: var(--radius-sm, 0.375rem); background: #4f46e5; color: #fff; text-decoration: none; font-weight: 600; font-size: 0.85rem;">🎨 Open Aria Visual Builder (/admin)</a><span style="font-size: 0.75rem; color: #10b981;">Visual canvas active at /admin (guided setup on first visit)</span></div>` : ""}
-          </div>` : ""}
+          </div>`
+              : ""
+          }
         </section>
 
         <footer style="text-align: center; border-block-start: var(--border-width-thin, 0.0625rem) solid var(--color-border, #334155); padding-block-start: var(--spacing-lg, 1.5rem);">
@@ -4232,16 +5330,19 @@ ${config.cms === "ariabuilder" && config.ecommerce === "medusa" ? `    <AriaMedu
   </body>
 </html>
 `;
-      writeFileSync(join(pagesDir, "index.astro"), astroDashboardContent, "utf8");
-      console.log("  ✅ Auto-wired: `src/pages/index.astro` (Day-1 Proof-of-Life Live Dashboard)");
-    } else if (config.framework === "html" || (!existsSync(join(resolvedTarget, "src/app")) && !existsSync(join(resolvedTarget, "src/pages")))) {
-      const htmlContent = `<!DOCTYPE html>
+        writeFileSync(join(pagesDir, "index.astro"), astroDashboardContent, "utf8");
+        console.log("  ✅ Auto-wired: `src/pages/index.astro` (Day-1 Proof-of-Life Live Dashboard)");
+      } else if (
+        config.framework === "html" ||
+        (!existsSync(join(resolvedTarget, "src/app")) && !existsSync(join(resolvedTarget, "src/pages")))
+      ) {
+        const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${projectName.replace(/"/g, '&quot;')}</title>
-  <meta name="description" content="${projectDesc.replace(/"/g, '&quot;')}" />
+  <title>${projectName.replace(/"/g, "&quot;")}</title>
+  <meta name="description" content="${projectDesc.replace(/"/g, "&quot;")}" />
   <link rel="stylesheet" href="./src/styles/tokens.css" />
   <link rel="stylesheet" href="./src/styles/reset.css" />
   <link rel="stylesheet" href="./src/styles/semantic.css" />
@@ -4254,8 +5355,8 @@ ${config.cms === "ariabuilder" && config.ecommerce === "medusa" ? `    <AriaMedu
         <div style="display: inline-block; padding-inline: var(--space-sm, 0.75rem); padding-block: var(--space-3xs, 0.25rem); border-radius: var(--radius-full, 9999rem); background: var(--color-primary-dark, #312e81); color: var(--color-text-heading, #fff); font-size: var(--font-size-xs, 0.75rem); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-block-end: var(--space-md, 1rem);">
           PURE HTML/CSS • ZERO BUILD STEP
         </div>
-        <h1 style="font-size: var(--font-size-4xl, 2.5rem); margin-block: 0 var(--space-md, 1rem); color: var(--color-text-heading, #fff);">${projectName.replace(/</g, '&lt;')}</h1>
-        <p style="font-size: var(--font-size-lg, 1.25rem); color: var(--color-text-muted, #94a3b8); max-inline-size: var(--measure-wide, 40rem); margin-inline: auto;">${projectDesc.replace(/</g, '&lt;')}</p>
+        <h1 style="font-size: var(--font-size-4xl, 2.5rem); margin-block: 0 var(--space-md, 1rem); color: var(--color-text-heading, #fff);">${projectName.replace(/</g, "&lt;")}</h1>
+        <p style="font-size: var(--font-size-lg, 1.25rem); color: var(--color-text-muted, #94a3b8); max-inline-size: var(--measure-wide, 40rem); margin-inline: auto;">${projectDesc.replace(/</g, "&lt;")}</p>
       </header>
 
       <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17.5rem), 1fr)); gap: var(--spacing-md, 1rem); margin-block-end: var(--spacing-2xl, 3rem);">
@@ -4283,50 +5384,12 @@ ${config.cms === "ariabuilder" && config.ecommerce === "medusa" ? `    <AriaMedu
 </body>
 </html>
 `;
-      writeFileSync(join(resolvedTarget, "index.html"), htmlContent, "utf8");
-      console.log("  ✅ Auto-wired: `index.html` (Day-1 Pure HTML/CSS Starter Page)");
-    }
+        writeFileSync(join(resolvedTarget, "index.html"), htmlContent, "utf8");
+        console.log("  ✅ Auto-wired: `index.html` (Day-1 Pure HTML/CSS Starter Page)");
+      }
 
-    // 3.10 Generate Production Deployment Artifacts & CI/CD
-    const ghWorkflowsDir = join(resolvedTarget, ".github", "workflows");
-    mkdirSync(ghWorkflowsDir, { recursive: true });
-    const ciWorkflowContent = `name: CI & Quality Gate
-
-on:
-  push:
-    branches: [main, master, dev]
-  pull_request:
-    branches: [main, master, dev]
-
-jobs:
-  verify:
-    name: Quality & Secret Audit
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Bun Runtime
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install Dependencies
-        run: bun install
-
-      - name: Run Test Suite
-        run: bun test || true
-
-      - name: Vibeguard Secret Audit
-        run: |
-          echo "Inspecting workspace for credential leaks..."
-          ! git grep -E "(sk_live_[0-9a-zA-Z]{24}|ghp_[0-9a-zA-Z]{36}|-----BEGIN PRIVATE KEY-----)" . || exit 1
-`;
-    writeFileSync(join(ghWorkflowsDir, "ci.yml"), ciWorkflowContent, "utf8");
-    console.log("  ✅ Auto-wired: `.github/workflows/ci.yml` (Automated CI & Vibeguard Audit)");
-
-    if (config.deploy === "docker" || existsSync(join(resolvedTarget, "docker-compose.yml"))) {
-      const dockerfileContent = `# Multi-stage production container for ${projectName}
+      if (config.deploy === "docker" || existsSync(join(resolvedTarget, "docker-compose.yml"))) {
+        const dockerfileContent = `# Multi-stage production container for ${projectName}
 FROM oven/bun:1-alpine AS base
 WORKDIR /app
 
@@ -4350,9 +5413,9 @@ EXPOSE 3000
 ENV PORT=3000
 CMD ["bun", "run", "start"]
 `;
-      writeFileSync(join(resolvedTarget, "Dockerfile"), dockerfileContent, "utf8");
+        writeFileSync(join(resolvedTarget, "Dockerfile"), dockerfileContent, "utf8");
 
-      const dockerignoreContent = `node_modules
+        const dockerignoreContent = `node_modules
 .git
 .env*
 !.env.example
@@ -4362,15 +5425,15 @@ out
 coverage
 *.log
 `;
-      writeFileSync(join(resolvedTarget, ".dockerignore"), dockerignoreContent, "utf8");
-      console.log("  ✅ Auto-wired: `Dockerfile` & `.dockerignore` (Production multi-stage container)");
-    }
+        writeFileSync(join(resolvedTarget, ".dockerignore"), dockerignoreContent, "utf8");
+        console.log("  ✅ Auto-wired: `Dockerfile` & `.dockerignore` (Production multi-stage container)");
+      }
 
-    if (config.deploy === "cloudflare") {
-      const wranglerContent = `name = "${projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-")}"
+      if (config.deploy === "cloudflare") {
+        const wranglerContent = `name = "${projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-")}"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "${config.framework === 'nextjs' ? '.next' : 'dist'}"
+pages_build_output_dir = "${config.framework === "nextjs" ? ".next" : "dist"}"
 
 # Cloudflare Bindings (Uncomment as needed)
 # [[d1_databases]]
@@ -4382,35 +5445,35 @@ pages_build_output_dir = "${config.framework === 'nextjs' ? '.next' : 'dist'}"
 # binding = "CACHE"
 # id = "your-kv-id"
 `;
-      writeFileSync(join(resolvedTarget, "wrangler.toml"), wranglerContent, "utf8");
-      console.log("  ✅ Auto-wired: `wrangler.toml` (Cloudflare Workers / Pages configuration)");
-    }
+        writeFileSync(join(resolvedTarget, "wrangler.toml"), wranglerContent, "utf8");
+        console.log("  ✅ Auto-wired: `wrangler.toml` (Cloudflare Workers / Pages configuration)");
+      }
 
-    if (config.deploy === "vercel") {
-      const vercelConfig = {
-        $schema: "https://openapi.vercel.sh/vercel.json",
-        buildCommand: "bun run build",
-        framework: config.framework === "nextjs" ? "nextjs" : "astro",
-        headers: [
-          {
-            source: "/(.*)",
-            headers: [
-              { key: "X-Content-Type-Options", value: "nosniff" },
-              { key: "X-Frame-Options", value: "DENY" },
-              { key: "X-XSS-Protection", value: "1; mode=block" },
-            ],
-          },
-        ],
-      };
-      writeFileSync(join(resolvedTarget, "vercel.json"), JSON.stringify(vercelConfig, null, 2) + "\n", "utf8");
-      console.log("  ✅ Auto-wired: `vercel.json` (Vercel deployment & security headers)");
-    }
+      if (config.deploy === "vercel") {
+        const vercelConfig = {
+          $schema: "https://openapi.vercel.sh/vercel.json",
+          buildCommand: "bun run build",
+          framework: config.framework === "nextjs" ? "nextjs" : "astro",
+          headers: [
+            {
+              source: "/(.*)",
+              headers: [
+                { key: "X-Content-Type-Options", value: "nosniff" },
+                { key: "X-Frame-Options", value: "DENY" },
+                { key: "X-XSS-Protection", value: "1; mode=block" },
+              ],
+            },
+          ],
+        };
+        writeFileSync(join(resolvedTarget, "vercel.json"), JSON.stringify(vercelConfig, null, 2) + "\n", "utf8");
+        console.log("  ✅ Auto-wired: `vercel.json` (Vercel deployment & security headers)");
+      }
 
-    // 3.11 Quality Gates & Test Suite
-    const testsDir = join(resolvedTarget, "tests");
-    mkdirSync(testsDir, { recursive: true });
+      // 3.11 Quality Gates & Test Suite
+      const testsDir = join(resolvedTarget, "tests");
+      mkdirSync(testsDir, { recursive: true });
 
-    const healthTestContent = `import { describe, expect, it } from "bun:test";
+      const healthTestContent = `import { describe, expect, it } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -4433,35 +5496,35 @@ describe("🏥 Project OS Health & Baseline Verification", () => {
   });
 });
 `;
-    writeFileSync(join(testsDir, "health.test.ts"), healthTestContent, "utf8");
-    console.log("  ✅ Auto-wired: `tests/health.test.ts` (Automated starter health test suite)");
+      writeFileSync(join(testsDir, "health.test.ts"), healthTestContent, "utf8");
+      console.log("  ✅ Auto-wired: `tests/health.test.ts` (Automated starter health test suite)");
 
-    const biomeConfig = {
-      $schema: "https://biomejs.dev/schemas/1.9.4/schema.json",
-      vcs: { enabled: true, clientKind: "git", useIgnoreFile: true },
-      files: { ignoreUnknown: false, includes: ["src/**", "tests/**"] },
-      formatter: { enabled: true, indentStyle: "space", indentWidth: 2 },
-      linter: { enabled: true, rules: { recommended: true } },
-    };
-    writeFileSync(join(resolvedTarget, "biome.json"), JSON.stringify(biomeConfig, null, 2) + "\n", "utf8");
-    console.log("  ✅ Auto-wired: `biome.json` (High-speed modern linter & formatter)");
+      const biomeConfig = {
+        $schema: "https://biomejs.dev/schemas/1.9.4/schema.json",
+        vcs: { enabled: true, clientKind: "git", useIgnoreFile: true },
+        files: { ignoreUnknown: false, includes: ["src/**", "tests/**"] },
+        formatter: { enabled: true, indentStyle: "space", indentWidth: 2 },
+        linter: { enabled: true, rules: { recommended: true } },
+      };
+      writeFileSync(join(resolvedTarget, "biome.json"), JSON.stringify(biomeConfig, null, 2) + "\n", "utf8");
+      console.log("  ✅ Auto-wired: `biome.json` (High-speed modern linter & formatter)");
 
-    // 3.12 Day-1 Secret Defense (Vibeguard Pre-Commit Hook)
-    const scriptsDir = join(resolvedTarget, "scripts");
-    mkdirSync(scriptsDir, { recursive: true });
+      // 3.12 Day-1 Secret Defense (Vibeguard Pre-Commit Hook)
+      const scriptsDir = join(resolvedTarget, "scripts");
+      mkdirSync(scriptsDir, { recursive: true });
 
-    const stripeLivePrefix = "sk_" + "live_";
-    const ghpPrefix = "gh" + "p_";
-    const privKeyPattern = "BEGIN " + "PRIVATE KEY";
+      const stripeLivePrefix = "sk_" + "live_";
+      const ghpPrefix = "gh" + "p_";
+      const privKeyPattern = "BEGIN " + "PRIVATE KEY";
 
-    const preCommitScript = `#!/usr/bin/env bash
-# LifeOS Vibeguard Pre-Commit Secret Defense Gate
+      const preCommitScript = `#!/usr/bin/env bash
+# Vibeguard Pre-Commit Secret Defense Gate
 set -e
 
 echo "🛡️ Vibeguard: Inspecting staged files for secrets..."
 
 # 1. Block staged .env files
-STAGED_ENV=$(git diff --cached --name-only 2>/dev/null | grep -E '^(\\.env|\\.env\\.local|\\.env\\.production)$' || true)
+STAGED_ENV=$(git diff --cached --name-only 2>/dev/null | (rg -E '^(\\.env|\\.env\\.local|\\.env\\.production)$' 2>/dev/null || grep -E '^(\\.env|\\.env\\.local|\\.env\\.production)$') || true)
 if [ -n "$STAGED_ENV" ]; then
   echo "❌ FATAL: Attempted to commit real environment file: $STAGED_ENV"
   echo "💡 Rule: Only .env.example should be committed. Keep .env in .gitignore."
@@ -4487,137 +5550,174 @@ fi
 echo "✅ Vibeguard: Pre-commit secret audit passed cleanly."
 exit 0
 `;
-    const preCommitPath = join(scriptsDir, "pre-commit.sh");
-    writeFileSync(preCommitPath, preCommitScript, "utf8");
-    try {
-      chmodSync(preCommitPath, 0o755);
-    } catch {}
-    console.log("  ✅ Auto-wired: `scripts/pre-commit.sh` (LifeOS Vibeguard pre-commit secret audit)");
-
-    const gitHooksDir = join(resolvedTarget, ".git", "hooks");
-    if (existsSync(join(resolvedTarget, ".git"))) {
-      mkdirSync(gitHooksDir, { recursive: true });
-      const gitHookTarget = join(gitHooksDir, "pre-commit");
-      writeFileSync(gitHookTarget, preCommitScript, "utf8");
+      const preCommitPath = join(scriptsDir, "pre-commit.sh");
+      writeFileSync(preCommitPath, preCommitScript, "utf8");
       try {
-        chmodSync(gitHookTarget, 0o755);
+        chmodSync(preCommitPath, 0o755);
       } catch {}
-    }
+      console.log("  ✅ Auto-wired: `scripts/pre-commit.sh` (Vibeguard pre-commit secret audit)");
 
-    // 3.13 Update package.json
-    const pkgPath = join(resolvedTarget, "package.json");
-    let pkg: any = null;
-    if (existsSync(pkgPath)) {
-      try {
-        pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
-      } catch {
-        pkg = null;
-      }
-    } else if (config.framework !== "instatic" && config.framework !== "wordpress") {
-      pkg = {
-        name: projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
-        version: "0.1.0",
-        private: true,
-        type: "module",
-        scripts: {
-          dev: config.framework === "nextjs" ? "next dev" : config.framework === "astro" ? "astro dev" : "bun x serve .",
-          build: config.framework === "nextjs" ? "next build" : config.framework === "astro" ? "astro build" : "echo 'Build complete'",
-          start: config.framework === "nextjs" ? "next start" : config.framework === "astro" ? "astro preview" : "bun x serve .",
-        },
-      };
-    }
-
-    if (pkg && typeof pkg === "object") {
-      pkg.name = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-");
-      pkg.dependencies = pkg.dependencies || {};
-      pkg.devDependencies = pkg.devDependencies || {};
-      pkg.scripts = pkg.scripts || {};
-
-      for (const [k, v] of Object.entries(depsToAdd)) {
-        pkg.dependencies[k] = useLatest ? "latest" : v;
-      }
-      for (const [k, v] of Object.entries(devDepsToAdd)) {
-        pkg.devDependencies[k] = useLatest ? "latest" : v;
-      }
-
-      pkg.scripts["test"] = "bun test";
-      pkg.scripts["lint"] = "biome check src || true";
-      pkg.scripts["format"] = "biome format --write src || true";
-      pkg.scripts["precommit"] = "bash scripts/pre-commit.sh";
-
-      if (config.db === "postgres" && config.ecommerce !== "medusa") {
-        pkg.scripts["setup"] = "bun install && docker compose up -d && bun run db:push";
-      } else if (config.ecommerce === "medusa") {
-        pkg.scripts["setup"] = "bun install && docker compose -f backend/docker-compose.yml up -d && cd backend && npm run build && npx medusa db:migrate";
-      } else if (config.framework === "html") {
-        pkg.scripts["setup"] = "bun install";
-      } else {
-        pkg.scripts["setup"] = "bun install && bun run build";
-      }
-
-      if (config.mobile === "capacitor") {
-        pkg.scripts["cap:sync"] = "cap sync";
-        pkg.scripts["cap:build"] = "bun run build && cap sync";
-        pkg.scripts["cap:ios"] = "cap open ios";
-        pkg.scripts["cap:android"] = "cap open android";
-      }
-
-      if (config.db !== "none") {
-        pkg.scripts["db:generate"] = "drizzle-kit generate";
-        pkg.scripts["db:push"] = "drizzle-kit push";
-      }
-
-      if (config.db === "postgres" && config.ecommerce !== "medusa") {
-        pkg.scripts["docker:up"] = "docker compose up -d";
-        pkg.scripts["docker:down"] = "docker compose down";
-      }
-
-      if (config.cms === "payload") {
-        pkg.scripts["payload"] = "payload";
-      }
-
-      if (config.cms === "ariabuilder") {
-        pkg.scripts["dev"] = "node --import tsx aria/scripts/project-command.ts dev";
-        pkg.scripts["dev:local"] = "node --import tsx aria/scripts/project-command.ts dev:local";
-        pkg.scripts["dev:edge"] = "node --import tsx aria/scripts/project-command.ts dev:edge";
-        pkg.scripts["build"] = "node --import tsx aria/scripts/project-command.ts build";
-        pkg.scripts["preview"] = "node --import tsx aria/scripts/project-command.ts preview";
-      }
-
-      if (config.cms === "emdash") {
-        pkg.emdash = { seed: "seed/seed.json" };
-        pkg.scripts["typecheck"] = "astro check";
-        if (config.deploy === "cloudflare") {
-          pkg.scripts["deploy"] = "astro build && wrangler deploy";
-        }
-      }
-
-      if (config.ecommerce === "medusa") {
-        pkg.scripts["backend:install"] = "cd backend && npm install";
-        pkg.scripts["dev:backend"] = "cd backend && npm run dev";
-        pkg.scripts["dev:all"] = "concurrently \"bun run dev\" \"bun run dev:backend\"";
-        pkg.scripts["backend:build"] = "cd backend && npm run build";
-        pkg.scripts["backend:migrate"] = "cd backend && npx medusa db:migrate";
-        pkg.scripts["docker:up"] = "docker compose -f backend/docker-compose.yml up -d";
-        pkg.scripts["docker:down"] = "docker compose -f backend/docker-compose.yml down";
-      }
-
-      writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
-      console.log("  ✅ Synchronized: `./package.json` with official companion dependencies and scripts");
-
-      if (!skipInstall && existsSync(pkgPath) && config.framework !== "none") {
-        console.log(`  📦 Resolving packages with Bun${noCache ? " (--no-cache)" : ""}...`);
+      const gitHooksDir = join(resolvedTarget, ".git", "hooks");
+      if (existsSync(join(resolvedTarget, ".git"))) {
+        mkdirSync(gitHooksDir, { recursive: true });
+        const gitHookTarget = join(gitHooksDir, "pre-commit");
+        writeFileSync(gitHookTarget, preCommitScript, "utf8");
         try {
-          const bunArgs = ["install"];
-          if (noCache) bunArgs.push("--no-cache");
-          spawnSync("bun", bunArgs, { cwd: resolvedTarget, stdio: "ignore" });
+          chmodSync(gitHookTarget, 0o755);
+        } catch {}
+      }
+
+      // 3.13 Update package.json
+      const pkgPath = join(resolvedTarget, "package.json");
+      let pkg: any = null;
+      if (existsSync(pkgPath)) {
+        try {
+          pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
         } catch {
-          // Gracefully continue if offline or sandbox
+          pkg = null;
+        }
+      } else if (config.framework !== "instatic" && config.framework !== "wordpress") {
+        pkg = {
+          name: projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+          version: "0.1.0",
+          private: true,
+          type: "module",
+          scripts: {
+            dev:
+              config.framework === "nextjs" ? "next dev" : config.framework === "astro" ? "astro dev" : "bun x serve .",
+            build:
+              config.framework === "nextjs"
+                ? "next build"
+                : config.framework === "astro"
+                  ? "astro build"
+                  : "echo 'Build complete'",
+            start:
+              config.framework === "nextjs"
+                ? "next start"
+                : config.framework === "astro"
+                  ? "astro preview"
+                  : "bun x serve .",
+          },
+        };
+      }
+
+      if (pkg && typeof pkg === "object") {
+        pkg.name = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+        pkg.dependencies = pkg.dependencies || {};
+        pkg.devDependencies = pkg.devDependencies || {};
+        pkg.scripts = pkg.scripts || {};
+
+        for (const [k, v] of Object.entries(depsToAdd)) {
+          pkg.dependencies[k] = useLatest ? "latest" : v;
+        }
+        for (const [k, v] of Object.entries(devDepsToAdd)) {
+          pkg.devDependencies[k] = useLatest ? "latest" : v;
+        }
+
+        pkg.scripts["test"] = "bun test";
+        pkg.scripts["lint"] = "biome check src";
+        pkg.scripts["format"] = "biome format --write src";
+        pkg.scripts["precommit"] = "bash scripts/pre-commit.sh";
+
+        if (config.db === "postgres" && config.ecommerce !== "medusa") {
+          pkg.scripts["setup"] = "bun install && docker compose up -d && bun run db:push";
+        } else if (config.ecommerce === "medusa") {
+          pkg.scripts["setup"] =
+            "bun install && docker compose -f backend/docker-compose.yml up -d && cd backend && npm run build && npx medusa db:migrate";
+        } else if (config.framework === "html") {
+          pkg.scripts["setup"] = "bun install";
+        } else {
+          pkg.scripts["setup"] = "bun install && bun run build";
+        }
+
+        if (config.mobile === "capacitor") {
+          pkg.scripts["cap:sync"] = "cap sync";
+          pkg.scripts["cap:build"] = "bun run build && cap sync";
+          pkg.scripts["cap:ios"] = "cap open ios";
+          pkg.scripts["cap:android"] = "cap open android";
+        }
+
+        if (config.db !== "none") {
+          pkg.scripts["db:generate"] = "drizzle-kit generate";
+          pkg.scripts["db:push"] = "drizzle-kit push";
+        }
+
+        if (config.db === "postgres" && config.ecommerce !== "medusa") {
+          pkg.scripts["docker:up"] = "docker compose up -d";
+          pkg.scripts["docker:down"] = "docker compose down";
+        }
+
+        if (config.cms === "payload") {
+          pkg.scripts["payload"] = "payload";
+        }
+
+        if (config.cms === "ariabuilder") {
+          pkg.scripts["dev"] = "node --import tsx aria/scripts/project-command.ts dev";
+          pkg.scripts["dev:local"] = "node --import tsx aria/scripts/project-command.ts dev:local";
+          pkg.scripts["dev:edge"] = "node --import tsx aria/scripts/project-command.ts dev:edge";
+          pkg.scripts["build"] = "node --import tsx aria/scripts/project-command.ts build";
+          pkg.scripts["preview"] = "node --import tsx aria/scripts/project-command.ts preview";
+        }
+
+        if (config.cms === "emdash") {
+          pkg.emdash = { seed: "seed/seed.json" };
+          pkg.scripts["typecheck"] = "astro check";
+          if (config.deploy === "cloudflare") {
+            pkg.scripts["deploy"] = "astro build && wrangler deploy";
+          }
+        }
+
+        if (config.ecommerce === "medusa") {
+          pkg.scripts["backend:install"] = "cd backend && npm install";
+          pkg.scripts["dev:backend"] = "cd backend && npm run dev";
+          pkg.scripts["dev:all"] = 'concurrently "bun run dev" "bun run dev:backend"';
+          pkg.scripts["backend:build"] = "cd backend && npm run build";
+          pkg.scripts["backend:migrate"] = "cd backend && npx medusa db:migrate";
+          pkg.scripts["docker:up"] = "docker compose -f backend/docker-compose.yml up -d";
+          pkg.scripts["docker:down"] = "docker compose -f backend/docker-compose.yml down";
+        }
+
+        writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
+        console.log("  ✅ Synchronized: `./package.json` with official companion dependencies and scripts");
+
+        if (!skipInstall && existsSync(pkgPath) && config.framework !== "none") {
+          console.log(`  📦 Resolving packages with Bun${noCache ? " (--no-cache)" : ""}...`);
+          try {
+            const bunArgs = ["install"];
+            if (noCache) bunArgs.push("--no-cache");
+            spawnSync("bun", bunArgs, { cwd: resolvedTarget, stdio: "ignore" });
+          } catch {
+            // Gracefully continue if offline or sandbox
+          }
         }
       }
-    }
 
-    console.log("  ✅ Self-Verification: All generated configuration files and packages confirmed.\n");
+      // Render after project scripts and any generated lockfile are finalized.
+      const githubAssets = scaffoldGitHubAssets(resolvedTarget, {
+        projectName,
+        projectDesc,
+        authorName: values.author,
+        agentName,
+        intent: config.intent,
+        framework: config.framework,
+        deploy: config.deploy,
+        githubProject: githubProjectEnabled,
+        packageManager: "bun",
+        dryRun: isDryRun,
+      });
+      for (const asset of githubAssets.created) console.log(`  ✅ Auto-wired: \`${asset}\``);
+      if (githubAssets.confirmationRequired) {
+        console.log(
+          "  ⚠️ Non-GitHub repository detected; existing workflows preserved. Ask before removing `.github/workflows`.",
+        );
+      }
+      if (githubAssets.hostUnknown) {
+        console.log(
+          "  ⚠️ GitHub assets skipped because hosting was not selected; rerun updateagents after confirming GitHub hosting.",
+        );
+      }
+
+      console.log("  ✅ Self-Verification: All generated configuration files and packages confirmed.\n");
     } // end Aria isolation gate (3.8-3.13: env, dashboard, CI, tests, hooks, package.json)
   }
 
@@ -4626,15 +5726,13 @@ exit 0
   // =========================================================================
   console.log("🎨 STAGE 4: Modern Tokens & BEM Architecture Injection...");
 
-  if (!isDryRun && !isAriaIsolated) {
+  if (!isDryRun && !isIsolatedOfficial) {
     const stylesDir = join(resolvedTarget, "src", "styles");
     mkdirSync(stylesDir, { recursive: true });
 
     // 4.1 tokens.css with Wide-Gamut OKLCH and Fluid clamp() scales
     const pal = PALETTES[colorPalette] || PALETTES["slate"];
-    const scaleVars = (pal.scale || [])
-      .map((c, idx) => `  --color-scale-${idx + 1}: ${c};`)
-      .join("\n");
+    const scaleVars = (pal.scale || []).map((c, idx) => `  --color-scale-${idx + 1}: ${c};`).join("\n");
     const tokensCssContent = `/**
  * 🎨 Modern Wide-Gamut OKLCH Tokens & Fluid Scales (${colorPalette.toUpperCase()})
  * 100% Modern Responsive Architecture • Zero px Values • Dynamic clamp() Scales
@@ -5206,13 +6304,30 @@ input, button, textarea, select {
 
   if (!isDryRun) {
     const intakeDir = join(resolvedTarget, "Client-Intake");
-    // ponytail: single canonical folder; no Intake//Onboarding/ mirrors —
-    // re-add alias copy pass only if an external consumer appears.
+    const templateIntakeDir = join(TEMPLATES_DIR, "Client-Intake");
     for (const sub of ["01-Brand", "02-Business", "03-Offerings", "04-Technical-Intake"]) {
-      mkdirSync(join(intakeDir, sub), { recursive: true });
+      const destSub = join(intakeDir, sub);
+      mkdirSync(destSub, { recursive: true });
+      const keepSrc = join(templateIntakeDir, sub, ".gitkeep");
+      const keepDest = join(destSub, ".gitkeep");
+      if (existsSync(keepSrc) && !existsSync(keepDest)) {
+        cpSync(keepSrc, keepDest);
+      }
     }
 
-    const intakeBriefContent = `# Client Intake Brief — ${projectName}
+    const templateBriefPath = join(templateIntakeDir, "00-Intake-Brief.md");
+    let intakeBriefContent = "";
+    if (existsSync(templateBriefPath)) {
+      intakeBriefContent = readFileSync(templateBriefPath, "utf8");
+      for (const [token, val] of Object.entries(tokenMap)) {
+        intakeBriefContent = intakeBriefContent.replaceAll(token, val);
+      }
+      intakeBriefContent = intakeBriefContent.replaceAll(
+        "{{STACK_DETAILS}}",
+        `framework \`${config.framework}\`, CMS \`${config.cms}\`, e-commerce \`${config.ecommerce}\`, database \`${config.db}\`, auth \`${config.auth}\`, styling \`${config.styling}\`, animation \`${config.animation}\`, state \`${config.state}\``,
+      );
+    } else {
+      intakeBriefContent = `# Client Intake Brief — ${projectName}
 
 > **How this works**: You (the employee/client) answer the checklist below in
 > conversation with your AI agent. The agent then writes every document in this
@@ -5252,10 +6367,13 @@ input, button, textarea, select {
 - Zero secrets in any file; credential docs contain placeholder links (1Password/Bitwarden share) only.
 - Modern fluid CSS only: \`clamp()\`, logical properties, zero \`px\` in fluid contexts.
 `;
+    }
     writeFileSync(join(intakeDir, "00-Intake-Brief.md"), intakeBriefContent, "utf8");
 
     console.log("  ✅ Generated: `./Client-Intake/00-Intake-Brief.md` (employee checklist + agent instructions)");
-    console.log("  ℹ️  Docs in 01-Brand/, 02-Business/, 03-Offerings/, 04-Technical-Intake/ are written by your AI agent from the brief.");
+    console.log(
+      "  ℹ️  Docs in 01-Brand/, 02-Business/, 03-Offerings/, 04-Technical-Intake/ are written by your AI agent from the brief.",
+    );
   }
   // =========================================================================
   console.log("📋 STAGE Closeout: Recording Shipped State in .agents/context/current.md...");
@@ -5264,7 +6382,9 @@ input, button, textarea, select {
     const currentMdPath = join(resolvedTarget, ".agents/context/current.md");
     if (existsSync(currentMdPath)) {
       const topFiles = readdirSync(resolvedTarget).filter((f) => !f.startsWith(".") && f !== "node_modules");
-      const artifactList = topFiles.map((f) => `- \`${f}\` — Initial ${f.includes(".") ? "configuration / root file" : "source directory"}`).join("\n");
+      const artifactList = topFiles
+        .map((f) => `- \`${f}\` — Initial ${f.includes(".") ? "configuration / root file" : "source directory"}`)
+        .join("\n");
 
       const initialCurrentContent = `# 📍 Current Shipped State & System Reality
 
@@ -5285,6 +6405,7 @@ input, button, textarea, select {
 - **Authentication**: ${config.auth.toUpperCase()}${config.customAuth ? ` (${config.customAuth})` : ""}
 - Progressive Disclosure DOX container active with 13 modular standards, brand token baseline, and cognitive memory.
 - Client intake brief provisioned at \`./Client-Intake/00-Intake-Brief.md\`.
+- Client content map provisioned at \`./.agents/brand/CONTENT_MAP.md\` (zero-hardcoded-strings contract).
 - Intake docs are produced by the AI agent from the brief after employee answers.
 
 ## 2. Live Deliverables & Key Artifacts
@@ -5304,8 +6425,8 @@ ${artifactList}
 ## 5. Next Immediate Focus
 - **Milestone 1**: ${firstMilestone}
 - Walk through the Client-Intake brief with your agent: \`./Client-Intake/00-Intake-Brief.md\`.
-- Run \`${isAriaIsolated ? "npm install" : "bun install"}\` to resolve dependencies.
-- Verify initial local development server (\`${isAriaIsolated ? "npm run dev" : "bun run dev"}\`)${isAriaIsolated ? " at http://localhost:4321/admin (first visit: http://localhost:4321/admin/setup)" : ""}.
+- Run \`${isAtomicIsolated ? "pnpm install" : isAriaIsolated ? "npm install" : "bun install"}\` to resolve dependencies.
+- Verify initial local development server (\`${isAtomicIsolated ? "pnpm dev" : isAriaIsolated ? "npm run dev" : "bun run dev"}\`)${isAtomicIsolated ? " at http://localhost:42100/admin (create the first admin user; seed via the dashboard banner)" : isAriaIsolated ? " at http://localhost:4321/admin (first visit: http://localhost:4321/admin/setup)" : ""}.
 `;
       writeFileSync(currentMdPath, initialCurrentContent, "utf8");
       console.log("  ✅ Updated: `./.agents/context/current.md` with initial reality");
@@ -5383,7 +6504,7 @@ ${artifactList}
 
 ### ADR-006: Automated Quality Gates & Vibeguard Secret Defense
 - **Context**: Prevent credential leaks and ensure zero-regression testing on day 1.
-- **Decision**: Provisioned pre-commit hook (\`scripts/pre-commit.sh\`), health test suite (\`tests/health.test.ts\`), and automated CI workflow (\`.github/workflows/ci.yml\`).
+- **Decision**: Provisioned the pre-commit hook (\`scripts/pre-commit.sh\`), health test suite (\`tests/health.test.ts\`), and project-adapted CI workflow when GitHub hosting was selected.
 - **Status**: Accepted & Implemented.
 `;
       writeFileSync(decisionsMdPath, decisionsContent, "utf8");
@@ -5392,26 +6513,50 @@ ${artifactList}
 
     const productMdPath = join(resolvedTarget, ".agents/context/product.md");
     if (existsSync(productMdPath)) {
-      const featItems = coreFeatures.split(",").map((s) => `- **${s.trim()}**`).join("\n");
-      const offerItems = offerings.split(",").map((s) => `- **${s.trim()}**`).join("\n");
+      const featItems = coreFeatures
+        .split(",")
+        .map((s) => `- **${s.trim()}**`)
+        .join("\n");
+      const offerItems = offerings
+        .split(",")
+        .map((s) => `- **${s.trim()}**`)
+        .join("\n");
 
       const productContent = `# 📦 Product Scope & Inventory — ${projectName}
+
+> Canonical source of truth for product scope, ICP, positioning, and traction. Every agent reads this before executing GTM, design, or engineering work.
+> Every substantive claim must carry an inline tag: \`[validated]\` (proven with a real paying/active user who is not a friend) or \`[assumption]\` (working hypothesis to test).
 
 ## 1. Overview & Vision
 ${projectDesc}
 
 ## 2. Target Audience & Problem Statement
-- **Target Audience**: ${targetAudience}
-- **Core Problem**: ${coreProblem}
-- **Value Proposition**: High-performance, agency-grade ${config.intent.toLowerCase()} system governed by DOX Engine.
+- **Industry Vertical**: ${industryVertical}
+- **Target Audience**: ${targetAudience} \`[assumption]\`
+- **Core Problem**: ${coreProblem} \`[assumption]\`
+- **Value Proposition**: High-performance, agency-grade ${config.intent.toLowerCase()} system governed by DOX Engine. \`[assumption]\`
 
-## 3. Core Capabilities & Features
+## 3. Status Quo & Competitive Wedge
+- **Status Quo (What they use today)**: Manual ad-hoc workflows, custom spreadsheets, or legacy tooling \`[assumption]\`
+- **The Villain / Breaking Point**: Inefficient manual execution, slow turnaround, and lack of automated verification.
+- **Why Us over Status Quo**: Purpose-first architecture with progressive disclosure governance and zero-drift verification.
+
+## 4. Defensibility & "Beyond the Wrapper" Wedge
+- **Core Wedge**: Domain-specific automation, deep workflow integration, and autonomous verification.
+- **Commoditization Defense**: System-level integration that cannot be replicated by simple prompt wrappers.
+
+## 5. Core Capabilities & Features
 ${featItems}
 
-## 4. Key Deliverables & Catalog Offerings
+## 6. Traction, Retention & Strongest Proof Point
+- **Current Traction**: Initial scaffold and active development stage \`[assumption]\`
+- **Retention / Activation Metric**: Time to first successful user workflow execution (< 15 min).
+- **Single Strongest Asset**: Production-ready codebase with full test coverage and automated quality gates \`[validated]\`
+
+## 7. Key Deliverables & Catalog Offerings
 ${offerItems}
 
-## 5. Domain Vocabulary & Key Concepts
+## 8. Domain Vocabulary & Key Concepts
 - **${projectName}**: Primary application and governed workspace.
 - **DOX Container (\`.agents/\`)**: Progressive disclosure documentation container maintaining durable context.
 - **Vibeguard**: Zero-secret credential leakage defense protocol.
@@ -5437,10 +6582,18 @@ ${offerItems}
   console.log(`🗄️  Database:          \`${config.db.toUpperCase()}\``);
   console.log(`🛡️  Governance:         DOX Engine Active (Root \`AGENTS.md\` + \`.agents/\` container)`);
   console.log(`📖 Developer Guide:    \`./start-here.md\` (written by your agent after intake)`);
-  console.log(`📋 Client Intake:      \`./Client-Intake/00-Intake-Brief.md\` (answer with your agent; docs generated after)`);
+  console.log(
+    `📋 Client Intake:      \`./Client-Intake/00-Intake-Brief.md\` (answer with your agent; docs generated after)`,
+  );
   console.log(`\nNext Steps:`);
   console.log(`  1. cd ${relative(process.cwd(), resolvedTarget) || "."}`);
-  if (isAriaIsolated) {
+  if (isAtomicIsolated) {
+    console.log(`  2. pnpm install (already run unless --skip-install)`);
+    console.log(`  3. pnpm generate:types && pnpm generate:importmap`);
+    console.log(
+      `  4. pnpm dev, then open http://localhost:42100/admin — first visit: create the first admin user; seed via the 'Seed database' dashboard banner`,
+    );
+  } else if (isAriaIsolated) {
     console.log(`  2. npm install (already run unless --skip-install)`);
     console.log(`  3. npm run dev`);
     console.log(`  4. Open http://localhost:4321/admin (first visit: http://localhost:4321/admin/setup)`);

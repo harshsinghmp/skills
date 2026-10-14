@@ -11,7 +11,7 @@ When an AI agent repeatedly solves a non-trivial issue across multiple tasks, th
 
 ```mermaid
 flowchart TD
-    A["Session Insight / Pattern Detected"] --> B{"Gate 1: Recurrence Gate\n(Seen >= 3 times?)"}
+    A["Session Insight / Pattern Detected"] --> B{"Gate 1: Recurrence Gate\n(Seen >= 4 times?)"}
     B -->|No| C["Record in .learnings/ or Memory (Wait)"]
     B -->|Yes| D{"Gate 2: Verification Gate\n(Tests pass?)"}
     D -->|No| E["Fix Code / Add Passing Test"]
@@ -28,9 +28,9 @@ flowchart TD
 
 Every candidate skill must clear three deterministic gates before promotion:
 
-### Gate 1: Recurrence Gate ($\ge 3$ Occurrences)
+### Gate 1: Recurrence Gate ($\ge 4$ Occurrences)
 - **Rule**: Never create an agent skill for a one-off problem.
-- **Verification**: The issue must be documented with at least 3 distinct occurrences across tasks, repositories, or debugging sessions (e.g., recorded in `.memory/` or `.learnings/`).
+- **Verification**: The issue must be documented with at least 4 distinct occurrences across tasks, repositories, or debugging sessions (e.g., recorded in `.memory/` or `.learnings/`).
 - **Failure Mode**: Premature extraction creates catalog bloat and introduces overly narrow heuristics.
 
 ### Gate 2: Verification Gate (Tested & Proven)
@@ -73,7 +73,7 @@ Use `scripts/extract-skill.ts` to execute automated validation and scaffolding:
 bun scripts/extract-skill.ts \
   --name "memory-lease-lock" \
   --desc "Enforce distributed concurrency locks on multi-agent cognitive memory writes to prevent race conditions." \
-  --occurrences 3 \
+  --occurrences 4 \
   --test-cmd "bun test tests/memory.test.ts" \
   --tags "memory,concurrency,governance" \
   --register
@@ -85,7 +85,7 @@ bun scripts/extract-skill.ts \
 |:---|:---|:---|
 | `-n, --name` | `<name>` | Skill name in strict kebab-case (`^[a-z0-9]+(-[a-z0-9]+)*$`). |
 | `-d, --desc` | `"<desc>"` | Trigger-rich description naming user intents and activation signals. |
-| `-o, --occurrences` | `<count>` | Number of observed pattern occurrences (must be $\ge 3$). |
+| `-o, --occurrences` | `<count>` | Number of observed pattern occurrences (must be $\ge 4$). |
 | `-e, --evidence` | `<file\|count>` | Path to markdown learning log or explicit recurrence count. |
 | `-t, --test-cmd` | `"<cmd>"` | Shell command to verify working code/tests before scaffolding. |
 | `--verified` | none | Boolean flag asserting manual test verification. |
@@ -93,3 +93,9 @@ bun scripts/extract-skill.ts \
 | `-r, --register` | none | Automatically updates `skills.json`, `llms.txt`, and `README.md`. |
 | `--dry-run` | none | Preview gate results and file scaffolding without disk writes. |
 | `-f, --force` | none | Bypass gate checks or overwrite existing target directory. |
+
+---
+
+## 5. Progressive Disclosure & Trigger Wording
+
+Keep `SKILL.md` under ~500 lines: metadata (name + trigger-rich description) always in context, body on trigger, heavy docs/scripts in `references/` + `scripts/` loaded as needed. Write descriptions slightly pushy — name the user phrases and contexts that should trigger the skill, since undertriggering (skill present but unused) is the common failure.

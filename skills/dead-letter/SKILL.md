@@ -2,6 +2,8 @@
 name: dead-letter
 aliases: ["failure-triage","blocked-task","dead-letter-queue"]
 description: "Capture a failed or blocked task before it disappears. Categorizes the failure mode, distinguishes transient from permanent failures, verifies actual state before any retry, preserves partial work and orphaned resources, and generates either a bounded autonomous retry packet with the root cause fixed or an escalation message with a specific decision question. Recovery follows a strict ordered sequence with baseline regression comparison against the last-known-good state, close-out can generate a repro test pack (exact reproduction steps, preconditions, expected-vs-actual, minimal failing test) for Dev/QA handoff, and the status sweep clusters open records by root cause so repeated failures across tasks surface as one systemic finding with one fix — with a findings ledger that deduplicates recurring sweeps and measures convergence."
+argument-hint: "task failed, blocked task, retry or escalate"
+user-invocable: true
 version: 1.5.0
 author: Harsh Singh
 license: MIT
@@ -11,15 +13,15 @@ metadata:
   category: quality-review
   priority: 15
   aliases: ["failure-triage","blocked-task","dead-letter-queue"]
-  suggested_skills: ["handoff","pua","context-anchor","secretary"]
+  suggested_skills: ["relay","pua","context-anchor","secretary"]
   hermes:
     tags: [triage, error-handling, debugging, subagents, escalation, reliability, retry-gate, state-verification, orphan-cleanup, recovery-sequence, baseline-regression, repro-pack, cluster-triage]
-    related_skills: [handoff, pua, context-anchor, secretary]
-    suggested_skills: [handoff, pua, context-anchor, secretary]
+    related_skills: [relay, pua, context-anchor, secretary]
+    suggested_skills: [relay, pua, context-anchor, secretary]
     requires_tools: [bash, view_file, write_to_file]
   openclaw:
     category: quality-review
-    suggested_skills: [handoff, pua, context-anchor, secretary]
+    suggested_skills: [relay, pua, context-anchor, secretary]
     primary_triggers: ["task failed","blocked on error","dead letter capture","escalate failure","retry failed task","dead letter status","repro pack","reproduction steps for the bug","triage open failures","nightly failure triage"]
     requires_tools: [bash, view_file, write_to_file]
   compatibility: [hermes, openclaw, claude-code, codex, cursor, gemini-cli, opencode]
@@ -67,17 +69,22 @@ Read full error logs, terminal stderr, or subagent exit messages.
 ### Step 2: Classify Failure Mode
 Assign exact code from the 9-part taxonomy.
 
-### Step 3: Recovery Decision (transient vs permanent)
-Before authoring any retry packet, answer three questions in the record:
-1. **Seen before?** A failure with the same code + root cause appearing **2+ times** escalates automatically — never a third silent retry.
+### Step 3: Recovery Decision & Circuit Breaker Check
+Before authoring any retry packet, verify against `references/circuit-breaker.md`:
+1. **Circuit Breaker Status**: If the same `(code, root-cause)` failed **$\ge 2$ times** on this task or blast radius $\ge 3$, the circuit is **TRIPPED**. Immediately freeze execution, generate an incident packet at `.agents/artifacts/incident-<task-id>-<timestamp>.md`, and escalate. Do not author a retry packet.
 2. **Transient or permanent?** Transient (crash, network blip, rate limit): retry is legitimate. Permanent (defective logic, missing capability): a retry packet is forbidden — escalate or re-scope.
-3. **Autonomy level:** `auto` (mechanical fix — diagnose → fix → re-run up to 3 verification rounds without asking), `confirm` (recovery path obvious but non-mechanical — one approval question), `escalate` (ambiguous root cause or repeated failure — specific decision question, never open-ended).
+3. **Autonomy level:** `auto` (mechanical fix — diagnose → fix → re-run up to 3 verification rounds without asking), `confirm` (recovery path obvious but non-mechanical — one approval question), `escalate` (ambiguous root cause, tripped circuit, or repeated failure — specific decision question, never open-ended).
 
-### Step 4: State Verification (Precondition Check)
-Never retry blindly. A "failed" state can be mid-backoff, mid-poll, or already partially applied. Emit one **Precondition Check** — a command or query that confirms the system is in the retryable state — and only emit a retry prompt when it passes.
+### Step 4: State Verification & Precondition Delta Gate
+Never retry blindly. A "failed" state can be mid-backoff, mid-poll, or already partially applied.
+1. Emit one **Precondition Check** — a command or query confirming the system is in the retryable state.
+2. Require an explicit **Precondition Delta**: What concretely changed in the code or environment? (e.g., file edited, env var exported). If Precondition Delta is empty/none, **RETRY IS STRICTLY FORBIDDEN** — escalate immediately to prevent thrashing.
 
-### Step 5: Write Dead-Letter Record
-Save record to `.agents/dead-letter-<timestamp>.md` using the canonical template in [references/record-schema.md](references/record-schema.md). The record carries a **Recovery Sequence** — the ordered checklist (classify → decide → precondition → fix → verify-against-baseline → close) is the single resume point for any retry: completed steps are marked, and a retry resumes from the first unchecked step, never from an arbitrary point. Load the schema reference only when authoring a record; a sweep or a resume-from-record does not need it.
+### Step 5: Write Dead-Letter Record (Atomic & Sanitized)
+Save record to `.agents/dead-letter-<timestamp>.md` using the canonical template in [references/record-schema.md](references/record-schema.md):
+- **Zero-Credential Sanitization**: Pass all captured stderr, stdout, and error dumps through the redaction filter (`Bearer [REDACTED]`, `sk-[REDACTED]`, `postgres://...`). Never write raw secrets to disk.
+- **Atomic Persistence**: Write initially to `.agents/artifacts/.tmp-dl-*` and atomically rename to prevent corruption under concurrent subagent crashes.
+- The record carries a **Recovery Sequence** — the ordered checklist (classify → decide → precondition → fix → verify-against-baseline → close) is the single resume point for any retry: completed steps are marked, and a retry resumes from the first unchecked step, never from an arbitrary point. Load the schema reference only when authoring a record.
 
 ### Step 6: Emit Inline Summary
 Output failure code and immediate next step to terminal.
@@ -135,8 +142,10 @@ The pack is a handoff artifact: Dev/QA (or a fresh agent) runs the test red → 
 
 - Confirm `.agents/dead-letter-<timestamp>.md` exists.
 - Confirm either a concrete retry prompt OR a routed escalation question is fully specified.
-- Confirm the Recovery Decision is filled (seen-before count, transient/permanent, autonomy level).
+- Confirm the Recovery Decision is filled (seen-before count, transient/permanent, autonomy level, circuit breaker status).
 - Confirm the Precondition Check ran and its observed result is recorded.
+- Confirm Precondition Delta is documented; if empty/none, confirm retry was forbidden.
+- Confirm Zero-Credential Sanitization passed (no raw tokens, keys, or passwords in stack dumps).
 - Confirm Orphaned Resources is enumerated (or "None.") — no silent leaks.
 - Confirm the Recovery Sequence tracks completed steps and a retry resumes from the first unchecked one.
 - Confirm a Baseline Reference exists when last-known-good state is available, and the verification loop compares against it — not just exit codes.
