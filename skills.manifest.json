@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft-07/schema#",
   "version": "1.0.0",
   "description": "Downstream Curated Agent Skills Hub for Harsh Singh (harshsinghmp)",
-  "lastUpdated": "2026-09-07T05:53:56.192Z",
+  "lastUpdated": "2026-10-14T11:41:30.341Z",
   "skills": [
     {
       "name": "60fps-animation",
@@ -328,6 +328,18 @@
         "sourcePath": "dead-letter"
       },
       "version": "1.0.0"
+    },
+    {
+      "name": "deep-research",
+      "category": "general",
+      "description": "Creates reusable, source-traced research reports and coordinates provider/mode lanes with original exports. Use for 深度研究, 调研报告, literature reviews, market or company research, and ChatGPT/Kimi/UniFuncs research routes. Technology choice uses tech-selection; competitor code uses competitors-analysis.",
+      "upstream": {
+        "repo": "daymade/claude-code-skills",
+        "branch": "main",
+        "sourcePath": "deep-research",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "designscope",
@@ -712,6 +724,18 @@
       "autoAdded": true
     },
     {
+      "name": "pdf-creator",
+      "category": "general",
+      "description": "Converts Markdown to print-ready PDF with proper Chinese typography, themes and a visual self-check. Use for Markdown → PDF, including documents formatted for printing or mobile reading. Not for Word/WPS files or Word output (use docx-creator).",
+      "upstream": {
+        "repo": "daymade/claude-code-skills",
+        "branch": "main",
+        "sourcePath": "daymade-docs/pdf-creator",
+        "host": "github"
+      },
+      "autoAdded": true
+    },
+    {
       "name": "pick-ui-library",
       "category": "creative",
       "description": "Pick the right library for a given frontend task from a curated, opinionated list — numbers, OTP inputs, charts, command menus, virtualization, drag and drop, toasts, state, styling, and more. Only runs when explicitly invoked; it does not trigger on its own.",
@@ -894,6 +918,18 @@
       "category": "engineering",
       "description": "Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy.",
       "version": "1.0.0"
+    },
+    {
+      "name": "skill-evolver",
+      "category": "general",
+      "description": "Researches and improves a specified existing Skill using successful/failed work and competitor evidence. Use for 优化这个Skill, 从成功和失败经验改进Skill, or 研究竞品后优化指定技能. Routine creation and editing use skill-creator.",
+      "upstream": {
+        "repo": "daymade/claude-code-skills",
+        "branch": "main",
+        "sourcePath": "skill-evolver",
+        "host": "github"
+      },
+      "autoAdded": true
     },
     {
       "name": "spec-miner",
