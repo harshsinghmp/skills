@@ -30,7 +30,7 @@ Install via `npx skills` shorthand:
 
 ```bash
 # Recommended shorthand
-npx skills add harshsinghmp/muse-skills --skill handoff
+npx skills add harshsinghmp/muse-skills --skill relay
 ```
 
 ---
@@ -103,6 +103,10 @@ npx skills add harshsinghmp/muse-skills --skill handoff
 - `path/to/file.ts` — [what to do here, optionally line number]
 - `path/to/other.ts` — [what to do here]
 
+## Interfaces
+- `path/to/file.ts` — consumes: [what it reads]; produces: [what it returns or changes]
+- [Every file in scope gets one line. Unlisted coupling is out of scope. No placeholders: `TBD`, "appropriate handling", and "etc." fail the packet.]
+
 ## Hard constraints
 - [MUST NOT]: [What the subagent must not change, call, or assume]
 - [MUST NOT]: [...]
@@ -150,6 +154,8 @@ branch: <branch> | phase: <one-line state>
 - **Ruled-out paths are mandatory**: Subagents re-explore dead ends unless explicitly warned away.
 - **Constraints are non-optional**: Conversational boundaries do not propagate across agent boundaries unless written.
 - **Verifiable criteria only**: "It works" is rejected; `"bun test tests/auth.test.ts passes"` is required.
+- **Approval before code**: every Mode B dispatch states its triage path (spike / bounded / architectural, one-way ratchet, never downgrade) and carries explicit human approval before any code is written.
+- **Fog stays fog**: multi-session packets carry a decision map (Destination · Notes · Decisions · Not-yet-specified · Out-of-scope); ticket sharp edges only, one ticket per session, never ticket what is not yet specified.
 - **No syntax filler**: Focus on architecture, API behavior, and runtime gotchas.
 - **Load-bearing fallback**: Define an explicit escalation path so unblocked agents don't hallucinate workarounds.
 - **Ambient writes are silent**: The live file updates without narration, never appends, and only on real state change.

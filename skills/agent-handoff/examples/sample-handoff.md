@@ -24,6 +24,10 @@ Implement Stripe webhook handler in `src/app/api/webhooks/stripe/route.ts` to pr
 - `src/db/queries/subscriptions.ts` — Add `upsertSubscription` query helper.
 - `tests/api/stripe-webhook.test.ts` — Add mock webhook integration tests.
 
+## Interfaces
+- `src/app/api/webhooks/stripe/route.ts` — consumes: raw `req.text()` + `stripe-signature` header; produces: 200/400 responses + `upsertSubscription` calls.
+- `src/db/queries/subscriptions.ts` — consumes: verified event payload; produces: `subscriptions` row upsert.
+
 ## Hard constraints
 - [MUST NOT]: Do not import client-side Stripe SDK packages into the route handler.
 - [MUST NOT]: Do not modify `src/db/schema.ts` without creating a formal migration file.

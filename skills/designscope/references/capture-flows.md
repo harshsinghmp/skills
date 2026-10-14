@@ -156,6 +156,17 @@ interpretation (mood, implicit components, system decisions).
 Mark this in the `design.md`: tokens with ✅ high confidence are those that came from
 `get_variable_defs`, not those you inferred yourself.
 
+### Step 3.4 — Portable Figma→code rules (source: `figma/figma-design-to-code`, fetched live)
+
+Tool-independent mechanics only. MCP/server parts (`get_design_context` mandatory-first,
+`skillNames` logging, Code Connect mapping — require Figma MCP server) are adapter-only:
+marked here, not ported as mechanics.
+
+- **Hint priority ladder:** Code Connect snippets > doc links > annotations > tokens (CSS vars) > raw hex/absolute values (screenshot for intent only).
+- **Reference-not-final + reuse-before-generate:** the output is a reference — adapt it to the target stack; reuse project components/tokens before generating anything new.
+- **Asset doctrine:** every icon/image from exported bytes only (never hand-drawn SVG/path); remote asset URLs expire (~7d) → download-and-commit or wire a data source; fixed-size container + fill leaf (`100%`, never `auto`); reuse a project icon only on glyph match.
+- **Error recovery:** STOP and read the message; file-only URL (no node-id) → ask the user, never guess; timeout → retry a smaller node; never silently fall back to screenshot-only hand-write.
+
 ---
 
 ## Flow 4 — Combinations

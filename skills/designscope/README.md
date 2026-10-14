@@ -59,4 +59,4 @@ and as client brand documentation.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](../../../LICENSE)

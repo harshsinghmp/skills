@@ -68,39 +68,39 @@ Historical context: 12 session memories integrated
 
 ## Example 4: Workspace boundary enforcement
 
-**User request:** "Update agents.md in /home/harsh/Projects/myapp"
+**User request:** "Update agents.md in /home/developer/Projects/myapp"
 
 **Skill execution:**
-1. Changes to `/home/harsh/Projects/myapp`
+1. Changes to `/home/developer/Projects/myapp`
 2. Confirms working directory is workspace root
-3. Scans only within `/home/harsh/Projects/myapp`
-4. Never reads parent `/home/harsh/Projects` or `/home/harsh`
-5. Updates file at `/home/harsh/Projects/myapp/AGENTS.md`
+3. Scans only within `/home/developer/Projects/myapp`
+4. Never reads parent `/home/developer/Projects` or `/home/developer`
+5. Updates file at `/home/developer/Projects/myapp/AGENTS.md`
 
 **Safety check output:**
 ```
-✅ Workspace root: /home/harsh/Projects/myapp
+✅ Workspace root: /home/developer/Projects/myapp
 ✅ No parent directory traversal detected
 ✅ All file operations scoped to workspace
 ```
 
-## Example 5: Multiple memory files detected
+## Example 5: Multiple agent instruction systems detected
 
 **User request:** "Refresh agent documentation"
 
 **Skill execution:**
-1. Discovers both `AGENTS.md` and `CLAUDE.md` exist
-2. Prioritizes AGENTS.md (higher priority)
-3. Reads CLAUDE.md to check for unique content
-4. Merges unique CLAUDE.md content into AGENTS.md
-5. Updates AGENTS.md with combined information
-6. Leaves CLAUDE.md untouched (user can delete manually if desired)
+1. Discovers `AGENTS.md`, `CLAUDE.md`, and scoped runtime rules.
+2. Copies each exact source to `.agents/archive/agent-instructions/` and records source paths + hashes.
+3. Imports full text and scope metadata into `.agents/context/imported-agent-instructions.md`.
+4. Updates the shared `AGENTS.md` router and replaces supported runtime files with adapters.
+5. Leaves a visible source → archive → canonical-context map; Claude's adapter is `@AGENTS.md`.
 
 **Output:**
 ```
-⚠️  Multiple memory files found: AGENTS.md, CLAUDE.md
-✅ Updated AGENTS.md (merged unique content from CLAUDE.md)
-ℹ️  CLAUDE.md preserved (consider removing if redundant)
+🧭 Imported: AGENTS.md, CLAUDE.md, .cursor/rules/design.mdc
+📦 Preserved exact originals under .agents/archive/agent-instructions/
+✅ Shared rules active in .agents/context/imported-agent-instructions.md
+🔗 Runtime adapters now route to AGENTS.md
 ```
 
 ## Common Trigger Phrases
