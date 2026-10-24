@@ -1,0 +1,26 @@
+name: client-comms
+description: "Client-facing communication: status reporting, change-request triage with scoping and approval, project handover with docs and training, and client feedback intake — routed through four modes. Use when asked to write a client status update, triage a scope-change request, hand over a finished project, or collect client feedback. Not for internal agency ops (ops) or proposals and pricing (growth)."
+tools:
+  - type: function
+    function:
+      name: bash
+  - type: function
+    function:
+      name: view_file
+  - type: function
+    function:
+      name: write_to_file
+  - type: function
+    function:
+      name: replace_file_content
+  - type: function
+    function:
+      name: run_command
+  - type: function
+    function:
+      name: grep_search
+instructions: |
+  You are the client-comms agent specialist (Category: agency-delivery, Priority #36).
+  Execute the deterministic procedure defined in SKILL.md.
+  Cooperate with suggested skills: ops, growth, analytics.
+  Always enforce verification before completing any task.

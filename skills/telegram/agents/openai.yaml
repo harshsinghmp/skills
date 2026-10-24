@@ -1,0 +1,90 @@
+skill:
+  name: telegram
+  description: Telegram messaging department — pure-bash bot alerts, approval boards, Claude Code hooks, and Kafka-event routing via curl + jq. Zero pip installs. Config-file token management with mode-600. Use when asked to notify a Telegram chat, build a notification bot, dimension approval buttons, integrate Claude Code hooks, route events to Telegram, or set up a bot with a config-file token.
+  version: 1.0.0
+  author: Harsh Singh
+  path: telegram/SKILL.md
+  agent:
+    name: telegram-agent
+    npm: telegram-bot-api
+    instructions: |
+      You are the Telegram department for muse-skills. You send messages to Telegram chats via the Bot API (curl + jq), handle approval callbacks, register Claude Code hooks that call Telegram, and route structured events to the right chat/bot/target.
+
+      MODES (pick exactly one per request):
+      - notify: send a message to a configured chat (text, optional formatting/threading).
+      - approve: pause a long-running task; send approve/reject inline keyboard; wait for callback; resume on approve, abort on reject.
+      - hook: write executable bash hook scripts per Claude Code hook event; each calls Telegram via curl + jq; fail-closed (Telegram down → log and continue, never block Claude Code).
+      - route: shape structured events into Telegram messages; ack before dispatch; route by config (event type → chat/bot/target); channel down → queue note, not silent drop; sanitize sensitive payloads before send.
+      - setup: create config file with bot token + chat ID + optional targets; mode-600; bind to env-manager layer when present; write recovery docs; confirm with a test message.
+
+      RULES:
+      - Exactly one mode per request; ambiguous → default notify, state assumption.
+      - Config resolved before any send: bot token + chat ID + target routing, all from config; mode-600 on the config file; token never printed in logs or output.
+      - notify: curl to sendMessage, parse ok + message_id + date with jq; on failure surface the real Telegram error reason.
+      - approve: inline keyboard with approve/reject callback_data; task pauses until callback (not a chat reply); reject aborts with a clear note; timeout handled (no silent default proceed).
+      - hook: hooks executable bash; registered per requested event; messages include meaningful context without dumping sensitive payloads; failures logged, session continues.
+      - route: ack event before dispatch; target from config; sensitive fields scrubbed; channel down noted, not dropped.
+      - setup: config file created with token + chat_id + optional targets; mode-600 enforced; recovery docs written and current; test message sent to confirm.
+      - No pip installs; pure bash + curl + jq for the Bot API.
+      - Sensitive payloads sanitized before sending; token stays in config.
+      - CI/automation/observability cross-skills routed to automation, coupling-router, sentry, user-onboarding as appropriate.
+
+      SOURCES:
+      - Telegram Bot API: https://core.telegram.org/bots/api
+      - Create a bot at @BotFather.
+      - Claude Code hooks documentation for the hook event contract.
+      - Kafka event routing patterns: ack before dispatch, consumer group, retry.
+      When a cited source conflicts with a default above, the source wins — record the override and why.
+    env:
+      - name: TELEGRAM_BOT_TOKEN
+        description: Telegram bot token from @BotFather (stored in config file, mode-600; never printed).
+        required: true
+      - name: TELEGRAM_CHAT_ID
+        description: Target chat ID (from getUpdates or operator note).
+        required: true
+    hooks:
+      event:
+        - name: telegram-notify
+          handler: notify
+          events: ["build.start", "build.success", "build.failure", "deploy.start", "deploy.success", "deploy.failure", "release.cut"]
+        - name: telegram-approve
+          handler: approve
+          events: ["deploy.approval"]
+        - name: telegram-hook
+          handler: hook
+          events: ["claude.start", "claude.end", "claude.tool.use", "claude.error"]
+        - name: telegram-route
+          handler: route
+          events: ["event.route"]
+  metadata:
+    category: agency-delivery
+    priority: 41
+    aliases: ["tg", "telegram-bot", "telegram-skill", "telegram-notify"]
+    suggested_skills: ["automation", "coupling-router", "sentry", "user-onboarding"]
+    tags: ["telegram", "bot", "notification", "alert", "approval", "curl", "jq", "config-file", "mode-600", "multi-bot", "kafka-event", "claude-code-hook", "bash"]
+    requires_tools: ["bash", "write_file", "read_file", "replace_file_content"]
+    requires_plugins: []
+    requires_toolsets: []
+  tools:
+    - type: bash
+      full_base_command: "curl -s -X POST 'https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage' -H 'Content-Type: application/json' -d '${JSON_PAYLOAD}'"
+      description: "Send a Telegram message via the Bot API (curl + jq)."
+      installed: true
+      state: installed
+      install_hint: "curl and jq are preinstalled on macOS/Linux; no pip installs."
+  examples:
+    - name: notify
+      description: "Send a build success message to the team chat."
+      prompt: "Send a Telegram message to the team chat: build #123 succeeded on main."
+    - name: approve
+      description: "Pause a production deploy and ask the operator to approve."
+      prompt: "Pause before deploying to production — send an approve/reject button to the ops chat."
+    - name: hook
+      description: "Register Claude Code hooks so Telegram gets session/tool/error notices."
+      prompt: "Mirror Claude Code session start, end, tool use, and error events to the team Telegram chat."
+    - name: route
+      description: "Route build failures to the on-call chat, deploys to the team chat."
+      prompt: "Route build failures to the on-call chat and deploy events to the team chat, with ack before dispatch."
+    - name: setup
+      description: "Create a bot token config with mode-600 and recovery docs."
+      prompt: "Set up a new Telegram bot for CI alerts — create the config, set mode-600, write recovery docs."
