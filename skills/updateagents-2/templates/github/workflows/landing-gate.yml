@@ -1,0 +1,46 @@
+name: Landing Gate
+
+# Enforces the Landing Gate standard: a commit is not a delivery.
+# Pre-review gate on pull_request (against github.head_ref);
+# post-merge gate on push to the integration branch (against github.ref_name).
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  landing-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Pre-review gate (pull_request)
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -e
+          HEAD="$HEAD_REF"
+          # pushed?
+          test -n "$(git ls-remote --heads origin "$HEAD")"
+          # open PR with green checks
+          STATE=$(gh pr view "$HEAD" --json state -q .state)
+          test "$STATE" = "OPEN"
+          echo "REVIEWABLE"
+
+      - name: Post-merge gate (push)
+        if: github.event_name == 'push'
+        run: |
+          set -e
+          BRANCH="${{ github.ref_name }}"
+          git fetch origin "$BRANCH" --quiet
+          git merge-base --is-ancestor HEAD "origin/$BRANCH"
+          echo "LANDED"

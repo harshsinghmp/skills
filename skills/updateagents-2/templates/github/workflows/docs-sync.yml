@@ -1,0 +1,62 @@
+name: Docs Link Integrity
+
+# Validates that all relative Markdown links across docs and README resolve cleanly on disk.
+# Pure POSIX shell check with zero external dependencies.
+
+on:
+  pull_request:
+    paths:
+      - '**/*.md'
+      - '.github/workflows/docs-sync.yml'
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - '**/*.md'
+      - '.github/workflows/docs-sync.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    name: Validate Markdown Relative Links
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify relative links resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          status=0
+          while IFS= read -r -d '' md; do
+            dir=$(dirname "$md")
+            while IFS= read -r target; do
+              case "$target" in
+                http://*|https://*|mailto:*|\#*|"") continue ;;
+              esac
+              path=${target%%#*}
+              path=${path%% *}
+              [[ -n $path ]] || continue
+              if [[ $path == /* ]]; then
+                resolved=".${path}"
+              else
+                resolved="$dir/$path"
+              fi
+              if [[ ! -e $resolved ]]; then
+                echo "::error file=$md::broken relative link: $target"
+                status=1
+              fi
+            done < <(grep -oE '\]\([^)]+\)' "$md" | sed -E 's/^\]\(//; s/\)$//')
+          done < <(git ls-files -z '*.md' ':(glob,exclude)**/node_modules/**' ':(glob,exclude)**/vendor/**')
+
+          if (( status == 0 )); then
+            echo "All Markdown relative links resolve successfully."
+          fi
+          exit "$status"

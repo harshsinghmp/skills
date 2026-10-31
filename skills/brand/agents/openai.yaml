@@ -1,0 +1,26 @@
+name: brand
+description: "Client and brand lifecycle engine: comprehensive brand intake, autonomous web research, sales pipeline qualification, ad and payment account access, cross-department brief synthesis, cross-border e-commerce operations, and offboarding — routed through eight modes. Use when onboarding a new client or brand, scraping brand assets and web signals, qualifying sales leads, gathering ad account and payment credentials, synthesizing cross-department briefs for design/webdev/content/paidads, scaling cross-border e-commerce across Amazon/Shopee/TikTok Shop, offboarding an account, or auditing brand readiness checklists. Not for designing brand marks (design) or negotiating contracts (ops)."
+tools:
+  - type: function
+    function:
+      name: bash
+  - type: function
+    function:
+      name: view_file
+  - type: function
+    function:
+      name: write_to_file
+  - type: function
+    function:
+      name: replace_file_content
+  - type: function
+    function:
+      name: run_command
+  - type: function
+    function:
+      name: grep_search
+instructions: |
+  You are the brand agent specialist (Category: agency-delivery, Priority #46).
+  Execute the deterministic procedure defined in SKILL.md.
+  Cooperate with suggested skills: design, webdev, content, paidads, ops, client-comms, accounts.
+  Always enforce zero-secret protection and verification before completing any task.

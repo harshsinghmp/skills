@@ -1,0 +1,91 @@
+name: AI Slop & Synthetic Residue Gate
+
+# Fails any PR that introduces synthetic placeholder comments, unfulfilled stubs,
+# or AI conversational residue into the codebase.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - dev
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ai-slop-scan:
+    name: Scan Added Lines for AI Residue
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan diff range
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          base=""
+          head="$SHA"
+          if [[ "$EVENT" == "pull_request" ]]; then
+            base="$PR_BASE"
+            head="$PR_HEAD"
+          elif [[ "$EVENT" == "push" && -n "$PUSH_BEFORE" && "$PUSH_BEFORE" != "0000000000000000000000000000000000000000" ]]; then
+            base="$PUSH_BEFORE"
+          else
+            base=$(git rev-parse HEAD~1 2>/dev/null || true)
+          fi
+
+          if [[ -z "$base" ]]; then
+            echo "Initial commit or empty base; checking HEAD only."
+            diff_cmd="git show HEAD"
+          else
+            echo "Scanning commit range: $base..$head"
+            diff_cmd="git diff $base..$head"
+          fi
+
+          # Scan only added lines (+) excluding diff file headers (+++)
+          added_lines=$($diff_cmd | grep '^+[^+]' || true)
+
+          if [[ -z "$added_lines" ]]; then
+            echo "No added lines detected in range."
+            exit 0
+          fi
+
+          # Prohibited AI slop markers
+          slop_patterns=(
+            "TODO: implement"
+            "// insert implementation here"
+            "// your code here"
+            "<!-- ORCA_RICH_MD"
+            "As an AI language model"
+            "Certainly! Here is"
+            "I hope this helps!"
+          )
+
+          detected=0
+          for pattern in "${slop_patterns[@]}"; do
+            if echo "$added_lines" | grep -iF "$pattern" > /dev/null; then
+              echo "::error::Detected prohibited AI placeholder/slop marker: '$pattern'"
+              detected=1
+            fi
+          done
+
+          if [[ $detected -eq 1 ]]; then
+            echo "AI slop scan failed: PR contains synthetic placeholders or chat residue."
+            exit 1
+          fi
+
+          echo "AI slop scan passed: No synthetic residue found."
