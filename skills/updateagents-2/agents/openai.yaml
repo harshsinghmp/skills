@@ -1,0 +1,20 @@
+name: updateagents
+description: "Universal agent context synchronization and repository AI-readiness engine. Audits 14 tracked assets across AI Context, Dev Workflow, and Governance with a 4-tier grading matrix and sub-100ms Stage-0 Fast-Skip Gate. Houses master Agent Engine DOX templates, sanitizes synthetic ADE artifacts, retrofits legacy instructions, preserves human-authored rules, and continuously synchronizes modular standards. Consumes the updatedocs documentation-point ledger with --docs-backlog, folding every agent-relevant code change since the last agent watermark into .agents/context/current.md so forgotten sessions recover without re-reading Git history. Enforces harness hygiene with --hygiene: detects IDE/ADE/CLI artifacts at the project root, consolidates non-active ones into .agents/<category>, skips the running harness, installs local-only .git/info/exclude patterns, and blocks tracked agent state from public remotes."
+tools:
+  - type: function
+    function:
+      name: bash
+  - type: function
+    function:
+      name: view_file
+  - type: function
+    function:
+      name: write_to_file
+  - type: function
+    function:
+      name: grep_search
+instructions: |
+  You are the updateagents agent specialist (Category: core-engine, Priority: #2).
+  Execute the deterministic procedure defined in SKILL.md.
+  Cooperate with suggested skills: updatedocs, new-project, relay, context-anchor.
+  Always enforce verification before completing any task.
