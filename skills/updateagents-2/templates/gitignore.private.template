@@ -1,0 +1,101 @@
+# ==============================================================================
+# Muse Internal Agent State — install into .git/info/exclude (never commit)
+# ==============================================================================
+# This file is the source for `updateagents --install-excludes`.
+# It keeps agent-generated folders, harness state, transcripts, and memory
+# out of GitHub without putting those names in the public .gitignore.
+
+# Agent Context, Standards & Workspace Instructions
+.agents/
+AGENTS.md
+AGENTS.local.md
+AGENTS.override.md
+AGENTS_*.md
+skills-lock.json
+
+# Modern AI Agent CLI & IDE Workspaces
+.gemini/
+.antigravity/
+.claude/
+.opencode/
+.openclaw/
+.aider*
+.cline/
+.commandcode/
+.roo/
+.hermes/
+.continue/
+.omo/
+.omh/
+.omp/
+.crush/
+.codex/
+.codex-*/
+.trae/
+.windsurf/
+.cursor/
+.cursorrules.local
+.windsurfrules
+.clinerules
+.roomodes
+.superpowers/
+
+# Specialized Agent Engines & Local Scratchpads
+.codegraph/
+.jez/
+.slim/
+.artifacets/
+.artifacts/
+.system_generated/
+subagents/
+
+# Conversation transcripts, token logs & raw chat dumps
+*.transcript.jsonl
+*.trajectory.jsonl
+*.chat.json
+*.prompt.md
+*.prompt.tmp
+*.scratchpad.md
+transcripts/
+chat-logs/
+session-logs/
+agent-transcripts/
+
+# Memory Systems & Runtime Data
+.memory/
+.musememory/
+memory.db
+memory.db-*
+audit.jsonl
+observations.jsonl
+optimization_meta.json
+harvested-transcripts.json
+graph-symbols.json
+
+# Personal Identity & Principal Context
+USER.md
+PRINCIPAL_*.md
+DA_IDENTITY.md
+*.personal.*
+*.identity.*
+.muse/
+.pulse/
+pulse-state/
+
+# Local Scratchpads, Drafts & Patches
+scratch/
+tmp/
+temp/
+*.tmp
+*.scratch.*
+*.draft.*
+*.patch
+*.diff
+*.rej
+*.orig
+dogfood-output/
+
+# Local Configuration Overrides
+*.local
+*.local.*
+!*.example
