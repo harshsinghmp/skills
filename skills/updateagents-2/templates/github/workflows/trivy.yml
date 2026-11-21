@@ -1,0 +1,78 @@
+name: Trivy Security Scan
+
+# Aquasecurity Trivy Filesystem, Vulnerability & Secret Scanner.
+# Scans repository files for committed credentials, high-severity CVEs, and misconfigurations.
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+  schedule:
+    - cron: '15 4 * * 2'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  scan:
+    name: Trivy filesystem & secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Generate SARIF vulnerability report
+        uses: aquasecurity/trivy-action@38b337fff0a2f984d5be173c99e3f633438167ec # pinned 2026-11-09
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          format: sarif
+          output: trivy-results.sarif
+          limit-severities-for-sarif: true
+          skip-dirs: .git,node_modules,dist,build,coverage
+
+      - name: Upload SARIF report to GitHub Security
+        if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        uses: github/codeql-action/upload-sarif@9418214df1f2c4b8128c770156c409013b07d6b9 # v3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy
+
+      - name: Block high-confidence leaked credentials
+        uses: aquasecurity/trivy-action@38b337fff0a2f984d5be173c99e3f633438167ec # pinned 2026-11-09
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: secret
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          format: table
+          skip-dirs: .git,node_modules,dist,build,coverage
+          skip-setup-trivy: true
+
+      - name: Block critical vulnerabilities
+        uses: aquasecurity/trivy-action@38b337fff0a2f984d5be173c99e3f633438167ec # pinned 2026-11-09
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,misconfig
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          format: table
+          skip-dirs: .git,node_modules,dist,build,coverage
+          skip-setup-trivy: true
