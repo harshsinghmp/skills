@@ -1,0 +1,34 @@
+name: Sync Gate
+
+# Blocks a pull request whose head does not contain the latest base branch.
+# Self-contained by design: pure Git, no language runtime or project script
+# required. Refresh an existing copy with `updateagents --refresh-workflows`.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  sync-gate:
+    name: sync-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      # Fork-safe: refs/pull/<n>/head exists in the base repository for forks too.
+      - name: Fetch the PR head commit
+        run: git fetch --no-tags origin "pull/${{ github.event.number }}/head:pr-head" --force
+
+      - name: Verify the PR contains the latest base
+        env:
+          BASE: ${{ github.base_ref }}
+        run: |
+          set -e
+          git fetch --no-tags origin "$BASE"
+          git merge-base --is-ancestor "origin/$BASE" pr-head
+          echo "SYNCED: pr-head contains origin/$BASE"
